@@ -1,0 +1,1204 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TenantStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum CommercialOnboardingStatus {
+  INITIATED
+  AWAITING_PAYMENT
+  PAID
+  ONBOARDING_STARTED
+  ONBOARDING_COMPLETED
+  EXPIRED
+  ESCALATED_TO_STAFF
+}
+
+enum MessagingChannel {
+  WHATSAPP
+}
+
+enum IntegrationProvider {
+  WHATSAPP_MOCK
+  WHATSAPP_META
+}
+
+enum IntegrationConnectionStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum MessageThreadStatus {
+  OPEN
+  IN_HANDOFF
+  CLOSED
+}
+
+enum MessageEventDirection {
+  INBOUND
+  OUTBOUND
+  SYSTEM
+}
+
+enum MessageEventType {
+  THREAD_CREATED
+  MESSAGE_RECEIVED
+  MESSAGE_SENT
+  MESSAGE_SEND_FAILED
+  HANDOFF_OPENED
+  HANDOFF_ASSIGNED
+  HANDOFF_CLOSED
+  THREAD_PATIENT_LINKED
+  THREAD_RESOLVED
+}
+
+enum MessageThreadResolutionActorType {
+  HUMAN
+  AUTOMATION
+}
+
+enum AppointmentFollowUpKind {
+  APPOINTMENT_REMINDER_24H
+}
+
+enum AppointmentFollowUpDispatchStatus {
+  PROCESSING
+  SENT
+  FAILED
+}
+
+enum WebhookEventStatus {
+  RECEIVED
+  PROCESSED
+  IGNORED
+  FAILED
+}
+
+enum HandoffStatus {
+  OPEN
+  ASSIGNED
+  CLOSED
+}
+
+enum HandoffSource {
+  MANUAL
+  AUTOMATIC
+}
+
+enum HandoffPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum AgentKind {
+  CAPTACAO
+  AGENDAMENTO
+}
+
+enum AgentExecutionStatus {
+  WAITING_FOR_INPUT
+  WAITING_FOR_SLOT_SELECTION
+  HANDOFF_OPENED
+  COMPLETED
+  FAILED
+}
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum RoleCode {
+  SUPER_ADMIN
+  PLATFORM_ADMIN
+  TENANT_ADMIN
+  CLINIC_MANAGER
+  RECEPTION
+  PROFESSIONAL
+}
+
+enum PatientContactType {
+  PHONE
+  WHATSAPP
+}
+
+enum ScheduleDayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum SlotHoldStatus {
+  ACTIVE
+  CONSUMED
+  CANCELED
+  EXPIRED
+}
+
+enum AppointmentStatus {
+  BOOKED
+  CONFIRMED
+  CHECKED_IN
+  CALLED
+  IN_PROGRESS
+  AWAITING_CLOSURE
+  AWAITING_PAYMENT
+  RESCHEDULED
+  CANCELED
+  COMPLETED
+  NO_SHOW
+}
+
+enum WaitlistStatus {
+  OPEN
+  CONTACTED
+  CONVERTED
+  CANCELED
+}
+
+enum ProtocolSessionStatus {
+  PLANNED
+  SCHEDULED
+  COMPLETED
+  CANCELED
+  SKIPPED
+}
+
+enum PatientProtocolStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+  CANCELED
+}
+
+enum AestheticArea {
+  FACIAL
+  CORPORAL
+  CAPILAR
+  LASER
+  HARMONIZACAO_OROFACIAL
+  PEELING
+  OUTRO
+}
+
+enum InvasivenessLevel {
+  NON_INVASIVE
+  MINIMALLY_INVASIVE
+  MODERATELY_INVASIVE
+  HIGHLY_INVASIVE
+  SURGICAL
+}
+
+model Tenant {
+  id        String       @id @default(uuid()) @db.Uuid
+  slug      String       @unique @db.VarChar(100)
+  name      String       @db.VarChar(160)
+  status    TenantStatus @default(ACTIVE)
+  timezone  String       @default("America/Sao_Paulo") @db.VarChar(64)
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  subscriptions  Subscription[]
+  tenantFeatures TenantFeature[]
+  tenantSettings TenantSetting[]
+  clinic         Clinic?
+  units          Unit[]
+  specialties    Specialty[]
+  professionals  Professional[]
+  consultationTypes        ConsultationType[]
+  professionalSpecialties  ProfessionalSpecialty[]
+  professionalUnits        ProfessionalUnit[]
+  patients                 Patient[]
+  patientContacts          PatientContact[]
+  professionalSchedules    ProfessionalSchedule[]
+  scheduleBlocks           ScheduleBlock[]
+  slotHolds                SlotHold[]
+  appointments             Appointment[]
+  appointmentStatusHistory AppointmentStatusHistory[]
+  waitlistEntries          Waitlist[]
+  userRoles      UserRole[]
+  auditLogs      AuditLog[]
+  integrationConnections IntegrationConnection[]
+  messageTemplates       MessageTemplate[]
+  messageThreads         MessageThread[]
+  messageEvents          MessageEvent[]
+  webhookEvents          WebhookEvent[]
+  handoffRequests        HandoffRequest[]
+  procedureProtocols     ProcedureProtocol[]
+  patientProtocolInstances PatientProtocolInstance[]
+  protocolSessionAppointments ProtocolSessionAppointment[]
+
+  @@map("tenants")
+}
+
+model User {
+  id                     String     @id @default(uuid()) @db.Uuid
+  email                  String     @unique @db.VarChar(180)
+  fullName               String     @map("full_name") @db.VarChar(160)
+  passwordHash           String     @map("password_hash") @db.VarChar(255)
+  passwordChangedAt      DateTime?  @map("password_changed_at") @db.Timestamptz(6)
+  passwordResetTokenHash String?    @map("password_reset_token_hash") @db.VarChar(255)
+  passwordResetExpiresAt DateTime?  @map("password_reset_expires_at") @db.Timestamptz(6)
+  sessionVersion         Int        @default(0) @map("session_version")
+  status                 UserStatus @default(INVITED)
+  createdAt              DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  userRoles        UserRole[]
+  auditLogsAsActor AuditLog[] @relation("audit_actor_logs")
+  slotHoldsCreated SlotHold[] @relation("slot_holds_created_by")
+  appointmentsCreated Appointment[] @relation("appointments_created_by")
+  appointmentsUpdated Appointment[] @relation("appointments_updated_by")
+  appointmentStatusChanges AppointmentStatusHistory[] @relation("appointment_status_changed_by")
+  professionalProfile Professional?
+  messageEvents       MessageEvent[]   @relation("message_events_actor_user")
+  handoffRequestsOpened HandoffRequest[] @relation("handoff_opened_by")
+  handoffRequestsAssigned HandoffRequest[] @relation("handoff_assigned_to")
+  handoffRequestsClosed HandoffRequest[] @relation("handoff_closed_by")
+
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        RoleCode @unique
+  name        String   @db.VarChar(120)
+  description String?  @db.VarChar(255)
+  isSystem    Boolean  @default(true) @map("is_system")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  userRoles UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  roleId    String   @map("role_id") @db.Uuid
+  tenantId  String?  @map("tenant_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role    @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId, tenantId], map: "uq_user_roles_user_role_tenant")
+  @@index([userId], map: "idx_user_roles_user_id")
+  @@index([roleId], map: "idx_user_roles_role_id")
+  @@index([tenantId], map: "idx_user_roles_tenant_id")
+  @@map("user_roles")
+}
+
+model Plan {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique @db.VarChar(80)
+  name        String   @db.VarChar(120)
+  description String?  @db.VarChar(255)
+  priceCents  Int      @default(0) @map("price_cents")
+  currency    String   @default("BRL") @db.VarChar(3)
+  isPublic    Boolean  @default(false) @map("is_public")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  subscriptions Subscription[]
+  commercialOnboardings CommercialOnboarding[]
+
+  @@map("plans")
+}
+
+model CommercialOnboarding {
+  id                  String                     @id @default(uuid()) @db.Uuid
+  publicTokenHash     String                     @unique @map("public_token_hash") @db.VarChar(255)
+  status              CommercialOnboardingStatus @default(INITIATED)
+  planId              String                     @map("plan_id") @db.Uuid
+  expiresAt           DateTime                   @map("expires_at") @db.Timestamptz(6)
+  clinicDisplayName   String?                    @map("clinic_display_name") @db.VarChar(160)
+  clinicLegalName     String?                    @map("clinic_legal_name") @db.VarChar(180)
+  clinicDocumentNumber String?                   @map("clinic_document_number") @db.VarChar(40)
+  clinicContactEmail  String?                    @map("clinic_contact_email") @db.VarChar(180)
+  clinicContactPhone  String?                    @map("clinic_contact_phone") @db.VarChar(40)
+  timezone            String?                    @db.VarChar(64)
+  initialUnitName     String?                    @map("initial_unit_name") @db.VarChar(160)
+  adminFullName       String?                    @map("admin_full_name") @db.VarChar(160)
+  adminEmail          String?                    @map("admin_email") @db.VarChar(180)
+  adminPasswordHash   String?                    @map("admin_password_hash") @db.VarChar(255)
+  paymentReference    String?                    @map("payment_reference") @db.VarChar(120)
+  checkoutConfirmedAt DateTime?                  @map("checkout_confirmed_at") @db.Timestamptz(6)
+  onboardingStartedAt DateTime?                  @map("onboarding_started_at") @db.Timestamptz(6)
+  onboardingCompletedAt DateTime?                @map("onboarding_completed_at") @db.Timestamptz(6)
+  tenantId            String?                    @map("tenant_id") @db.Uuid
+  clinicId            String?                    @map("clinic_id") @db.Uuid
+  unitId              String?                    @map("unit_id") @db.Uuid
+  adminUserId         String?                    @map("admin_user_id") @db.Uuid
+  subscriptionId      String?                    @map("subscription_id") @db.Uuid
+  createdAt           DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Restrict)
+
+  @@index([planId], map: "idx_commercial_onboardings_plan_id")
+  @@index([status], map: "idx_commercial_onboardings_status")
+  @@index([expiresAt], map: "idx_commercial_onboardings_expires_at")
+  @@index([adminEmail], map: "idx_commercial_onboardings_admin_email")
+  @@index([clinicContactEmail], map: "idx_commercial_onboardings_clinic_contact_email")
+  @@index([tenantId], map: "idx_commercial_onboardings_tenant_id")
+  @@map("commercial_onboardings")
+}
+
+model Subscription {
+  id        String             @id @default(uuid()) @db.Uuid
+  tenantId  String             @map("tenant_id") @db.Uuid
+  planId    String             @map("plan_id") @db.Uuid
+  status    SubscriptionStatus @default(TRIAL)
+  startsAt  DateTime           @default(now()) @map("starts_at") @db.Timestamptz(6)
+  endsAt    DateTime?          @map("ends_at") @db.Timestamptz(6)
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan   Plan   @relation(fields: [planId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId], map: "idx_subscriptions_tenant_id")
+  @@index([planId], map: "idx_subscriptions_plan_id")
+  @@map("subscriptions")
+}
+
+model TenantFeature {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  key       String   @db.VarChar(120)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key], map: "uq_tenant_features_tenant_key")
+  @@index([tenantId], map: "idx_tenant_features_tenant_id")
+  @@map("tenant_features")
+}
+
+model TenantSetting {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  key       String   @db.VarChar(120)
+  value     String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key], map: "uq_tenant_settings_tenant_key")
+  @@index([tenantId], map: "idx_tenant_settings_tenant_id")
+  @@map("tenant_settings")
+}
+
+model Clinic {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @unique @map("tenant_id") @db.Uuid
+  displayName    String   @map("display_name") @db.VarChar(160)
+  legalName      String?  @map("legal_name") @db.VarChar(180)
+  documentNumber String?  @map("document_number") @db.VarChar(40)
+  contactEmail   String?  @map("contact_email") @db.VarChar(180)
+  contactPhone   String?  @map("contact_phone") @db.VarChar(40)
+  timezone       String   @default("America/Sao_Paulo") @db.VarChar(64)
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId], map: "idx_clinics_tenant_id")
+  @@map("clinics")
+}
+
+model Unit {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  name        String   @db.VarChar(160)
+  description String?  @db.VarChar(255)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  professionalUnits ProfessionalUnit[]
+  professionalSchedules ProfessionalSchedule[]
+  scheduleBlocks         ScheduleBlock[]
+  slotHolds              SlotHold[]
+  appointments           Appointment[]
+  waitlistEntries        Waitlist[]
+
+  @@unique([tenantId, name], map: "uq_units_tenant_name")
+  @@index([tenantId], map: "idx_units_tenant_id")
+  @@map("units")
+}
+
+model Specialty {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  name        String   @db.VarChar(160)
+  description String?  @db.VarChar(255)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant                  Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  professionalSpecialties ProfessionalSpecialty[]
+
+  @@unique([tenantId, name], map: "uq_specialties_tenant_name")
+  @@index([tenantId], map: "idx_specialties_tenant_id")
+  @@map("specialties")
+}
+
+model Professional {
+  id                    String   @id @default(uuid()) @db.Uuid
+  tenantId              String   @map("tenant_id") @db.Uuid
+  userId                String?  @unique @map("user_id") @db.Uuid
+  fullName              String   @map("full_name") @db.VarChar(160)
+  displayName           String   @map("display_name") @db.VarChar(120)
+  professionalRegister  String   @map("professional_register") @db.VarChar(80)
+  visibleForSelfBooking Boolean  @default(false) @map("visible_for_self_booking")
+  isActive              Boolean  @default(true) @map("is_active")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant                 Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user                   User?                   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  professionalSpecialties ProfessionalSpecialty[]
+  professionalUnits       ProfessionalUnit[]
+  schedules               ProfessionalSchedule[]
+  scheduleBlocks          ScheduleBlock[]
+  slotHolds               SlotHold[]
+  appointments            Appointment[]
+  waitlistEntries         Waitlist[]
+
+  @@unique([tenantId, professionalRegister], map: "uq_professionals_tenant_register")
+  @@index([tenantId], map: "idx_professionals_tenant_id")
+  @@index([userId], map: "idx_professionals_user_id")
+  @@map("professionals")
+}
+
+model ProfessionalSpecialty {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  professionalId String   @map("professional_id") @db.Uuid
+  specialtyId    String   @map("specialty_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  specialty    Specialty    @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+
+  @@unique([professionalId, specialtyId], map: "uq_professional_specialties_professional_specialty")
+  @@index([tenantId], map: "idx_professional_specialties_tenant_id")
+  @@index([professionalId], map: "idx_professional_specialties_professional_id")
+  @@index([specialtyId], map: "idx_professional_specialties_specialty_id")
+  @@map("professional_specialties")
+}
+
+model ProfessionalUnit {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  professionalId String   @map("professional_id") @db.Uuid
+  unitId         String   @map("unit_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  unit         Unit         @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([professionalId, unitId], map: "uq_professional_units_professional_unit")
+  @@index([tenantId], map: "idx_professional_units_tenant_id")
+  @@index([professionalId], map: "idx_professional_units_professional_id")
+  @@index([unitId], map: "idx_professional_units_unit_id")
+  @@map("professional_units")
+}
+
+model ConsultationType {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @map("tenant_id") @db.Uuid
+  name                String   @db.VarChar(160)
+  durationMinutes     Int      @map("duration_minutes")
+  bufferBeforeMinutes Int      @default(0) @map("buffer_before_minutes")
+  bufferAfterMinutes  Int      @default(0) @map("buffer_after_minutes")
+  isFirstVisit        Boolean  @default(false) @map("is_first_visit")
+  isReturnVisit       Boolean  @default(false) @map("is_return_visit")
+  isOnline            Boolean  @default(false) @map("is_online")
+  isActive            Boolean  @default(true) @map("is_active")
+  aestheticArea       AestheticArea? @map("aesthetic_area")
+  invasivenessLevel   InvasivenessLevel? @map("invasiveness_level")
+  recoveryDays        Int?     @map("recovery_days")
+  recommendedFrequencyDays Int? @map("recommended_frequency_days")
+  preparationNotes    String?  @map("preparation_notes") @db.Text
+  contraindications   String?  @db.Text
+  aftercareGuidance   String?  @map("aftercare_guidance") @db.Text
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  slotHolds     SlotHold[]
+  appointments  Appointment[]
+  waitlistEntries Waitlist[]
+  procedureProtocols ProcedureProtocol[]
+
+  @@unique([tenantId, name], map: "uq_consultation_types_tenant_name")
+  @@index([tenantId], map: "idx_consultation_types_tenant_id")
+  @@map("consultation_types")
+}
+
+model Patient {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  fullName       String?  @map("full_name") @db.VarChar(160)
+  birthDate      DateTime? @map("birth_date") @db.Date
+  documentNumber String?  @map("document_number") @db.VarChar(40)
+  notes          String?  @db.Text
+  intentHistory  Json?    @map("intent_history") // Sprint 8: Memory Context
+  isActive       Boolean  @default(true) @map("is_active")
+  mergedIntoPatientId String? @map("merged_into_patient_id") @db.Uuid
+  mergedAt       DateTime? @map("merged_at") @db.Timestamptz(6)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  mergedIntoPatient Patient? @relation("patient_merges", fields: [mergedIntoPatientId], references: [id], onDelete: SetNull)
+  mergedPatients    Patient[] @relation("patient_merges")
+  contacts          PatientContact[]
+  slotHolds         SlotHold[]
+  appointments      Appointment[]
+  waitlistEntries   Waitlist[]
+  messageThreads    MessageThread[]
+  messageEvents     MessageEvent[]
+  patientProtocolInstances PatientProtocolInstance[]
+
+  @@index([tenantId], map: "idx_patients_tenant_id")
+  @@index([mergedIntoPatientId], map: "idx_patients_merged_into_patient_id")
+  @@map("patients")
+}
+
+model IntegrationConnection {
+  id                    String                      @id @default(uuid()) @db.Uuid
+  tenantId              String                      @map("tenant_id") @db.Uuid
+  channel               MessagingChannel
+  provider              IntegrationProvider
+  status                IntegrationConnectionStatus @default(ACTIVE)
+  displayName           String                      @map("display_name") @db.VarChar(120)
+  phoneNumber           String?                     @map("phone_number") @db.VarChar(40)
+  normalizedPhoneNumber String?                     @map("normalized_phone_number") @db.VarChar(40)
+  externalAccountId     String?                     @map("external_account_id") @db.VarChar(120)
+  webhookVerifyTokenHash String?                    @map("webhook_verify_token_hash") @db.VarChar(255)
+  config                Json?
+  createdAt             DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime                    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  threads       MessageThread[]
+  messageEvents MessageEvent[]
+  webhookEvents WebhookEvent[]
+
+  @@index([tenantId], map: "idx_integration_connections_tenant_id")
+  @@index([status], map: "idx_integration_connections_status")
+  @@unique([tenantId, channel], map: "uq_integration_connections_tenant_channel")
+  @@unique([tenantId, channel, displayName], map: "uq_integration_connections_tenant_channel_display_name")
+  @@unique([channel, externalAccountId], map: "uq_integration_connections_channel_external_account_id")
+  @@map("integration_connections")
+}
+
+model MessageTemplate {
+  id        String           @id @default(uuid()) @db.Uuid
+  tenantId  String           @map("tenant_id") @db.Uuid
+  channel   MessagingChannel
+  code      String           @db.VarChar(80)
+  name      String           @db.VarChar(120)
+  bodyText  String           @map("body_text") @db.Text
+  variables Json?
+  isActive  Boolean          @default(true) @map("is_active")
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  messageEvents MessageEvent[]
+
+  @@unique([tenantId, channel, code], map: "uq_message_templates_tenant_channel_code")
+  @@index([tenantId], map: "idx_message_templates_tenant_id")
+  @@index([isActive], map: "idx_message_templates_is_active")
+  @@map("message_templates")
+}
+
+model MessageThread {
+  id                      String              @id @default(uuid()) @db.Uuid
+  tenantId                String              @map("tenant_id") @db.Uuid
+  patientId               String?             @map("patient_id") @db.Uuid
+  integrationConnectionId String              @map("integration_connection_id") @db.Uuid
+  channel                 MessagingChannel
+  status                  MessageThreadStatus  @default(OPEN)
+  contactDisplayValue     String               @map("contact_display_value") @db.VarChar(120)
+  normalizedContactValue  String               @map("normalized_contact_value") @db.VarChar(40)
+  patientDisplayName      String?              @map("patient_display_name") @db.VarChar(160)
+  externalThreadId        String?              @map("external_thread_id") @db.VarChar(120)
+  lastIntent              String?              @map("last_intent") @db.VarChar(80) // Sprint 8: Memory Context
+  lastMessagePreview      String?              @map("last_message_preview") @db.VarChar(255)
+  lastMessageAt           DateTime?            @map("last_message_at") @db.Timestamptz(6)
+  lastInboundAt           DateTime?            @map("last_inbound_at") @db.Timestamptz(6)
+  lastOutboundAt          DateTime?            @map("last_outbound_at") @db.Timestamptz(6)
+  closedAt                DateTime?            @map("closed_at") @db.Timestamptz(6)
+  createdAt               DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant                Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient               Patient?              @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  integrationConnection IntegrationConnection @relation(fields: [integrationConnectionId], references: [id], onDelete: Cascade)
+  messageEvents         MessageEvent[]
+  webhookEvents         WebhookEvent[]
+  handoffRequests       HandoffRequest[]
+
+  @@unique([tenantId, integrationConnectionId, channel, normalizedContactValue], map: "uq_message_threads_connection_contact")
+  @@index([tenantId], map: "idx_message_threads_tenant_id")
+  @@index([patientId], map: "idx_message_threads_patient_id")
+  @@index([status], map: "idx_message_threads_status")
+  @@index([lastMessageAt], map: "idx_message_threads_last_message_at")
+  @@map("message_threads")
+}
+
+model MessageEvent {
+  id                      String                @id @default(uuid()) @db.Uuid
+  tenantId                String                @map("tenant_id") @db.Uuid
+  threadId                String                @map("thread_id") @db.Uuid
+  patientId               String?               @map("patient_id") @db.Uuid
+  integrationConnectionId String                @map("integration_connection_id") @db.Uuid
+  templateId              String?               @map("template_id") @db.Uuid
+  webhookEventId          String?               @map("webhook_event_id") @db.Uuid
+  handoffRequestId        String?               @map("handoff_request_id") @db.Uuid
+  actorUserId             String?               @map("actor_user_id") @db.Uuid
+  direction               MessageEventDirection
+  eventType               MessageEventType      @map("event_type")
+  providerMessageId       String?               @map("provider_message_id") @db.VarChar(120)
+  contentText             String?               @map("content_text") @db.Text
+  metadata                Json?
+  occurredAt              DateTime              @map("occurred_at") @db.Timestamptz(6)
+  createdAt               DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tenant                Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  thread                MessageThread         @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  patient               Patient?              @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  integrationConnection IntegrationConnection @relation(fields: [integrationConnectionId], references: [id], onDelete: Cascade)
+  template              MessageTemplate?      @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  webhookEvent          WebhookEvent?         @relation(fields: [webhookEventId], references: [id], onDelete: SetNull)
+  handoffRequest        HandoffRequest?       @relation(fields: [handoffRequestId], references: [id], onDelete: SetNull)
+  actorUser             User?                 @relation("message_events_actor_user", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId], map: "idx_message_events_tenant_id")
+  @@index([threadId], map: "idx_message_events_thread_id")
+  @@index([webhookEventId], map: "idx_message_events_webhook_event_id")
+  @@index([handoffRequestId], map: "idx_message_events_handoff_request_id")
+  @@index([occurredAt], map: "idx_message_events_occurred_at")
+  @@map("message_events")
+}
+
+model MessageThreadResolution {
+  id               String                           @id @default(uuid()) @db.Uuid
+  tenantId         String                           @map("tenant_id") @db.Uuid
+  threadId         String                           @map("thread_id") @db.Uuid
+  patientId        String?                          @map("patient_id") @db.Uuid
+  handoffRequestId String?                          @map("handoff_request_id") @db.Uuid
+  messageEventId   String?                          @map("message_event_id") @db.Uuid
+  agentExecutionId String?                          @map("agent_execution_id") @db.Uuid
+  resolvedByUserId String?                          @map("resolved_by_user_id") @db.Uuid
+  actorType        MessageThreadResolutionActorType @map("actor_type")
+  correlationId    String?                          @map("correlation_id") @db.VarChar(120)
+  note             String?                          @db.VarChar(255)
+  metadata         Json?
+  occurredAt       DateTime                         @map("occurred_at") @db.Timestamptz(6)
+  createdAt        DateTime                         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime                         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([tenantId], map: "idx_message_thread_resolutions_tenant_id")
+  @@index([threadId], map: "idx_message_thread_resolutions_thread_id")
+  @@index([actorType], map: "idx_message_thread_resolutions_actor_type")
+  @@index([occurredAt], map: "idx_message_thread_resolutions_occurred_at")
+  @@index([correlationId], map: "idx_message_thread_resolutions_correlation_id")
+  @@index([agentExecutionId], map: "idx_message_thread_resolutions_agent_execution_id")
+  @@map("message_thread_resolutions")
+}
+
+model WebhookEvent {
+  id                      String             @id @default(uuid()) @db.Uuid
+  tenantId                String?            @map("tenant_id") @db.Uuid
+  integrationConnectionId String?            @map("integration_connection_id") @db.Uuid
+  threadId                String?            @map("thread_id") @db.Uuid
+  channel                 MessagingChannel
+  provider                IntegrationProvider?
+  providerEventId         String?            @map("provider_event_id") @db.VarChar(120)
+  eventType               String             @map("event_type") @db.VarChar(80)
+  status                  WebhookEventStatus @default(RECEIVED)
+  payload                 Json
+  errorMessage            String?            @map("error_message") @db.VarChar(255)
+  receivedAt              DateTime           @default(now()) @map("received_at") @db.Timestamptz(6)
+  processedAt             DateTime?          @map("processed_at") @db.Timestamptz(6)
+  createdAt               DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant                Tenant?               @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  integrationConnection IntegrationConnection? @relation(fields: [integrationConnectionId], references: [id], onDelete: SetNull)
+  thread                MessageThread?        @relation(fields: [threadId], references: [id], onDelete: SetNull)
+  messageEvents         MessageEvent[]
+
+  @@unique([integrationConnectionId, providerEventId], map: "uq_webhook_events_connection_provider_event")
+  @@index([tenantId], map: "idx_webhook_events_tenant_id")
+  @@index([threadId], map: "idx_webhook_events_thread_id")
+  @@index([status], map: "idx_webhook_events_status")
+  @@index([receivedAt], map: "idx_webhook_events_received_at")
+  @@map("webhook_events")
+}
+
+model HandoffRequest {
+  id             String        @id @default(uuid()) @db.Uuid
+  tenantId       String        @map("tenant_id") @db.Uuid
+  threadId       String        @map("thread_id") @db.Uuid
+  status         HandoffStatus @default(OPEN)
+  source         HandoffSource @default(MANUAL)
+  priority       HandoffPriority @default(MEDIUM)
+  reason         String        @db.VarChar(120)
+  note           String?       @db.VarChar(255)
+  closedNote     String?       @map("closed_note") @db.VarChar(255)
+  openedByUserId String?       @map("opened_by_user_id") @db.Uuid
+  assignedToUserId String?     @map("assigned_to_user_id") @db.Uuid
+  closedByUserId String?       @map("closed_by_user_id") @db.Uuid
+  assignedAt     DateTime?     @map("assigned_at") @db.Timestamptz(6)
+  openedAt       DateTime      @default(now()) @map("opened_at") @db.Timestamptz(6)
+  closedAt       DateTime?     @map("closed_at") @db.Timestamptz(6)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  thread       MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  openedByUser User?         @relation("handoff_opened_by", fields: [openedByUserId], references: [id], onDelete: SetNull)
+  assignedToUser User?       @relation("handoff_assigned_to", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  closedByUser User?         @relation("handoff_closed_by", fields: [closedByUserId], references: [id], onDelete: SetNull)
+  messageEvents MessageEvent[]
+
+  @@index([tenantId], map: "idx_handoff_requests_tenant_id")
+  @@index([threadId], map: "idx_handoff_requests_thread_id")
+  @@index([status], map: "idx_handoff_requests_status")
+  @@index([assignedToUserId], map: "idx_handoff_requests_assigned_to_user_id")
+  @@index([openedAt], map: "idx_handoff_requests_opened_at")
+  @@map("handoff_requests")
+}
+
+model AgentExecution {
+  id               String               @id @default(uuid()) @db.Uuid
+  tenantId         String               @map("tenant_id") @db.Uuid
+  threadId         String               @map("thread_id") @db.Uuid
+  patientId        String?              @map("patient_id") @db.Uuid
+  handoffRequestId String?              @map("handoff_request_id") @db.Uuid
+  appointmentId    String?              @map("appointment_id") @db.Uuid
+  correlationId    String               @map("correlation_id") @db.VarChar(120)
+  agent            AgentKind
+  status           AgentExecutionStatus
+  durationMs       Int                  @map("duration_ms")
+  skillCalls       Int                  @default(0) @map("skill_calls")
+  failedSkillCalls Int                  @default(0) @map("failed_skill_calls")
+  startedAt        DateTime             @map("started_at") @db.Timestamptz(6)
+  finishedAt       DateTime             @map("finished_at") @db.Timestamptz(6)
+  errorMessage     String?              @map("error_message") @db.VarChar(255)
+  metadata         Json?
+  createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([tenantId], map: "idx_agent_executions_tenant_id")
+  @@index([threadId], map: "idx_agent_executions_thread_id")
+  @@index([correlationId], map: "idx_agent_executions_correlation_id")
+  @@index([agent], map: "idx_agent_executions_agent")
+  @@index([status], map: "idx_agent_executions_status")
+  @@index([finishedAt], map: "idx_agent_executions_finished_at")
+  @@map("agent_executions")
+}
+
+model PatientContact {
+  id              String            @id @default(uuid()) @db.Uuid
+  tenantId        String            @map("tenant_id") @db.Uuid
+  patientId       String            @map("patient_id") @db.Uuid
+  type            PatientContactType
+  value           String            @db.VarChar(40)
+  normalizedValue String            @map("normalized_value") @db.VarChar(40)
+  isPrimary       Boolean           @default(false) @map("is_primary")
+  allowAutomatedMessaging Boolean   @default(true) @map("allow_automated_messaging")
+  automatedMessagingOptedOutAt DateTime? @map("automated_messaging_opted_out_at") @db.Timestamptz(6)
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, type, normalizedValue], map: "uq_patient_contacts_tenant_type_normalized")
+  @@index([tenantId], map: "idx_patient_contacts_tenant_id")
+  @@index([patientId], map: "idx_patient_contacts_patient_id")
+  @@map("patient_contacts")
+}
+
+model AppointmentFollowUpDispatch {
+  id                    String                          @id @default(uuid()) @db.Uuid
+  tenantId              String                          @map("tenant_id") @db.Uuid
+  appointmentId         String                          @map("appointment_id") @db.Uuid
+  patientId             String                          @map("patient_id") @db.Uuid
+  patientContactId      String                          @map("patient_contact_id") @db.Uuid
+  threadId              String?                         @map("thread_id") @db.Uuid
+  integrationConnectionId String?                       @map("integration_connection_id") @db.Uuid
+  templateId            String                          @map("template_id") @db.Uuid
+  messageEventId        String?                         @map("message_event_id") @db.Uuid
+  initiatedByUserId     String?                         @map("initiated_by_user_id") @db.Uuid
+  kind                  AppointmentFollowUpKind
+  status                AppointmentFollowUpDispatchStatus
+  dispatchKey           String                          @map("dispatch_key") @db.VarChar(160)
+  correlationId         String                          @map("correlation_id") @db.VarChar(120)
+  scheduledFor          DateTime                        @map("scheduled_for") @db.Timestamptz(6)
+  startedAt             DateTime?                       @map("started_at") @db.Timestamptz(6)
+  dispatchedAt          DateTime?                       @map("dispatched_at") @db.Timestamptz(6)
+  failedAt              DateTime?                       @map("failed_at") @db.Timestamptz(6)
+  errorMessage          String?                         @map("error_message") @db.VarChar(255)
+  metadata              Json?
+  createdAt             DateTime                        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime                        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([tenantId, dispatchKey], map: "uq_appointment_follow_up_dispatches_tenant_dispatch_key")
+  @@index([tenantId], map: "idx_appointment_follow_up_dispatches_tenant_id")
+  @@index([appointmentId], map: "idx_appointment_follow_up_dispatches_appointment_id")
+  @@index([status], map: "idx_appointment_follow_up_dispatches_status")
+  @@index([scheduledFor], map: "idx_appointment_follow_up_dispatches_scheduled_for")
+  @@map("appointment_follow_up_dispatches")
+}
+
+model ProfessionalSchedule {
+  id                String            @id @default(uuid()) @db.Uuid
+  tenantId          String            @map("tenant_id") @db.Uuid
+  professionalId    String            @map("professional_id") @db.Uuid
+  unitId            String?           @map("unit_id") @db.Uuid
+  dayOfWeek         ScheduleDayOfWeek @map("day_of_week")
+  startTime         DateTime          @map("start_time") @db.Time(6)
+  endTime           DateTime          @map("end_time") @db.Time(6)
+  slotIntervalMinutes Int            @default(15) @map("slot_interval_minutes")
+  isActive          Boolean           @default(true) @map("is_active")
+  validFrom         DateTime?         @map("valid_from") @db.Date
+  validTo           DateTime?         @map("valid_to") @db.Date
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  unit         Unit?        @relation(fields: [unitId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId], map: "idx_professional_schedules_tenant_id")
+  @@index([professionalId], map: "idx_professional_schedules_professional_id")
+  @@index([unitId], map: "idx_professional_schedules_unit_id")
+  @@map("professional_schedules")
+}
+
+model ScheduleBlock {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  professionalId String   @map("professional_id") @db.Uuid
+  unitId         String?  @map("unit_id") @db.Uuid
+  room           String?  @db.VarChar(80)
+  reason         String?  @db.VarChar(255)
+  startsAt       DateTime @map("starts_at") @db.Timestamptz(6)
+  endsAt         DateTime @map("ends_at") @db.Timestamptz(6)
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  unit         Unit?        @relation(fields: [unitId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId], map: "idx_schedule_blocks_tenant_id")
+  @@index([professionalId], map: "idx_schedule_blocks_professional_id")
+  @@index([startsAt], map: "idx_schedule_blocks_starts_at")
+  @@map("schedule_blocks")
+}
+
+model SlotHold {
+  id                 String         @id @default(uuid()) @db.Uuid
+  tenantId           String         @map("tenant_id") @db.Uuid
+  patientId          String?        @map("patient_id") @db.Uuid
+  professionalId     String         @map("professional_id") @db.Uuid
+  consultationTypeId String         @map("consultation_type_id") @db.Uuid
+  unitId             String?        @map("unit_id") @db.Uuid
+  room               String?        @db.VarChar(80)
+  startsAt           DateTime       @map("starts_at") @db.Timestamptz(6)
+  endsAt             DateTime       @map("ends_at") @db.Timestamptz(6)
+  durationMinutes    Int            @map("duration_minutes")
+  bufferBeforeMinutes Int           @default(0) @map("buffer_before_minutes")
+  bufferAfterMinutes  Int           @default(0) @map("buffer_after_minutes")
+  status             SlotHoldStatus @default(ACTIVE)
+  expiresAt          DateTime       @map("expires_at") @db.Timestamptz(6)
+  createdByUserId    String?        @map("created_by_user_id") @db.Uuid
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant           Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient          Patient?         @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  professional     Professional     @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  consultationType ConsultationType @relation(fields: [consultationTypeId], references: [id], onDelete: Restrict)
+  unit             Unit?            @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  createdByUser    User?            @relation("slot_holds_created_by", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  appointment      Appointment?
+
+  @@index([tenantId], map: "idx_slot_holds_tenant_id")
+  @@index([professionalId], map: "idx_slot_holds_professional_id")
+  @@index([status], map: "idx_slot_holds_status")
+  @@index([expiresAt], map: "idx_slot_holds_expires_at")
+  @@map("slot_holds")
+}
+
+model Appointment {
+  id                 String            @id @default(uuid()) @db.Uuid
+  tenantId           String            @map("tenant_id") @db.Uuid
+  patientId          String            @map("patient_id") @db.Uuid
+  professionalId     String            @map("professional_id") @db.Uuid
+  consultationTypeId String            @map("consultation_type_id") @db.Uuid
+  unitId             String?           @map("unit_id") @db.Uuid
+  slotHoldId         String?           @unique @map("slot_hold_id") @db.Uuid
+  room               String?           @db.VarChar(80)
+  startsAt           DateTime          @map("starts_at") @db.Timestamptz(6)
+  endsAt             DateTime          @map("ends_at") @db.Timestamptz(6)
+  durationMinutes    Int               @map("duration_minutes")
+  bufferBeforeMinutes Int              @default(0) @map("buffer_before_minutes")
+  bufferAfterMinutes  Int              @default(0) @map("buffer_after_minutes")
+  status             AppointmentStatus @default(BOOKED)
+  confirmedAt        DateTime?         @map("confirmed_at") @db.Timestamptz(6)
+  checkedInAt        DateTime?         @map("checked_in_at") @db.Timestamptz(6)
+  calledAt           DateTime?         @map("called_at") @db.Timestamptz(6)
+  startedAt          DateTime?         @map("started_at") @db.Timestamptz(6)
+  closureReadyAt     DateTime?         @map("closure_ready_at") @db.Timestamptz(6)
+  awaitingPaymentAt  DateTime?         @map("awaiting_payment_at") @db.Timestamptz(6)
+  completedAt        DateTime?         @map("completed_at") @db.Timestamptz(6)
+  noShowAt           DateTime?         @map("no_show_at") @db.Timestamptz(6)
+  idempotencyKey     String            @map("idempotency_key") @db.VarChar(120)
+  cancellationReason String?           @map("cancellation_reason") @db.VarChar(255)
+  notes              String?           @db.Text
+  createdByUserId    String?           @map("created_by_user_id") @db.Uuid
+  updatedByUserId    String?           @map("updated_by_user_id") @db.Uuid
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant           Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient          Patient                  @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  professional     Professional             @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+  consultationType ConsultationType         @relation(fields: [consultationTypeId], references: [id], onDelete: Restrict)
+  unit             Unit?                    @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  slotHold         SlotHold?                @relation(fields: [slotHoldId], references: [id], onDelete: SetNull)
+  createdByUser    User?                    @relation("appointments_created_by", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  updatedByUser    User?                    @relation("appointments_updated_by", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+  statusHistory    AppointmentStatusHistory[]
+  protocolSessionAppointments ProtocolSessionAppointment[]
+
+  @@unique([tenantId, idempotencyKey], map: "uq_appointments_tenant_idempotency_key")
+  @@index([tenantId], map: "idx_appointments_tenant_id")
+  @@index([professionalId], map: "idx_appointments_professional_id")
+  @@index([patientId], map: "idx_appointments_patient_id")
+  @@index([startsAt], map: "idx_appointments_starts_at")
+  @@index([status], map: "idx_appointments_status")
+  @@index([checkedInAt], map: "idx_appointments_checked_in_at")
+  @@index([calledAt], map: "idx_appointments_called_at")
+  @@index([startedAt], map: "idx_appointments_started_at")
+  @@index([closureReadyAt], map: "idx_appointments_closure_ready_at")
+  @@index([awaitingPaymentAt], map: "idx_appointments_awaiting_payment_at")
+  @@index([completedAt], map: "idx_appointments_completed_at")
+  @@map("appointments")
+}
+
+model AppointmentStatusHistory {
+  id              String            @id @default(uuid()) @db.Uuid
+  tenantId        String            @map("tenant_id") @db.Uuid
+  appointmentId   String            @map("appointment_id") @db.Uuid
+  fromStatus      AppointmentStatus? @map("from_status")
+  toStatus        AppointmentStatus @map("to_status")
+  changedByUserId String?           @map("changed_by_user_id") @db.Uuid
+  reason          String?           @db.VarChar(255)
+  metadata        Json?
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  changedByUser User?       @relation("appointment_status_changed_by", fields: [changedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId], map: "idx_appointment_status_history_tenant_id")
+  @@index([appointmentId], map: "idx_appointment_status_history_appointment_id")
+  @@index([createdAt], map: "idx_appointment_status_history_created_at")
+  @@map("appointment_status_history")
+}
+
+model Waitlist {
+  id                 String       @id @default(uuid()) @db.Uuid
+  tenantId           String       @map("tenant_id") @db.Uuid
+  patientId          String       @map("patient_id") @db.Uuid
+  professionalId     String?      @map("professional_id") @db.Uuid
+  consultationTypeId String?      @map("consultation_type_id") @db.Uuid
+  unitId             String?      @map("unit_id") @db.Uuid
+  preferredDate      DateTime?    @map("preferred_date") @db.Date
+  note               String?      @db.VarChar(255)
+  status             WaitlistStatus @default(OPEN)
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant           Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient          Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  professional     Professional?    @relation(fields: [professionalId], references: [id], onDelete: SetNull)
+  consultationType ConsultationType? @relation(fields: [consultationTypeId], references: [id], onDelete: SetNull)
+  unit             Unit?            @relation(fields: [unitId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId], map: "idx_waitlist_tenant_id")
+  @@index([patientId], map: "idx_waitlist_patient_id")
+  @@index([status], map: "idx_waitlist_status")
+  @@map("waitlist")
+}
+
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  action       String   @db.VarChar(80)
+  actorUserId  String?  @map("actor_user_id") @db.Uuid
+  actorProfile String   @map("actor_profile") @db.VarChar(32)
+  actorRoles   String[] @map("actor_roles")
+  tenantId     String?  @map("tenant_id") @db.Uuid
+  targetType   String   @map("target_type") @db.VarChar(80)
+  targetId     String?  @map("target_id") @db.VarChar(80)
+  metadata     Json?
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  actorUser User?   @relation("audit_actor_logs", fields: [actorUserId], references: [id], onDelete: SetNull)
+  tenant    Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([action], map: "idx_audit_logs_action")
+  @@index([tenantId], map: "idx_audit_logs_tenant_id")
+  @@index([actorUserId], map: "idx_audit_logs_actor_user_id")
+  @@index([createdAt], map: "idx_audit_logs_created_at")
+  @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Protocol Models (P1: Multi-session aesthetic procedures)
+// ---------------------------------------------------------------------------
+
+model ProcedureProtocol {
+  id                        String   @id @default(uuid()) @db.Uuid
+  tenantId                  String   @map("tenant_id") @db.Uuid
+  consultationTypeId        String   @map("consultation_type_id") @db.Uuid
+  name                      String   @db.VarChar(160)
+  description               String?  @db.Text
+  totalSessions             Int      @map("total_sessions")
+  intervalBetweenSessionsDays Int   @map("interval_between_sessions_days")
+  isActive                  Boolean  @default(true) @map("is_active")
+  createdAt                 DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant               Tenant                     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  consultationType     ConsultationType           @relation(fields: [consultationTypeId], references: [id], onDelete: Restrict)
+  patientInstances     PatientProtocolInstance[]
+  sessionAppointments  ProtocolSessionAppointment[]
+
+  @@unique([tenantId, consultationTypeId, name], map: "uq_procedure_protocols_tenant_consultation_type_name")
+  @@index([tenantId], map: "idx_procedure_protocols_tenant_id")
+  @@index([consultationTypeId], map: "idx_procedure_protocols_consultation_type_id")
+  @@map("procedure_protocols")
+}
+
+model PatientProtocolInstance {
+  id                     String   @id @default(uuid()) @db.Uuid
+  tenantId               String   @map("tenant_id") @db.Uuid
+  patientId              String   @map("patient_id") @db.Uuid
+  procedureProtocolId    String   @map("procedure_protocol_id") @db.Uuid
+  status                 PatientProtocolStatus @default(ACTIVE)
+  sessionsPlanned        Int      @map("sessions_planned")
+  sessionsScheduled      Int      @default(0) @map("sessions_scheduled")
+  sessionsCompleted      Int      @default(0) @map("sessions_completed")
+  startedAt              DateTime @default(now()) @map("started_at") @db.Timestamptz(6)
+  expectedCompletionAt   DateTime? @map("expected_completion_at") @db.Timestamptz(6)
+  completedAt            DateTime? @map("completed_at") @db.Timestamptz(6)
+  abandonedAt            DateTime? @map("abandoned_at") @db.Timestamptz(6)
+  notes                  String?  @db.Text
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant             Tenant                     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient            Patient                    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  procedureProtocol  ProcedureProtocol          @relation(fields: [procedureProtocolId], references: [id], onDelete: Restrict)
+  sessionAppointments ProtocolSessionAppointment[]
+
+  @@unique([patientId, procedureProtocolId], map: "uq_patient_protocol_instances_patient_protocol")
+  @@index([tenantId], map: "idx_patient_protocol_instances_tenant_id")
+  @@index([patientId], map: "idx_patient_protocol_instances_patient_id")
+  @@index([procedureProtocolId], map: "idx_patient_protocol_instances_procedure_protocol_id")
+  @@index([status], map: "idx_patient_protocol_instances_status")
+  @@map("patient_protocol_instances")
+}
+
+model ProtocolSessionAppointment {
+  id                    String   @id @default(uuid()) @db.Uuid
+  tenantId              String   @map("tenant_id") @db.Uuid
+  patientProtocolInstanceId String @map("patient_protocol_instance_id") @db.Uuid
+  procedureProtocolId   String   @map("procedure_protocol_id") @db.Uuid
+  appointmentId         String?  @map("appointment_id") @db.Uuid
+  sessionSequence       Int      @map("session_sequence")
+  status                ProtocolSessionStatus @default(PLANNED)
+  plannedStartDate      DateTime @map("planned_start_date") @db.Date
+  canceledReason        String?  @map("canceled_reason") @db.VarChar(255)
+  skippedReason         String?  @map("skipped_reason") @db.VarChar(255)
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  tenant                  Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patientProtocolInstance PatientProtocolInstance   @relation(fields: [patientProtocolInstanceId], references: [id], onDelete: Cascade)
+  procedureProtocol       ProcedureProtocol        @relation(fields: [procedureProtocolId], references: [id], onDelete: Restrict)
+  appointment             Appointment?             @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  @@unique([patientProtocolInstanceId, sessionSequence], map: "uq_protocol_session_appointments_instance_sequence")
+  @@index([tenantId], map: "idx_protocol_session_appointments_tenant_id")
+  @@index([patientProtocolInstanceId], map: "idx_protocol_session_appointments_patient_protocol_instance_id")
+  @@index([procedureProtocolId], map: "idx_protocol_session_appointments_procedure_protocol_id")
+  @@index([status], map: "idx_protocol_session_appointments_status")
+  @@map("protocol_session_appointments")
+}
+
+// ---------------------------------------------------------------------------
+// Commercial Webhook Deduplication
+// ---------------------------------------------------------------------------
+
+model CommercialWebhookEvent {
+  id              String   @id @default(uuid()) @db.Uuid
+  providerEventId String   @map("provider_event_id") @db.VarChar(120)
+  eventType       String   @map("event_type") @db.VarChar(80)
+  processedAt     DateTime @default(now()) @map("processed_at") @db.Timestamptz(6)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([providerEventId], map: "uq_commercial_webhook_events_provider_event_id")
+  @@index([createdAt], map: "idx_commercial_webhook_events_created_at")
+  @@map("commercial_webhook_events")
+}

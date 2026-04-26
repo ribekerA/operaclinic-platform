@@ -1,0 +1,28 @@
+﻿const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
+
+async function main() {
+  const plans = await prisma.plan.findMany({
+    where: { isActive: true },
+    orderBy: [{ priceCents: "asc" }, { createdAt: "asc" }],
+    select: {
+      code: true,
+      name: true,
+      priceCents: true,
+      currency: true,
+      isPublic: true,
+      isActive: true,
+    },
+  });
+
+  console.log(JSON.stringify({ count: plans.length, plans }, null, 2));
+}
+
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

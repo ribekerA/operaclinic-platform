@@ -1,0 +1,2 @@
+﻿"timestamp","serviceStatus","agentStatus","enabled","rolloutPercentage","totalExecutions","successCount","failureCount","failureRate","p95LatencyMs","avgLatencyMs","degradedByFailureRate","degradedByP95","notes"
+"2026-04-03T15:21:39.9791829-03:00","degraded","ok","True","100","0","0","0","0","0","0","","","ok"

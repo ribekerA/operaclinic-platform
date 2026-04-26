@@ -1,0 +1,15 @@
+export const paths = {
+  home: "/",
+  access: "/acesso",
+  platformLogin: "/login/platform",
+  clinicLogin: "/login/clinic",
+  platformDashboard: "/platform",
+  platformTenants: "/platform/tenants",
+  platformPlans: "/platform/plans",
+  platformUsers: "/platform/users",
+  clinicDashboard: "/clinic",
+  clinicUnits: "/clinic/units",
+  clinicSpecialties: "/clinic/specialties",
+  clinicProfessionals: "/clinic/professionals",
+  clinicConsultationTypes: "/clinic/consultation-types",
+} as const;

@@ -1,0 +1,177 @@
+﻿
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90mC:/Users/byimp/OneDrive/Documentos/GitHub/operaclinic-platform/apps/api[39m
+
+[95m[Nest] 46620  - [39m22/03/2026, 21:08:35 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent v1: Processing booking request for tenant tenant-1[39m
+[95m[Nest] 46620  - [39m22/03/2026, 21:08:35 [95m  DEBUG[39m [38;5;3m[IntentRouterService] [39m[95mClassifying intent for message: "1..."[39m
+[95m[Nest] 46620  - [39m22/03/2026, 21:08:35 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: Current Intent = SELECT_OPTION (Selection: 1)[39m
+[95m[Nest] 46620  - [39m22/03/2026, 21:08:35 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: User selected slot 1. Proceeding with hold and create.[39m
+[95m[Nest] 46620  - [39m22/03/2026, 21:08:35 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent v1: Processing booking request for tenant tenant-1[39m
+[95m[Nest] 46620  - [39m22/03/2026, 21:08:35 [95m  DEBUG[39m [38;5;3m[IntentRouterService] [39m[95mClassifying intent for message: "quero o segundo..."[39m
+[95m[Nest] 46620  - [39m22/03/2026, 21:08:35 [95m  DEBUG[39m [38;5;3m[IntentRouterService] [39m[95mIntent classified: SELECT_OPTION (confidence: 0.2222222222222222)[39m
+[95m[Nest] 46620  - [39m22/03/2026, 21:08:35 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: Current Intent = SELECT_OPTION[39m
+[95m[Nest] 46620  - [39m22/03/2026, 21:08:35 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: Using provided patientId: patient-456[39m
+[95m[Nest] 46620  - [39m22/03/2026, 21:08:35 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: Found undefined available slots[39m
+npx : [31m[Nest] 46620  
+- [39m22/03/2026, 
+21:08:35 [31m  
+ERROR[39m [38;5;3m[Agen
+damentoAgentService] [39
+m[31mAgendamentoAgent: 
+Unhandled error: 
+availability.slice is 
+not a function[39m
+No linha:1 caractere:1
++ npx vitest test/agent/a
+gendamento-v2.integration
+.test.ts --run > test ...
++ ~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo       
+       : NotSpecified:   
+  ([31m[Nest] 466...a   
+  function[39m:Strin    
+g) [], RemoteExcepti    
+on
+    + FullyQualifiedErro 
+   rId : NativeCommandE  
+  rror
+ 
+TypeError: 
+availability.slice is 
+not a function
+    at AgendamentoAgentSe
+rvice.execute (C:\Users\b
+yimp\OneDrive\Documentos\
+GitHub\operaclinic-platfo
+rm\apps\api\src\modules\a
+gent\agents\agendamento-a
+gent.service.ts:298:39)
+    at processTicksAndRej
+ections (node:internal/pr
+ocess/task_queues:95:5)
+    at C:\Users\byimp\One
+Drive\Documentos\GitHub\o
+peraclinic-platform\apps\
+api\test\agent\agendament
+o-v2.integration.test.ts:
+86:20
+    at file:///C:/Users/b
+yimp/OneDrive/Documentos/
+GitHub/operaclinic-platfo
+rm/node_modules/.pnpm/@vi
+test+runner@3.2.4/node_mo
+dules/@vitest/runner/dist
+/chunk-hooks.js:752:20
+[95m[Nest] 46620  - [39m22/03/2026, 21:08:35 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent v1: Processing booking request for tenant tenant-1[39m
+[95m[Nest] 46620  - [39m22/03/2026, 21:08:35 [95m  DEBUG[39m [38;5;3m[IntentRouterService] [39m[95mClassifying intent for message: "5..."[39m
+[95m[Nest] 46620  - [39m22/03/2026, 21:08:35 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: Current Intent = SELECT_OPTION (Selection: 5)[39m
+[95m[Nest] 46620  - [39m22/03/2026, 21:08:35 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: Using provided patientId: patient-456[39m
+[95m[Nest] 46620  - [39m22/03/2026, 21:08:35 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: Found undefined available slots[39m
+[31m[Nest] 46620  - 
+[39m22/03/2026, 
+21:08:35 [31m  
+ERROR[39m [38;5;3m[Agen
+damentoAgentService] [39
+m[31mAgendamentoAgent: 
+Unhandled error: 
+availability.slice is 
+not a function[39m
+TypeError: 
+availability.slice is 
+not a function
+    at AgendamentoAgentSe
+rvice.execute (C:\Users\b
+yimp\OneDrive\Documentos\
+GitHub\operaclinic-platfo
+rm\apps\api\src\modules\a
+gent\agents\agendamento-a
+gent.service.ts:298:39)
+    at processTicksAndRej
+ections (node:internal/pr
+ocess/task_queues:95:5)
+    at C:\Users\byimp\One
+Drive\Documentos\GitHub\o
+peraclinic-platform\apps\
+api\test\agent\agendament
+o-v2.integration.test.ts:
+109:20
+    at file:///C:/Users/b
+yimp/OneDrive/Documentos/
+GitHub/operaclinic-platfo
+rm/node_modules/.pnpm/@vi
+test+runner@3.2.4/node_mo
+dules/@vitest/runner/dist
+/chunk-hooks.js:752:20
+ [31mÔØ»[39m test/agent/agendamento-v2.integration.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 20[2mms[22m[39m
+   [32mÔ£ô[39m AgendamentoAgentService V2 (Selection Flow)[2m > [22mshould process direct numeric selection (1) and confirm appointment[32m 8[2mms[22m[39m
+[31m   [31m├ù[31m AgendamentoAgentService V2 (Selection Flow)[2m > [22mshould process ordinal selection (o segundo) and confirm appointment[39m[32m 10[2mms[22m[39m
+[31m     ÔåÆ expected 'FAILED' to be 'COMPLETED' // Object.is equality[39m
+   [32mÔ£ô[39m AgendamentoAgentService V2 (Selection Flow)[2m > [22mshould escalate if selection is invalid (e.g. 5 when only 2 offered)[32m 2[2mms[22m[39m
+
+[31mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ
+»[39m[1m[41m Failed 
+Tests 1 [49m[22m[31mÔÄ
+»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[39m
+
+[41m[1m FAIL 
+[22m[49m test/agent/age
+ndamento-v2.integration.t
+est.ts[2m > [22mAgendam
+entoAgentService V2 
+(Selection Flow)[2m > 
+[22mshould process 
+ordinal selection (o 
+segundo) and confirm 
+appointment
+[31m[1mAssertionError[
+22m: expected 'FAILED' 
+to be 'COMPLETED' // 
+Object.is equality[39m
+
+Expected: [32m"[7mCOMPL
+ET[27mED"[39m
+Received: [31m"[7mFAIL
+[27mED"[39m
+
+[36m [2mÔØ»[22m test/a
+gent/agendamento-v2.integ
+ration.test.ts:[2m88:27
+[22m[39m
+    [90m 86| [39m    
+[35mconst[39m result 
+[33m=[39m 
+[35mawait[39m service[
+33m.[39m[34mexecute[39
+m(session[33m,[39m 
+input)[33m;[39m
+    [90m 87| [39m
+    [90m 88| [39m    [
+34mexpect[39m(result[33
+m.[39mstatus)[33m.[39m
+[34mtoBe[39m([32m"COMP
+LETED"[39m)[33m;[39m
+    [90m   | [39m      
+                    
+[31m^[39m
+    [90m 89| [39m    ex
+pect(session.executeSkill
+).toHaveBeenCalledWith("h
+old_slot", expÔÇª
+    [90m 90| [39m      
+startsAt[33m:[39m [32m
+"2026-04-01T14:00:00Z"[3
+9m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ
+»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+ÔÄ»ÔÄ»[1/1]ÔÄ»[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (3)[39m
+[2m   Start at [22m 21:08:34
+[2m   Duration [22m 1.07s[2m (transform 128ms, setup 0ms, collect 460ms, tests 20ms, environment 0ms, prepare 273ms)[22m
+
+

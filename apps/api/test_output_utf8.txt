@@ -1,0 +1,43 @@
+﻿
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90mC:/Users/byimp/OneDrive/Documentos/GitHub/operaclinic-platform/apps/api[39m
+
+npx : [31mNo test files 
+found, exiting with code 
+1
+No linha:1 caractere:1
++ npx vitest apps/api/tes
+t/agent/agendamento-v2.in
+tegration.test.ts --r ...
++ ~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo       
+       : NotSpecified:   
+  ([31mNo test fi...i   
+ ng with code 1:Strin    
+g) [], RemoteExcepti    
+on
+    + FullyQualifiedErro 
+   rId : NativeCommandE  
+  rror
+ 
+[39m
+[2mfilter: [22m[33mapp
+s/api/test/agent/agendame
+nto-v2.integration.test.t
+s[39m
+[2minclude: [22m[33mte
+st/**/*.test.ts[39m
+[2mexclude:  [22m[33m*
+*/node_modules/**[2m, 
+[22m**/dist/**[2m, 
+[22m**/cypress/**[2m, 
+[22m**/.{idea,git,cache,o
+utput,temp}/**[2m, [22m
+**/{karma,rollup,webpack,
+vite,vitest,jest,ava,babe
+l,nyc,cypress,tsup,build,
+eslint,prettier}.config.*
+[39m
+
+

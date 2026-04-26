@@ -1,0 +1,4 @@
+timestamp,serviceStatus,agentStatus,enabled,rolloutPercentage,totalExecutions,successCount,failureCount,failureRate,p95LatencyMs,avgLatencyMs,degradedByFailureRate,degradedByP95,notes
+2026-04-03T10:00:00.000Z,ok,ok,True,5,100,98,2,0.02,900,450,False,False,ok
+2026-04-03T12:00:00.000Z,ok,ok,True,5,180,176,4,0.0222,980,470,False,False,ok
+2026-04-03T14:00:00.000Z,ok,ok,True,5,250,245,5,0.02,1020,500,False,False,ok

@@ -1,0 +1,25 @@
+{
+  "name": "operaclinic-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OperaClinic monorepo - SaaS multi-tenant para clinicas de estetica",
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "start:dev": "powershell -ExecutionPolicy Bypass -File scripts/start-api-dev-safe.ps1 -BaseUrl http://localhost:3001",
+    "api:start:dev": "powershell -ExecutionPolicy Bypass -File scripts/start-api-dev-safe.ps1 -BaseUrl http://localhost:3001",
+    "api:ready:check": "powershell -ExecutionPolicy Bypass -File scripts/check-api-readiness.ps1 -BaseUrl http://localhost:3001",
+    "api:ready:strict": "powershell -ExecutionPolicy Bypass -File scripts/check-api-readiness.ps1 -BaseUrl http://localhost:3001 -RequireHealthy",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean",
+    "format": "turbo run format",
+    "agent:gate:run:local": "powershell -ExecutionPolicy Bypass -File scripts/run-agent-gate.ps1 -BaseUrl http://localhost:3001 -IntervalMinutes 15 -DurationHours 0 -FailureRateThreshold 0.05 -P95ThresholdMs 1500 -MinSnapshots 3 -Environment local-runtime-root -OutputCsv tmp/agent-readiness-local-root.csv -OutputReport tmp/agent-gate-local-root.md -ValidationDoc tmp/AGENT_GATE_LOCAL_VALIDATION.md",
+    "smoke:e2e": "pnpm --filter @operaclinic/api prisma:seed && pnpm --filter @operaclinic/api smoke:e2e:seed && pnpm --filter @operaclinic/web smoke:e2e"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  }
+}

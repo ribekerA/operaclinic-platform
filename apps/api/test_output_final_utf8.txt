@@ -1,0 +1,26 @@
+﻿
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90mC:/Users/byimp/OneDrive/Documentos/GitHub/operaclinic-platform/apps/api[39m
+
+[95m[Nest] 267000  - [39m22/03/2026, 21:11:27 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent v1: Processing booking request for tenant tenant-1[39m
+[95m[Nest] 267000  - [39m22/03/2026, 21:11:27 [95m  DEBUG[39m [38;5;3m[IntentRouterService] [39m[95mClassifying intent for message: "1..."[39m
+[95m[Nest] 267000  - [39m22/03/2026, 21:11:27 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: Current Intent = SELECT_OPTION (Selection: 1)[39m
+[95m[Nest] 267000  - [39m22/03/2026, 21:11:27 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: User selected slot 1. Proceeding with hold and create.[39m
+[95m[Nest] 267000  - [39m22/03/2026, 21:11:27 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent v1: Processing booking request for tenant tenant-1[39m
+[95m[Nest] 267000  - [39m22/03/2026, 21:11:27 [95m  DEBUG[39m [38;5;3m[IntentRouterService] [39m[95mClassifying intent for message: "quero o segundo..."[39m
+[95m[Nest] 267000  - [39m22/03/2026, 21:11:27 [95m  DEBUG[39m [38;5;3m[IntentRouterService] [39m[95mIntent classified: SELECT_OPTION (confidence: 0.2222222222222222)[39m
+[95m[Nest] 267000  - [39m22/03/2026, 21:11:27 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: Current Intent = SELECT_OPTION (Selection: 2)[39m
+[95m[Nest] 267000  - [39m22/03/2026, 21:11:27 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: User selected slot 2. Proceeding with hold and create.[39m
+[95m[Nest] 267000  - [39m22/03/2026, 21:11:27 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent v1: Processing booking request for tenant tenant-1[39m
+[95m[Nest] 267000  - [39m22/03/2026, 21:11:27 [95m  DEBUG[39m [38;5;3m[IntentRouterService] [39m[95mClassifying intent for message: "5..."[39m
+[95m[Nest] 267000  - [39m22/03/2026, 21:11:27 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: Current Intent = SELECT_OPTION (Selection: 5)[39m
+[95m[Nest] 267000  - [39m22/03/2026, 21:11:27 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: Using provided patientId: patient-456[39m
+[95m[Nest] 267000  - [39m22/03/2026, 21:11:27 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: Found 0 available slots[39m
+[95m[Nest] 267000  - [39m22/03/2026, 21:11:27 [95m  DEBUG[39m [38;5;3m[AgendamentoAgentService] [39m[95mAgendamentoAgent: Completed in 0ms with status HANDOFF_OPENED[39m
+ [32mÔ£ô[39m test/agent/agendamento-v2.integration.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+[2m   Start at [22m 21:11:27
+[2m   Duration [22m 907ms[2m (transform 94ms, setup 0ms, collect 396ms, tests 11ms, environment 0ms, prepare 235ms)[22m
+
+

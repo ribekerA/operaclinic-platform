@@ -1,0 +1,9 @@
+import { PublicShell } from "@/components/layout/public-shell";
+
+interface PublicLayoutProps {
+  children: React.ReactNode;
+}
+
+export default function PublicLayout({ children }: PublicLayoutProps) {
+  return <PublicShell>{children}</PublicShell>;
+}

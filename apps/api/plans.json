@@ -1,0 +1,52 @@
+﻿PLAN_DATA_START
+[
+  {
+    "id": "9b4145a4-b738-40a8-ae56-590ab870151d",
+    "code": "BASE_MVP",
+    "name": "Base MVP",
+    "description": "Initial base plan for early tenant onboarding.",
+    "priceCents": 0,
+    "currency": "BRL",
+    "isPublic": false,
+    "isActive": true,
+    "createdAt": "2026-03-17T00:19:29.373Z",
+    "updatedAt": "2026-03-17T00:19:29.373Z"
+  },
+  {
+    "id": "fa56a8c2-dedd-4a4b-ba86-05ee258761e2",
+    "code": "ESTETICA_START",
+    "name": "Start Estetica",
+    "description": "Para clinicas esteticas privadas com recepcao enxuta e agenda em organizacao inicial.",
+    "priceCents": 19900,
+    "currency": "BRL",
+    "isPublic": true,
+    "isActive": true,
+    "createdAt": "2026-03-17T00:19:29.606Z",
+    "updatedAt": "2026-03-17T00:19:29.606Z"
+  },
+  {
+    "id": "a11f2831-5b70-4782-8f56-0991aad23cd7",
+    "code": "ESTETICA_FLOW",
+    "name": "Flow Estetica",
+    "description": "Para clinicas com forte operacao no WhatsApp, confirmacao e remarcacao frequente.",
+    "priceCents": 34900,
+    "currency": "BRL",
+    "isPublic": true,
+    "isActive": true,
+    "createdAt": "2026-03-17T00:19:29.829Z",
+    "updatedAt": "2026-03-17T00:19:29.829Z"
+  },
+  {
+    "id": "6c4a0b1a-31c0-4ce7-a0b6-2bf1d4a9a58a",
+    "code": "ESTETICA_SCALE",
+    "name": "Scale Estetica",
+    "description": "Para clinicas com mais profissionais, recepcao ativa e maior volume ao longo do dia.",
+    "priceCents": 54900,
+    "currency": "BRL",
+    "isPublic": true,
+    "isActive": true,
+    "createdAt": "2026-03-17T00:19:30.056Z",
+    "updatedAt": "2026-03-17T00:19:30.056Z"
+  }
+]
+PLAN_DATA_END
