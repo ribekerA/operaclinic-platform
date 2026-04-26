@@ -41,6 +41,15 @@ export function PublicShell({ children }: PublicShellProps) {
               </nav>
 
               <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href="https://wa.me/5511968771362?text=Ola%2C%20gostaria%20de%20saber%20mais%20sobre%20o%20OperaClinic!"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-teal-50 px-4 py-2.5 text-sm font-semibold text-teal-700 transition hover:bg-teal-100"
+                >
+                  <MessageCircleMore className="h-4 w-4" />
+                  Falar com Comercial
+                </a>
                 <Link
                   href="/planos"
                   className="inline-flex items-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-slate-50"
@@ -62,7 +71,7 @@ export function PublicShell({ children }: PublicShellProps) {
         <main className="flex-1 py-10">{children}</main>
 
         <footer className="mt-6 rounded-[32px] border border-slate-200 bg-slate-950 px-6 py-8 text-white shadow-[0_26px_90px_-54px_rgba(15,23,42,0.92)] lg:px-8">
-          <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
+          <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
             <div className="space-y-4">
               <BrandLogo className="w-40" />
               <p className="max-w-xl text-sm leading-7 text-slate-300">
@@ -120,6 +129,23 @@ export function PublicShell({ children }: PublicShellProps) {
                 <Link href="/login/platform" className="transition hover:text-white">
                   Entrar na plataforma
                 </Link>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-200">
+                Contato
+              </p>
+              <div className="mt-4 grid gap-3 text-sm text-slate-300">
+                <a
+                  href="https://wa.me/5511968771362?text=Ola%2C%20gostaria%20de%20saber%20mais%20sobre%20o%20OperaClinic!"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 transition hover:text-white"
+                >
+                  <MessageCircleMore className="h-4 w-4" />
+                  Comercial no WhatsApp
+                </a>
               </div>
             </div>
           </div>

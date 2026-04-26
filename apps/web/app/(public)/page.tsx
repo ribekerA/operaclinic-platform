@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -116,6 +117,14 @@ const audienceCards = [
   "Operacoes de harmonizacao facial e estetica avancada que precisam mais controle da agenda.",
   "Clinicas pequenas e medias que ja sentem perda por remarcacao desorganizada e no-show.",
 ] as const;
+
+export const metadata: Metadata = {
+  title: "OperaClinic | Menos no-show e mais controle da recepção",
+  description: "Aumente as vendas e organize a recepção da sua clínica estética usando WhatsApp e uma agenda profissional centralizada.",
+  alternates: {
+    canonical: "/",
+  },
+};
 
 export default function PublicHomePage() {
   return (

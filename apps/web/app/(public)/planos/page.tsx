@@ -1,7 +1,16 @@
+import { Metadata } from "next";
 import { ArrowRight, BadgeCheck, CalendarRange, MessageCircleMore } from "lucide-react";
 import Link from "next/link";
 import { CommercialPlanGrid } from "@/components/public/commercial-plan-grid";
 import { PublicSectionHeading } from "@/components/public/public-section-heading";
+
+export const metadata: Metadata = {
+  title: "Planos e Preços",
+  description: "Conheça os planos do OperaClinic. Escolha a opção ideal para a operação da sua clínica de estética.",
+  alternates: {
+    canonical: "/planos",
+  },
+};
 
 export default function PublicPlansPage() {
   return (
