@@ -1,8 +1,10 @@
 import { Body, Controller, Get, Post, Query, Req } from "@nestjs/common";
+import { SkipThrottle } from "@nestjs/throttler";
 import type { MessagingWhatsappWebhookResponsePayload } from "@operaclinic/shared";
 import type { Request } from "express";
 import { WhatsappWebhooksService } from "./whatsapp-webhooks.service";
 
+@SkipThrottle()
 @Controller("webhooks/whatsapp")
 export class WhatsappWebhooksController {
   constructor(

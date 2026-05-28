@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Typecheck & Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @operaclinic/api prisma:generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/operaclinic
+
+      - name: Typecheck (api)
+        run: pnpm --filter @operaclinic/api typecheck
+
+      - name: Typecheck (web)
+        run: pnpm --filter @operaclinic/web typecheck
+
+      - name: Tests (api)
+        run: pnpm --filter @operaclinic/api test
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/operaclinic
+          JWT_ACCESS_SECRET: ci-access-secret-at-least-32-characters-long
+          JWT_REFRESH_SECRET: ci-refresh-secret-at-least-32-characters-long
+          JWT_ACCESS_TTL: 15m
+          JWT_REFRESH_TTL: 7d
+          COMMERCIAL_ONBOARDING_TTL_HOURS: 48
+          PAYMENT_PROVIDER: mock
+          WEB_URL: http://localhost:3000
+          MESSAGING_WHATSAPP_META_API_BASE_URL: https://graph.facebook.com
+          MESSAGING_WHATSAPP_META_API_VERSION: v21.0
+          AGENT_LAYER_ENABLED: true
+          AGENT_LAYER_ROLLOUT_PERCENTAGE: 100
+          CRON_SECRET: ci-cron-secret-at-least-32-characters-long

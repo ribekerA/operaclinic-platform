@@ -13,6 +13,7 @@ import { MessagingModule } from "./messaging/messaging.module";
 import { FollowUpsModule } from "./follow-ups/follow-ups.module";
 import { SkillRegistryModule } from "./skill-registry/skill-registry.module";
 import { AgentModule } from "./agent/agent.module";
+import { ProcedureProtocolsModule } from "./procedure-protocols/procedure-protocols.module";
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AgentModule } from "./agent/agent.module";
     FollowUpsModule,
     SkillRegistryModule,
     AgentModule,
+    ProcedureProtocolsModule,
   ],
 })
 export class ModulesModule {}

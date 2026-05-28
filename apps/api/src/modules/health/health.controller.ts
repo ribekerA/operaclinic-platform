@@ -1,4 +1,5 @@
 import { Controller, Get } from "@nestjs/common";
+import { SkipThrottle } from "@nestjs/throttler";
 import {
   HealthReadinessResponse,
   HealthResponse,
@@ -10,6 +11,7 @@ import {
   OperationalObservabilityService,
 } from "../../common/observability/operational-observability.service";
 
+@SkipThrottle()
 @Controller("health")
 export class HealthController {
   constructor(

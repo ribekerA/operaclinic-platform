@@ -15,6 +15,8 @@ import { SchedulingAccessService } from "./scheduling-access.service";
 import { SchedulingPoliciesService } from "./scheduling-policies.service";
 import { ProfessionalWorkspaceGateway } from "./gateways/professional-workspace.gateway";
 import { NoShowSchedulerService } from "./no-show-scheduler.service";
+import { WaitlistController } from "./waitlist.controller";
+import { WaitlistService } from "./waitlist.service";
 
 @Module({
   imports: [AuthModule],
@@ -23,6 +25,7 @@ import { NoShowSchedulerService } from "./no-show-scheduler.service";
     ScheduleBlocksController,
     AvailabilityController,
     AppointmentsController,
+    WaitlistController,
   ],
   providers: [
     SchedulingAccessService,
@@ -36,6 +39,7 @@ import { NoShowSchedulerService } from "./no-show-scheduler.service";
     AppointmentsService,
     ProfessionalWorkspaceGateway,
     NoShowSchedulerService,
+    WaitlistService,
   ],
   exports: [
     AppointmentsService,
