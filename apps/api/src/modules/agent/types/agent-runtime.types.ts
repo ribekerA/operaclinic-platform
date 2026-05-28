@@ -128,8 +128,18 @@ export interface AgentOutput {
   decision: AgentDecision;
   intent: IntentClassification;
   reasoning: string;
+  operational: AgentOperationalContract;
   trace: AgentExecutionTrace;
   timestamp: string;
+}
+
+export interface AgentOperationalContract {
+  proximaAcaoRecomendada: string;
+  justificativaAuditavelCurta: string;
+  handoffNecessario: "sim" | "nao";
+  fatosConfirmados: string[];
+  hipoteses: string[];
+  lacunas: string[];
 }
 
 /**

@@ -45,7 +45,7 @@ export class WhatsappWebhooksService {
     request: Request,
     query: Record<string, unknown>,
   ): Promise<string | { ok: true; channel: "WHATSAPP" }> {
-    this.abuseProtectionService.assertWithinLimit(
+    await this.abuseProtectionService.assertWithinLimit(
       request,
       "verify_whatsapp_webhook",
     );
@@ -85,7 +85,7 @@ export class WhatsappWebhooksService {
     request: Request,
     payload: Record<string, unknown>,
   ): Promise<MessagingWhatsappWebhookResponsePayload> {
-    this.abuseProtectionService.assertWithinLimit(
+    await this.abuseProtectionService.assertWithinLimit(
       request,
       "receive_whatsapp_webhook",
     );

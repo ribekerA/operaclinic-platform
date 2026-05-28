@@ -173,6 +173,7 @@ describe("ReceptionService", () => {
       availabilityService as never,
       appointmentsService as never,
       patientsService as never,
+      { record: vi.fn().mockResolvedValue(undefined) } as never,
     );
 
     const result = await service.getDashboard(buildClinicActor(), {});
@@ -240,6 +241,7 @@ describe("ReceptionService", () => {
       availabilityService as never,
       appointmentsService as never,
       patientsService as never,
+      { record: vi.fn().mockResolvedValue(undefined) } as never,
     );
 
     const result = await service.getDayAgenda(buildClinicActor(), {
@@ -288,6 +290,7 @@ describe("ReceptionService", () => {
       availabilityService as never,
       appointmentsService as never,
       patientsService as never,
+      { record: vi.fn().mockResolvedValue(undefined) } as never,
     );
 
     const result = await service.searchPatients(buildClinicActor(), {
@@ -370,6 +373,7 @@ describe("ReceptionService", () => {
       availabilityService as never,
       appointmentsService as never,
       patientsService as never,
+      { record: vi.fn().mockResolvedValue(undefined) } as never,
     );
 
     const result = await service.updateAppointmentStatus(buildClinicActor(), "appointment-1", {
@@ -445,6 +449,7 @@ describe("ReceptionService", () => {
       availabilityService as never,
       appointmentsService as never,
       patientsService as never,
+      { record: vi.fn().mockResolvedValue(undefined) } as never,
     );
 
     const result = await service.updateAppointmentStatus(
@@ -462,6 +467,136 @@ describe("ReceptionService", () => {
       "Pagamento confirmado",
     );
     expect(result.status).toBe("COMPLETED");
+  });
+
+  it("grava audit log ao fazer check-in via recepção", async () => {
+    const auditService = { record: vi.fn().mockResolvedValue(undefined) };
+    appointmentsService.checkInAppointment.mockResolvedValue({
+      id: "appointment-audit",
+      tenantId: "tenant-1",
+    });
+    prisma.appointment.findFirst.mockResolvedValue({
+      id: "appointment-audit",
+      tenantId: "tenant-1",
+      patientId: "patient-1",
+      professionalId: "professional-1",
+      consultationTypeId: "ct-1",
+      unitId: "unit-1",
+      room: null,
+      startsAt: new Date(),
+      endsAt: new Date(),
+      status: "CHECKED_IN",
+      confirmedAt: null,
+      checkedInAt: new Date(),
+      calledAt: null,
+      startedAt: null,
+      closureReadyAt: null,
+      awaitingPaymentAt: null,
+      completedAt: null,
+      cancellationReason: null,
+      slotHoldId: null,
+      durationMinutes: 30,
+      bufferBeforeMinutes: 0,
+      bufferAfterMinutes: 0,
+      idempotencyKey: "key-1",
+      notes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      patient: { fullName: "Paciente Audit", contacts: [] },
+      professional: { fullName: "Dr. Audit", displayName: "Dr. Audit" },
+      consultationType: { name: "Consulta", durationMinutes: 30, bufferBeforeMinutes: 0, bufferAfterMinutes: 0 },
+      unit: { name: "Unidade Audit" },
+      statusHistory: [],
+    });
+
+    const service = new ReceptionService(
+      prisma as never,
+      accessService as never,
+      timezoneService as never,
+      availabilityService as never,
+      appointmentsService as never,
+      patientsService as never,
+      auditService as never,
+    );
+
+    await service.checkInAppointment(buildClinicActor(), "appointment-audit", { reason: "Chegou" });
+
+    // Aguardar fire-and-forget
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(auditService.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "RECEPTION_APPOINTMENT_CHECKED_IN",
+        tenantId: "tenant-1",
+        targetType: "Appointment",
+        targetId: "appointment-audit",
+        metadata: expect.objectContaining({ via: "reception" }),
+      }),
+    );
+  });
+
+  it("grava audit log ao cancelar agendamento via recepção", async () => {
+    const auditService = { record: vi.fn().mockResolvedValue(undefined) };
+    appointmentsService.cancelAppointment.mockResolvedValue({
+      id: "appointment-cancel",
+      tenantId: "tenant-1",
+    });
+    prisma.appointment.findFirst.mockResolvedValue({
+      id: "appointment-cancel",
+      tenantId: "tenant-1",
+      patientId: "patient-1",
+      professionalId: "professional-1",
+      consultationTypeId: "ct-1",
+      unitId: "unit-1",
+      room: null,
+      startsAt: new Date(),
+      endsAt: new Date(),
+      status: "CANCELED",
+      confirmedAt: null,
+      checkedInAt: null,
+      calledAt: null,
+      startedAt: null,
+      closureReadyAt: null,
+      awaitingPaymentAt: null,
+      completedAt: null,
+      cancellationReason: "Paciente desmarcou",
+      slotHoldId: null,
+      durationMinutes: 30,
+      bufferBeforeMinutes: 0,
+      bufferAfterMinutes: 0,
+      idempotencyKey: "key-2",
+      notes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      patient: { fullName: "Paciente Cancel", contacts: [] },
+      professional: { fullName: "Dr. Cancel", displayName: "Dr. Cancel" },
+      consultationType: { name: "Consulta", durationMinutes: 30, bufferBeforeMinutes: 0, bufferAfterMinutes: 0 },
+      unit: { name: "Unidade Cancel" },
+      statusHistory: [],
+    });
+
+    const service = new ReceptionService(
+      prisma as never,
+      accessService as never,
+      timezoneService as never,
+      availabilityService as never,
+      appointmentsService as never,
+      patientsService as never,
+      auditService as never,
+    );
+
+    await service.cancelAppointment(buildClinicActor(), "appointment-cancel", { reason: "Paciente desmarcou" });
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(auditService.record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "RECEPTION_APPOINTMENT_CANCELED",
+        tenantId: "tenant-1",
+        targetType: "Appointment",
+        targetId: "appointment-cancel",
+      }),
+    );
   });
 });
 
@@ -501,6 +636,7 @@ describe("ReceptionService — CRITICAL: isolamento de tenant", () => {
       availabilityService as never,
       appointmentsService as never,
       patientsService as never,
+      { record: vi.fn().mockResolvedValue(undefined) } as never,
     );
   }
 

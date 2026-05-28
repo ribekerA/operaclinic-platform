@@ -1202,3 +1202,14 @@ model CommercialWebhookEvent {
   @@index([createdAt], map: "idx_commercial_webhook_events_created_at")
   @@map("commercial_webhook_events")
 }
+
+model WebhookRateLimit {
+  id          String   @id @default(uuid()) @db.Uuid
+  fingerprint String   @unique @db.VarChar(160)
+  count       Int      @default(1)
+  resetAt     DateTime @map("reset_at") @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([resetAt], map: "idx_webhook_rate_limits_reset_at")
+  @@map("webhook_rate_limits")
+}

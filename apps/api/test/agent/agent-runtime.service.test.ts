@@ -15,6 +15,7 @@ describe("AgentRuntimeService", () => {
   let escalationPolicy: any;
   let skillExecutor: any;
   let prisma: any;
+  let auditService: any;
   let service: AgentRuntimeService;
 
   beforeEach(() => {
@@ -45,7 +46,9 @@ describe("AgentRuntimeService", () => {
       $transaction: vi.fn((cb) => cb(prisma)),
       messageThread: { update: vi.fn() },
       patient: { findUnique: vi.fn(), update: vi.fn() },
+      messageThreadResolution: { create: vi.fn().mockResolvedValue({ id: "resolution-1" }) },
     };
+    auditService = { record: vi.fn().mockResolvedValue(undefined) };
     service = new AgentRuntimeService(
       skillRegistry,
       contextResolver,
@@ -54,6 +57,7 @@ describe("AgentRuntimeService", () => {
       escalationPolicy,
       skillExecutor,
       prisma,
+      auditService,
     );
   });
 
@@ -116,6 +120,26 @@ describe("AgentRuntimeService", () => {
   });
 
   describe("processMessage - fallback to handoff", () => {
+    it("returns operational contract fields in output", async () => {
+      const session = service.createSession({
+        tenantId: "tenant-1",
+        actorUserId: "user-1",
+        source: "api",
+        threadId: "thread-contract-1",
+        correlationId: "corr-contract",
+      });
+
+      const output = await service.processMessage(session, "quero agendar");
+
+      expect(output.operational).toBeDefined();
+      expect(output.operational.proximaAcaoRecomendada).toEqual(expect.any(String));
+      expect(output.operational.justificativaAuditavelCurta).toEqual(expect.any(String));
+      expect(["sim", "nao"]).toContain(output.operational.handoffNecessario);
+      expect(Array.isArray(output.operational.fatosConfirmados)).toBe(true);
+      expect(Array.isArray(output.operational.hipoteses)).toBe(true);
+      expect(Array.isArray(output.operational.lacunas)).toBe(true);
+    });
+
     it("returns ESCALATE when policy triggers after too many failed attempts", async () => {
       escalationPolicy.shouldEscalate = vi.fn().mockReturnValue({
         shouldEscalate: true,
@@ -198,6 +222,40 @@ describe("AgentRuntimeService", () => {
       expect(output.decision.type).not.toBe("ESCALATE");
     });
 
+    it("escalates automatically when confidence is below threshold", async () => {
+      intentRouter.classify = vi.fn(() => ({
+        intent: "BOOK_APPOINTMENT",
+        confidence: 0.45,
+        keywords: ["agendar"],
+        suggestedSkills: [],
+        requiresEscalation: false,
+        reason: "low confidence intent",
+      }));
+      escalationPolicy.shouldEscalate = vi.fn(
+        (_intent: string, _failedAttempts: number, outOfScope: boolean) => ({
+          shouldEscalate: outOfScope,
+          intent: "BOOK_APPOINTMENT",
+          failedAttempts: 0,
+          reason: outOfScope ? "Low confidence fallback" : "Handled",
+          priority: outOfScope ? "HIGH" : "LOW",
+        }),
+      );
+
+      const session = service.createSession({
+        tenantId: "tenant-1",
+        actorUserId: "user-1",
+        source: "api",
+        threadId: "thread-low-confidence",
+        correlationId: "corr-low-confidence",
+      });
+
+      const output = await service.processMessage(session, "agendar talvez essa semana");
+
+      expect(output.decision.type).toBe("ESCALATE");
+      expect(output.operational.handoffNecessario).toBe("sim");
+      expect(output.operational.hipoteses.length).toBeGreaterThan(0);
+    });
+
     it("ESCALATE decision carries threadId for correct handoff targeting", async () => {
       escalationPolicy.shouldEscalate = vi.fn().mockReturnValue({
         shouldEscalate: true,
@@ -220,6 +278,138 @@ describe("AgentRuntimeService", () => {
 
       expect(output.decision.handoffData?.threadId).toBe("thread-xyz-999");
       expect(output.decision.handoffData?.priority).toBe("HIGH");
+    });
+
+    it("routes to SKILL_CALL when intent has actionable suggested skills", async () => {
+      intentRouter.classify = vi.fn(() => ({
+        intent: "BOOK_APPOINTMENT",
+        confidence: 0.92,
+        keywords: ["agendar"],
+        suggestedSkills: ["find_or_merge_patient", "search_availability", "create_appointment"],
+        requiresEscalation: false,
+        reason: "appointment intent with skills",
+      }));
+
+      const session = service.createSession({
+        tenantId: "tenant-skill",
+        actorUserId: "user-1",
+        source: "api",
+        threadId: "thread-skill-1",
+        correlationId: "corr-skill",
+      });
+
+      const output = await service.processMessage(session, "quero agendar para sexta");
+
+      expect(output.decision.type).toBe("SKILL_CALL");
+      expect((output.decision as any).skillName).toBe("find_or_merge_patient");
+      expect(output.operational.handoffNecessario).toBe("nao");
+    });
+
+    it("falls back to SEND_MESSAGE when only send_message is in suggestedSkills", async () => {
+      intentRouter.classify = vi.fn(() => ({
+        intent: "FAQ_SIMPLE",
+        confidence: 0.88,
+        keywords: ["horário"],
+        suggestedSkills: ["send_message"],
+        requiresEscalation: false,
+        reason: "faq intent",
+      }));
+
+      const session = service.createSession({
+        tenantId: "tenant-faq",
+        actorUserId: "user-1",
+        source: "api",
+        threadId: "thread-faq-1",
+        correlationId: "corr-faq",
+      });
+
+      const output = await service.processMessage(session, "qual o horário de funcionamento?");
+
+      expect(output.decision.type).toBe("SEND_MESSAGE");
+      expect((output.decision as any).text).toBeTruthy();
+    });
+
+    it("fires audit record for ESCALATE decision (fire-and-forget)", async () => {
+      escalationPolicy.shouldEscalate = vi.fn().mockReturnValue({
+        shouldEscalate: true,
+        intent: "HUMAN_REQUEST",
+        failedAttempts: 0,
+        reason: "User requested human",
+        priority: "HIGH",
+      });
+      escalationPolicy.getEscalationNote = vi.fn().mockReturnValue("Escalonamento solicitado");
+
+      const session = service.createSession({
+        tenantId: "tenant-audit",
+        actorUserId: "user-audit",
+        source: "api",
+        threadId: "thread-audit-esc",
+        correlationId: "corr-audit",
+      });
+
+      await service.processMessage(session, "quero falar com atendente");
+
+      // Allow fire-and-forget to settle
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(auditService.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: "AGENT_ESCALATED",
+          tenantId: "tenant-audit",
+          targetType: "MessageThread",
+          targetId: "thread-audit-esc",
+        }),
+      );
+    });
+
+    it("emits AGENT_RESOLVED audit + creates MessageThreadResolution when agent handles with SEND_MESSAGE", async () => {
+      intentRouter.classify = vi.fn().mockReturnValue({
+        intent: "FAQ_SIMPLE",
+        confidence: 0.9,
+        keywords: [],
+        suggestedSkills: [],
+        requiresEscalation: false,
+        reason: "FAQ classified",
+      });
+      escalationPolicy.shouldEscalate = vi.fn().mockReturnValue({
+        shouldEscalate: false,
+        intent: "FAQ_SIMPLE",
+        failedAttempts: 0,
+        reason: "handled",
+        priority: "LOW",
+      });
+
+      const session = service.createSession({
+        tenantId: "tenant-resolved",
+        actorUserId: "user-resolved",
+        source: "api",
+        threadId: "thread-resolved",
+        correlationId: "corr-resolved",
+      });
+
+      await service.processMessage(session, "qual o horário de funcionamento?");
+
+      // Allow fire-and-forget to settle
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(auditService.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: "AGENT_RESOLVED",
+          tenantId: "tenant-resolved",
+          targetType: "MessageThread",
+          targetId: "thread-resolved",
+        }),
+      );
+
+      expect(prisma.messageThreadResolution.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            tenantId: "tenant-resolved",
+            threadId: "thread-resolved",
+            actorType: "AUTOMATION",
+          }),
+        }),
+      );
     });
   });
 });

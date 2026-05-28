@@ -23,6 +23,7 @@ interface ValidatedEnv {
   MESSAGING_WHATSAPP_META_APP_SECRET: string;
   AGENT_LAYER_ENABLED: boolean;
   AGENT_LAYER_ROLLOUT_PERCENTAGE: number;
+  CRON_SECRET: string;
 }
 
 const JWT_TTL_PATTERN = /^\d+(s|m|h|d)$/i;
@@ -138,6 +139,7 @@ export function validateEnv(config: RawEnv): ValidatedEnv {
       config.AGENT_LAYER_ROLLOUT_PERCENTAGE,
       100,
     ),
+    CRON_SECRET: String(config.CRON_SECRET ?? ""),
   };
 
   if (validated.API_PORT <= 0 || validated.API_PORT > 65535) {
@@ -245,6 +247,20 @@ export function validateEnv(config: RawEnv): ValidatedEnv {
     throw new Error(
       "AGENT_LAYER_ROLLOUT_PERCENTAGE must be an integer between 0 and 100.",
     );
+  }
+
+  if (validated.NODE_ENV === "production") {
+    if (!validated.CRON_SECRET.trim()) {
+      throw new Error("CRON_SECRET is required in production.");
+    }
+
+    if (validated.CRON_SECRET.trim().length < 32) {
+      throw new Error("CRON_SECRET must have at least 32 characters in production.");
+    }
+
+    if (PLACEHOLDER_SECRET_MARKERS.some((m) => validated.CRON_SECRET.toLowerCase().includes(m))) {
+      throw new Error("CRON_SECRET cannot use placeholder or development values in production.");
+    }
   }
 
   return validated;

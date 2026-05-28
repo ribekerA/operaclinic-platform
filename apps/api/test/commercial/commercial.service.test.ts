@@ -72,6 +72,9 @@ describe("CommercialService", () => {
       update: vi.fn(),
       updateMany: vi.fn(),
     },
+    commercialWebhookEvent: {
+      create: vi.fn(),
+    },
     $transaction: vi.fn(),
   };
 
@@ -113,6 +116,7 @@ describe("CommercialService", () => {
     prisma.commercialOnboarding.findUnique.mockReset();
     prisma.commercialOnboarding.update.mockReset();
     prisma.commercialOnboarding.updateMany.mockReset();
+    prisma.commercialWebhookEvent.create.mockReset();
     prisma.$transaction.mockReset();
     tenantSettingsService.buildInitialSettings.mockReset();
     tenantSettingsService.upsertMany.mockReset();
@@ -120,6 +124,11 @@ describe("CommercialService", () => {
     paymentAdapterFactory.getAdapter.mockClear();
     prisma.commercialOnboarding.findMany.mockResolvedValue([]);
     prisma.commercialOnboarding.findFirst.mockResolvedValue(null);
+    prisma.commercialWebhookEvent.create.mockResolvedValue({
+      id: "event-1",
+      providerEventId: "evt_1",
+      eventType: "checkout.session.completed",
+    });
     delete process.env.NODE_ENV;
   });
 
@@ -455,6 +464,117 @@ describe("CommercialService", () => {
     );
   });
 
+  it("confirms checkout with a single transition and audit entry", async () => {
+    const awaitingPayment = buildOnboarding({
+      status: CommercialOnboardingStatus.AWAITING_PAYMENT,
+    });
+    const paidOnboarding = buildOnboarding({
+      status: CommercialOnboardingStatus.PAID,
+      paymentReference: "mock-123",
+      checkoutConfirmedAt: new Date("2026-03-15T18:10:00.000Z"),
+    });
+
+    prisma.commercialOnboarding.findUnique.mockResolvedValue(awaitingPayment);
+
+    const txMock = {
+      commercialOnboarding: {
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findUnique: vi.fn().mockResolvedValue(paidOnboarding),
+      },
+      auditLog: {
+        create: vi.fn(),
+      },
+    };
+
+    prisma.$transaction.mockImplementation(async (callback: (tx: never) => unknown) =>
+      callback(txMock as never),
+    );
+
+    configService.get.mockImplementation((key: string, fallback?: unknown) => {
+      if (key === "commercial.onboardingTtlHours") {
+        return 48;
+      }
+
+      if (key === "commercial.enableMockCheckout") {
+        return true;
+      }
+
+      return fallback;
+    });
+
+    const service = new CommercialService(
+      prisma as never,
+      tenantSettingsService as never,
+      configService as never,
+      paymentAdapterFactory as never,
+    );
+
+    const result = await service.confirmCheckout(VALID_PUBLIC_TOKEN);
+
+    expect(result.status).toBe(CommercialOnboardingStatus.PAID);
+    expect(txMock.commercialOnboarding.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: awaitingPayment.id,
+          status: CommercialOnboardingStatus.AWAITING_PAYMENT,
+        },
+      }),
+    );
+    expect(txMock.auditLog.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not duplicate checkout audit when status transition was already processed", async () => {
+    const awaitingPayment = buildOnboarding({
+      status: CommercialOnboardingStatus.AWAITING_PAYMENT,
+    });
+    const paidOnboarding = buildOnboarding({
+      status: CommercialOnboardingStatus.PAID,
+      paymentReference: "stripe-sub-1",
+      checkoutConfirmedAt: new Date("2026-03-15T18:10:00.000Z"),
+    });
+
+    prisma.commercialOnboarding.findUnique.mockResolvedValue(awaitingPayment);
+
+    const txMock = {
+      commercialOnboarding: {
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        findUnique: vi.fn().mockResolvedValue(paidOnboarding),
+      },
+      auditLog: {
+        create: vi.fn(),
+      },
+    };
+
+    prisma.$transaction.mockImplementation(async (callback: (tx: never) => unknown) =>
+      callback(txMock as never),
+    );
+
+    const paymentAdapter = {
+      createCheckout: vi.fn(),
+      confirmPayment: vi.fn().mockResolvedValue({
+        reference: "stripe-sub-1",
+        status: "confirmed",
+        amount: 34900,
+        currency: "BRL",
+      }),
+      handleWebhookEvent: vi.fn(),
+      verifyWebhookSignature: vi.fn(),
+    };
+    paymentAdapterFactory.getAdapter.mockReturnValueOnce(paymentAdapter);
+
+    const service = new CommercialService(
+      prisma as never,
+      tenantSettingsService as never,
+      configService as never,
+      paymentAdapterFactory as never,
+    );
+
+    const result = await service.confirmCheckout(VALID_PUBLIC_TOKEN, "cs_test_123");
+
+    expect(result.status).toBe(CommercialOnboardingStatus.PAID);
+    expect(txMock.auditLog.create).not.toHaveBeenCalled();
+  });
+
   it("requires explicit mock checkout enablement even outside production", async () => {
     prisma.commercialOnboarding.findUnique.mockResolvedValue(
       buildOnboarding({
@@ -484,5 +604,99 @@ describe("CommercialService", () => {
     await expect(service.confirmCheckout(VALID_PUBLIC_TOKEN)).rejects.toThrow(
       "Mock checkout confirmation is disabled for this environment.",
     );
+  });
+
+  it("uses rawBody for webhook signature verification", async () => {
+    const paymentAdapter = {
+      createCheckout: vi.fn(),
+      confirmPayment: vi.fn(),
+      handleWebhookEvent: vi.fn().mockResolvedValue(undefined),
+      verifyWebhookSignature: vi.fn().mockReturnValue(true),
+    };
+    paymentAdapterFactory.getAdapter.mockReturnValueOnce(paymentAdapter);
+
+    const service = new CommercialService(
+      prisma as never,
+      tenantSettingsService as never,
+      configService as never,
+      paymentAdapterFactory as never,
+    );
+
+    const rawPayload = "{\"id\":\"evt_custom\",\"type\":\"payment_intent.succeeded\"}";
+    const body = {
+      id: "evt_custom",
+      type: "payment_intent.succeeded",
+    };
+    const request = {
+      headers: {
+        "stripe-signature": "t=1,v1=fake",
+      },
+      rawBody: Buffer.from(rawPayload, "utf8"),
+    };
+
+    await service.handlePaymentWebhook(body, request);
+
+    expect(paymentAdapter.verifyWebhookSignature).toHaveBeenCalledWith(
+      rawPayload,
+      "t=1,v1=fake",
+    );
+  });
+
+  it("rejects webhook when signature is invalid", async () => {
+    const paymentAdapter = {
+      createCheckout: vi.fn(),
+      confirmPayment: vi.fn(),
+      handleWebhookEvent: vi.fn().mockResolvedValue(undefined),
+      verifyWebhookSignature: vi.fn().mockReturnValue(false),
+    };
+    paymentAdapterFactory.getAdapter.mockReturnValueOnce(paymentAdapter);
+
+    const service = new CommercialService(
+      prisma as never,
+      tenantSettingsService as never,
+      configService as never,
+      paymentAdapterFactory as never,
+    );
+
+    await expect(
+      service.handlePaymentWebhook(
+        { id: "evt_invalid", type: "payment_intent.succeeded" },
+        {
+          headers: {
+            "stripe-signature": "invalid",
+          },
+          rawBody: Buffer.from("{}", "utf8"),
+        },
+      ),
+    ).rejects.toThrow("Invalid webhook signature");
+  });
+
+  it("returns 5xx path on webhook processing failure so provider can retry", async () => {
+    const paymentAdapter = {
+      createCheckout: vi.fn(),
+      confirmPayment: vi.fn(),
+      handleWebhookEvent: vi.fn().mockRejectedValue(new Error("adapter failure")),
+      verifyWebhookSignature: vi.fn().mockReturnValue(true),
+    };
+    paymentAdapterFactory.getAdapter.mockReturnValueOnce(paymentAdapter);
+
+    const service = new CommercialService(
+      prisma as never,
+      tenantSettingsService as never,
+      configService as never,
+      paymentAdapterFactory as never,
+    );
+
+    await expect(
+      service.handlePaymentWebhook(
+        { id: "evt_retry", type: "payment_intent.succeeded" },
+        {
+          headers: {
+            "stripe-signature": "t=1,v1=fake",
+          },
+          rawBody: Buffer.from("{}", "utf8"),
+        },
+      ),
+    ).rejects.toThrow("Failed to process payment webhook.");
   });
 });

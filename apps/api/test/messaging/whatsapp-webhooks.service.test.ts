@@ -25,7 +25,7 @@ describe("WhatsappWebhooksService", () => {
   };
 
   const abuseProtectionService = {
-    assertWithinLimit: vi.fn(),
+    assertWithinLimit: vi.fn().mockResolvedValue(undefined),
   };
 
   const handoffsService = {
@@ -51,6 +51,7 @@ describe("WhatsappWebhooksService", () => {
     providerFactory.getAdapter.mockReset();
     patientLinkService.resolveByContactValue.mockReset();
     abuseProtectionService.assertWithinLimit.mockReset();
+    abuseProtectionService.assertWithinLimit.mockResolvedValue(undefined);
     handoffsService.ensureAutomaticHandoffForThread.mockReset();
     agentBridge.routeInboundMessage.mockReset();
     messagingGateway.emitThreadActivity.mockReset();

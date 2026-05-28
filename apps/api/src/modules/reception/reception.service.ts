@@ -10,6 +10,8 @@ import type {
 import { PatientProtocolStatus, Prisma, ProtocolSessionStatus } from "@prisma/client";
 import { AuthenticatedUser } from "../../auth/interfaces/authenticated-user.interface";
 import { PrismaService } from "../../database/prisma.service";
+import { AUDIT_ACTIONS } from "../../common/audit/audit.constants";
+import { AuditService } from "../../common/audit/audit.service";
 import { PatientsService } from "../patients/patients.service";
 import { AppointmentsService } from "../scheduling/appointments.service";
 import { AvailabilityService } from "../scheduling/availability.service";
@@ -73,6 +75,7 @@ export class ReceptionService {
     private readonly availabilityService: AvailabilityService,
     private readonly appointmentsService: AppointmentsService,
     private readonly patientsService: PatientsService,
+    private readonly auditService: AuditService,
   ) {}
 
   async getDashboard(
@@ -411,6 +414,16 @@ export class ReceptionService {
       appointmentId,
       input,
     );
+
+    void this.auditService.record({
+      action: AUDIT_ACTIONS.RECEPTION_APPOINTMENT_CANCELED,
+      actor,
+      tenantId: canceled.tenantId,
+      targetType: "Appointment",
+      targetId: appointmentId,
+      metadata: { reason: input.reason ?? null, via: "reception" },
+    }).catch(() => undefined);
+
     return this.getAppointmentDetail(actor, canceled.id);
   }
 
@@ -424,6 +437,16 @@ export class ReceptionService {
       appointmentId,
       input.reason,
     );
+
+    void this.auditService.record({
+      action: AUDIT_ACTIONS.RECEPTION_APPOINTMENT_CONFIRMED,
+      actor,
+      tenantId: confirmed.tenantId,
+      targetType: "Appointment",
+      targetId: appointmentId,
+      metadata: { reason: input.reason ?? null, via: "reception" },
+    }).catch(() => undefined);
+
     return this.getAppointmentDetail(actor, confirmed.id);
   }
 
@@ -437,6 +460,16 @@ export class ReceptionService {
       appointmentId,
       input.reason,
     );
+
+    void this.auditService.record({
+      action: AUDIT_ACTIONS.RECEPTION_APPOINTMENT_CHECKED_IN,
+      actor,
+      tenantId: checkedIn.tenantId,
+      targetType: "Appointment",
+      targetId: appointmentId,
+      metadata: { reason: input.reason ?? null, via: "reception" },
+    }).catch(() => undefined);
+
     return this.getAppointmentDetail(actor, checkedIn.id);
   }
 
@@ -450,6 +483,16 @@ export class ReceptionService {
       appointmentId,
       input.reason,
     );
+
+    void this.auditService.record({
+      action: AUDIT_ACTIONS.RECEPTION_APPOINTMENT_NO_SHOW,
+      actor,
+      tenantId: noShow.tenantId,
+      targetType: "Appointment",
+      targetId: appointmentId,
+      metadata: { reason: input.reason ?? null, via: "reception" },
+    }).catch(() => undefined);
+
     return this.getAppointmentDetail(actor, noShow.id);
   }
 
@@ -473,6 +516,14 @@ export class ReceptionService {
           appointmentId,
           input.reason,
         );
+        void this.auditService.record({
+          action: AUDIT_ACTIONS.RECEPTION_APPOINTMENT_COMPLETED,
+          actor,
+          tenantId: completed.tenantId,
+          targetType: "Appointment",
+          targetId: appointmentId,
+          metadata: { reason: input.reason ?? null, via: "reception" },
+        }).catch(() => undefined);
         return this.getAppointmentDetail(actor, completed.id);
       }
       case "CANCELED":

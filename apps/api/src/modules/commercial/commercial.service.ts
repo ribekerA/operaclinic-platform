@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   GoneException,
+  InternalServerErrorException,
   Injectable,
   Logger,
   NotFoundException,
@@ -341,29 +342,43 @@ export class CommercialService {
       }
 
       const updated = await this.prisma.$transaction(async (tx) => {
-        const next = await tx.commercialOnboarding.update({
-          where: { id: onboarding.id },
+        // Guard the transition to keep confirmCheckout idempotent under concurrent calls.
+        const transition = await tx.commercialOnboarding.updateMany({
+          where: {
+            id: onboarding.id,
+            status: CommercialOnboardingStatus.AWAITING_PAYMENT,
+          },
           data: {
             status: CommercialOnboardingStatus.PAID,
             paymentReference,
             checkoutConfirmedAt: confirmedAt,
             expiresAt: nextExpiresAt,
           },
+        });
+
+        const next = await tx.commercialOnboarding.findUnique({
+          where: { id: onboarding.id },
           include: onboardingInclude,
         });
 
-        await this.recordAuditLog(tx, {
-          action: AUDIT_ACTIONS.COMMERCIAL_CHECKOUT_CONFIRMED,
-          actorProfile: "system",
-          targetType: "commercial_onboarding",
-          targetId: next.id,
-          metadata: {
-            paymentReference,
-            sessionId: sessionId || "mock",
-            mode: sessionId ? "production" : "mock",
-            expiresAt: nextExpiresAt.toISOString(),
-          },
-        });
+        if (!next) {
+          throw new NotFoundException("Commercial onboarding not found.");
+        }
+
+        if (transition.count > 0) {
+          await this.recordAuditLog(tx, {
+            action: AUDIT_ACTIONS.COMMERCIAL_CHECKOUT_CONFIRMED,
+            actorProfile: "system",
+            targetType: "commercial_onboarding",
+            targetId: next.id,
+            metadata: {
+              paymentReference,
+              sessionId: sessionId || "mock",
+              mode: sessionId ? "production" : "mock",
+              expiresAt: nextExpiresAt.toISOString(),
+            },
+          });
+        }
 
         return next;
       });
@@ -576,54 +591,63 @@ export class CommercialService {
     body: Record<string, any>,
     request: any,
   ): Promise<void> {
-    try {
-      // Verify webhook signature using adapter
-      const signature = request.headers["stripe-signature"] as string;
-      if (!signature) {
-        this.logger.warn("Webhook rejected: Missing signature header");
-        throw new BadRequestException("Missing Stripe signature");
-      }
+    // Verify webhook signature using adapter
+    const signatureHeader = request?.headers?.["stripe-signature"];
+    const signature =
+      typeof signatureHeader === "string"
+        ? signatureHeader
+        : Array.isArray(signatureHeader)
+          ? (signatureHeader[0] as string | undefined)
+          : undefined;
 
-      if (!this.paymentAdapter.verifyWebhookSignature) {
-        this.logger.warn("Webhook adapter does not support signature verification");
-        return;
-      }
+    if (!signature?.trim()) {
+      this.logger.warn("Webhook rejected: Missing signature header");
+      throw new BadRequestException("Missing Stripe signature");
+    }
 
-      // Verify signature - returns false if invalid
-      const isValid = this.paymentAdapter.verifyWebhookSignature(
-        JSON.stringify(body),
-        signature,
+    if (!this.paymentAdapter.verifyWebhookSignature) {
+      this.logger.error("Webhook adapter does not support signature verification");
+      throw new InternalServerErrorException(
+        "Payment webhook signature verification is not configured.",
       );
+    }
 
-      if (!isValid) {
-        this.logger.warn("Webhook rejected: Invalid signature");
-        throw new BadRequestException("Invalid webhook signature");
-      }
+    const rawBody = this.resolveWebhookRawBody(request, body);
+    const isValid = this.paymentAdapter.verifyWebhookSignature(
+      rawBody.toString("utf8"),
+      signature.trim(),
+    );
 
-      // Deduplication: reject already-processed Stripe events (retry storms)
-      const stripeEventId = typeof body?.id === "string" ? body.id.trim() : null;
-      if (stripeEventId) {
-        try {
-          await this.prisma.commercialWebhookEvent.create({
-            data: {
-              providerEventId: stripeEventId,
-              eventType: typeof body?.type === "string" ? body.type.slice(0, 80) : "unknown",
-            },
-          });
-        } catch (dedupError: unknown) {
-          const isPrismaUniqueViolation =
-            dedupError instanceof Prisma.PrismaClientKnownRequestError &&
-            dedupError.code === "P2002";
-          if (isPrismaUniqueViolation) {
-            this.logger.debug(
-              `Payment webhook deduplicated: event ${stripeEventId} already processed`,
-            );
-            return; // ACK 200 without reprocessing
-          }
-          throw dedupError;
+    if (!isValid) {
+      this.logger.warn("Webhook rejected: Invalid signature");
+      throw new BadRequestException("Invalid webhook signature");
+    }
+
+    // Deduplication: reject already-processed Stripe events (retry storms)
+    const stripeEventId = typeof body?.id === "string" ? body.id.trim() : null;
+    if (stripeEventId) {
+      try {
+        await this.prisma.commercialWebhookEvent.create({
+          data: {
+            providerEventId: stripeEventId,
+            eventType: typeof body?.type === "string" ? body.type.slice(0, 80) : "unknown",
+          },
+        });
+      } catch (dedupError: unknown) {
+        const isPrismaUniqueViolation =
+          dedupError instanceof Prisma.PrismaClientKnownRequestError &&
+          dedupError.code === "P2002";
+        if (isPrismaUniqueViolation) {
+          this.logger.debug(
+            `Payment webhook deduplicated: event ${stripeEventId} already processed`,
+          );
+          return; // ACK 200 without reprocessing
         }
+        throw dedupError;
       }
+    }
 
+    try {
       await this.reconcileWebhookEvent(body);
 
       // Handle webhook events
@@ -631,12 +655,23 @@ export class CommercialService {
       this.logger.debug(`Successfully processed webhook event: ${body.type}`);
     } catch (error) {
       this.logger.error(
-        `Failed to process payment webhook`,
+        "Failed to process payment webhook",
         error instanceof Error ? error.message : String(error),
       );
-      // Don't re-throw - Stripe expects 200 response even if we can't process
-      // Re-throw would make Stripe retry the webhook
+      // Return non-2xx so provider retries and we avoid dropping financial events.
+      throw new InternalServerErrorException("Failed to process payment webhook.");
     }
+  }
+
+  private resolveWebhookRawBody(
+    request: { rawBody?: Buffer } | undefined,
+    body: Record<string, any>,
+  ): Buffer {
+    if (request?.rawBody?.length) {
+      return request.rawBody;
+    }
+
+    return Buffer.from(JSON.stringify(body));
   }
 
   private async reconcileWebhookEvent(event: Record<string, any>): Promise<void> {
