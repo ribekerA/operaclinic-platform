@@ -109,6 +109,32 @@ interface CandidateEvaluation {
     | "empty_rendered_message";
 }
 
+export interface FollowUpDispatchItem {
+  id: string;
+  appointmentId: string;
+  patientId: string;
+  patientName: string | null;
+  kind: AppointmentFollowUpKind;
+  status: AppointmentFollowUpDispatchStatus;
+  scheduledFor: string;
+  dispatchedAt: string | null;
+  failedAt: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+}
+
+export interface ListFollowUpDispatchesResult {
+  items: FollowUpDispatchItem[];
+  total: number;
+}
+
+export interface FollowUpDispatchStats {
+  processing: number;
+  sent: number;
+  failed: number;
+  total: number;
+}
+
 export interface AppointmentFollowUpRunResult {
   tenantId: string;
   kind: AppointmentFollowUpKind;
@@ -406,6 +432,99 @@ export class AppointmentFollowUpsService {
       });
       throw error;
     }
+  }
+
+  async listDispatches(
+    actor: AuthenticatedUser,
+    query: { from?: string; to?: string; status?: string },
+  ): Promise<ListFollowUpDispatchesResult> {
+    const tenantId = this.accessService.resolveActiveTenantId(actor);
+
+    const statusFilter =
+      query.status &&
+      Object.values(AppointmentFollowUpDispatchStatus).includes(
+        query.status as AppointmentFollowUpDispatchStatus,
+      )
+        ? (query.status as AppointmentFollowUpDispatchStatus)
+        : undefined;
+
+    const fromDate = query.from ? this.parseDateTime(query.from, "from") : undefined;
+    const toDate = query.to ? this.parseDateTime(query.to, "to") : undefined;
+
+    const where: Prisma.AppointmentFollowUpDispatchWhereInput = {
+      tenantId,
+      ...(statusFilter ? { status: statusFilter } : {}),
+      ...(fromDate || toDate
+        ? {
+            scheduledFor: {
+              ...(fromDate ? { gte: fromDate } : {}),
+              ...(toDate ? { lte: toDate } : {}),
+            },
+          }
+        : {}),
+    };
+
+    const [dispatches, total] = await Promise.all([
+      this.prisma.appointmentFollowUpDispatch.findMany({
+        where,
+        orderBy: { scheduledFor: "desc" },
+        take: DEFAULT_LIMIT,
+      }),
+      this.prisma.appointmentFollowUpDispatch.count({ where }),
+    ]);
+
+    const patientIds = [...new Set(dispatches.map((d) => d.patientId))];
+    const patients =
+      patientIds.length > 0
+        ? await this.prisma.patient.findMany({
+            where: { id: { in: patientIds } },
+            select: { id: true, fullName: true },
+          })
+        : [];
+    const patientMap = new Map(patients.map((p) => [p.id, p.fullName]));
+
+    return {
+      items: dispatches.map((dispatch) => ({
+        id: dispatch.id,
+        appointmentId: dispatch.appointmentId,
+        patientId: dispatch.patientId,
+        patientName: patientMap.get(dispatch.patientId) ?? null,
+        kind: dispatch.kind,
+        status: dispatch.status,
+        scheduledFor: dispatch.scheduledFor.toISOString(),
+        dispatchedAt: dispatch.dispatchedAt?.toISOString() ?? null,
+        failedAt: dispatch.failedAt?.toISOString() ?? null,
+        errorMessage: dispatch.errorMessage ?? null,
+        createdAt: dispatch.createdAt.toISOString(),
+      })),
+      total,
+    };
+  }
+
+  async getStats(actor: AuthenticatedUser): Promise<FollowUpDispatchStats> {
+    const tenantId = this.accessService.resolveActiveTenantId(actor);
+
+    const groups = await this.prisma.appointmentFollowUpDispatch.groupBy({
+      by: ["status"],
+      where: { tenantId },
+      _count: { id: true },
+    });
+
+    const counts: Record<string, number> = {};
+    for (const group of groups) {
+      counts[group.status] = group._count.id;
+    }
+
+    const processing = counts[AppointmentFollowUpDispatchStatus.PROCESSING] ?? 0;
+    const sent = counts[AppointmentFollowUpDispatchStatus.SENT] ?? 0;
+    const failed = counts[AppointmentFollowUpDispatchStatus.FAILED] ?? 0;
+
+    return {
+      processing,
+      sent,
+      failed,
+      total: processing + sent + failed,
+    };
   }
 
   private async evaluateCandidate(input: {

@@ -89,7 +89,7 @@ export class AppointmentFollowUpsCronController {
     this.logger.log(`Cron appointment-reminders started — dryRun=${dryRun} templateCode=${templateCode}`);
 
     const tenants = await this.prisma.tenant.findMany({
-      where: { isActive: true },
+      where: { status: "ACTIVE" },
       select: { id: true },
       orderBy: { createdAt: "asc" },
     });
