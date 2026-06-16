@@ -17,6 +17,36 @@ export type AgentIntentType =
   | "SELECT_OPTION"
   | "OUT_OF_SCOPE";
 
+/** Incremental booking state stored in thread.metadata between turns */
+export interface BookingContext {
+  professionalId?: string;
+  professionalName?: string;
+  consultationTypeId?: string;
+  consultationTypeName?: string;
+  preferredDate?: string;
+  /** Professionals offered in the current step (so SELECT_OPTION can resolve to ID) */
+  stepOfferedProfessionals?: Array<{ id: string; displayName: string }>;
+  /** Consultation types offered in the current step */
+  stepOfferedTypes?: Array<{ id: string; name: string; durationMinutes: number }>;
+}
+
+/** Active catalog items pre-loaded for the tenant */
+export interface TenantCatalogProfessional {
+  id: string;
+  displayName: string;
+}
+
+export interface TenantCatalogConsultationType {
+  id: string;
+  name: string;
+  durationMinutes: number;
+}
+
+export interface TenantCatalog {
+  professionals: TenantCatalogProfessional[];
+  consultationTypes: TenantCatalogConsultationType[];
+}
+
 /**
  * Conversation Context - safely resolved from incoming event
  * Multi-tenant isolated, with all required routing information
@@ -36,6 +66,8 @@ export interface ConversationContext {
   historicalContext?: {
     lastIntents: AgentIntentType[];
     offeredSlots?: any[];
+    bookingCtx?: BookingContext;
+    tenantCatalog?: TenantCatalog;
   };
 }
 

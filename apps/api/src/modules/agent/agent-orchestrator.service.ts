@@ -97,6 +97,24 @@ export class AgentOrchestratorService {
         });
       }
 
+      // If the captacao agent identified a patient and the last intent is
+      // booking-related, mark the thread so the bridge routes to AgendamentoAgent
+      // on the next incoming message.
+      const captacaoBookingIntents = new Set([
+        "BOOK_APPOINTMENT",
+        "RESCHEDULE_APPOINTMENT",
+        "CANCEL_APPOINTMENT",
+      ]);
+      const hasBookingIntent = session.intentHistory.some((i) =>
+        captacaoBookingIntents.has(i),
+      );
+      if (patientId && hasBookingIntent && baseContext.threadId) {
+        await this.updateThreadLastIntentSafely(
+          baseContext.threadId,
+          "BOOK_APPOINTMENT",
+        );
+      }
+
       return response;
     } catch (error) {
       await this.recordExecutionSafely({
@@ -121,7 +139,7 @@ export class AgentOrchestratorService {
     input: AgendamentoAgentRequestPayload & { correlationId?: string },
   ): Promise<AgendamentoAgentResponsePayload> {
     const baseContext = this.buildContext(actor, input.threadId, input.correlationId);
-    const conversationContext = await this.buildConversationContextWithMemory(baseContext);
+    const conversationContext = await this.buildAgendamentoContextWithMemory(baseContext);
     const session = this.runtime.createSessionFromContext(conversationContext);
 
     this.logger.debug(
@@ -177,6 +195,11 @@ export class AgentOrchestratorService {
         });
       }
 
+      // Clear the booking intent flag when appointment is successfully created
+      if (result.status === "COMPLETED" && result.appointment && baseContext.threadId) {
+        await this.updateThreadLastIntentSafely(baseContext.threadId, null);
+      }
+
       return response;
     } catch (error) {
       await this.recordExecutionSafely({
@@ -193,6 +216,80 @@ export class AgentOrchestratorService {
       });
 
       throw error;
+    }
+  }
+
+  private async buildAgendamentoContextWithMemory(
+    base: ClinicSkillContext,
+  ): Promise<ConversationContext> {
+    const thread = await this.prisma.messageThread.findUnique({
+      where: { id: base.threadId },
+      include: { patient: true },
+    });
+
+    let lastIntents: AgentIntentType[] = [];
+    if (thread?.patient?.intentHistory && Array.isArray(thread.patient.intentHistory)) {
+      lastIntents = thread.patient.intentHistory as AgentIntentType[];
+    } else if (thread?.lastIntent) {
+      lastIntents = [thread.lastIntent as AgentIntentType];
+    }
+
+    const [professionals, consultationTypes, lastAgentMessage] = await Promise.all([
+      this.prisma.professional.findMany({
+        where: { tenantId: base.tenantId, isActive: true },
+        select: { id: true, displayName: true },
+        orderBy: { displayName: "asc" },
+      }),
+      this.prisma.consultationType.findMany({
+        where: { tenantId: base.tenantId, isActive: true },
+        select: { id: true, name: true, durationMinutes: true },
+        orderBy: { name: "asc" },
+      }),
+      this.prisma.messageEvent.findFirst({
+        where: {
+          threadId: base.threadId,
+          direction: "OUTBOUND",
+          eventType: "MESSAGE_SENT",
+        },
+        orderBy: { occurredAt: "desc" },
+        select: { metadata: true },
+      }),
+    ]);
+
+    const lastMeta = (lastAgentMessage?.metadata ?? {}) as Record<string, unknown>;
+    const bookingCtx = (lastMeta.bookingCtx ?? null) as import("./types/agent-runtime.types").BookingContext | null;
+    const offeredSlots: unknown[] = (lastMeta.offeredSlots as unknown[]) ?? [];
+
+    return {
+      tenantId: base.tenantId,
+      threadId: base.threadId ?? "",
+      patientId: thread?.patientId ?? undefined,
+      channel: "WHATSAPP",
+      correlationId: base.correlationId || randomUUID(),
+      actorUserId: base.actorUserId,
+      actorRole: "AGENT",
+      source: "AGENT",
+      timestamp: new Date(),
+      historicalContext: {
+        lastIntents,
+        offeredSlots,
+        bookingCtx: bookingCtx ?? undefined,
+        tenantCatalog: { professionals, consultationTypes },
+      },
+    };
+  }
+
+  private async updateThreadLastIntentSafely(
+    threadId: string,
+    intent: string | null,
+  ): Promise<void> {
+    try {
+      await this.prisma.messageThread.update({
+        where: { id: threadId },
+        data: { lastIntent: intent },
+      });
+    } catch {
+      // Non-critical — log silently, never propagate
     }
   }
 

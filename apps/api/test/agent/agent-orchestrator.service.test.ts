@@ -19,6 +19,7 @@ describe("AgentOrchestratorService", () => {
       }),
       skillCalls: [],
       startedAt: new Date("2026-03-20T10:00:00.000Z"),
+      intentHistory: [],
     };
     const runtime = {
       createSessionFromContext: vi.fn().mockReturnValue(session),
@@ -146,6 +147,7 @@ describe("AgentOrchestratorService", () => {
       }),
       skillCalls: [],
       startedAt: new Date("2026-03-20T10:00:00.000Z"),
+      intentHistory: [],
     };
     const runtime = {
       createSessionFromContext: vi.fn().mockReturnValue(session),

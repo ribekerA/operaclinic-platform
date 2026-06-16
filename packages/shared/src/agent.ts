@@ -60,8 +60,8 @@ export interface AgendamentoAgentRequestPayload {
   threadId: string;
   messageText?: string;
   patientId: string;
-  professionalId: string;
-  consultationTypeId: string;
+  professionalId?: string;
+  consultationTypeId?: string;
   preferredDate?: string;
   unitId?: string;
   selectedSlotStartsAt?: string;

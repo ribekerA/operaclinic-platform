@@ -30,6 +30,7 @@ import { PrismaService } from "../../database/prisma.service";
 import { AUDIT_ACTIONS } from "../../common/audit/audit.constants";
 import { AuditService } from "../../common/audit/audit.service";
 import { MessageThreadResolutionActorType } from "@prisma/client";
+import type { AuthenticatedUser } from "../../auth/interfaces/authenticated-user.interface";
 
 const LOW_CONFIDENCE_ESCALATION_THRESHOLD = 0.7;
 
@@ -445,11 +446,13 @@ export class AgentRuntimeService {
     decision: AgentDecision,
     intent: IntentClassification,
   ): Promise<void> {
-    const systemActor = {
+    const systemActor: AuthenticatedUser = {
       id: session.conversationContext.actorUserId,
-      tenantId: session.conversationContext.tenantId,
-      profile: "AGENT" as const,
-      roles: [] as any[],
+      email: "agent-system@operaclinic.internal",
+      profile: "platform",
+      roles: [],
+      tenantIds: [session.conversationContext.tenantId],
+      activeTenantId: session.conversationContext.tenantId,
     };
 
     const baseMetadata: Record<string, unknown> = {

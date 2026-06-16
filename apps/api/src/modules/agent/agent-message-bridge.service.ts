@@ -5,6 +5,13 @@ import { PrismaService } from "../../database/prisma.service";
 import { AgentOrchestratorService } from "./agent-orchestrator.service";
 import { HandoffStatus } from "@prisma/client";
 
+const BOOKING_INTENTS = new Set([
+  "BOOK_APPOINTMENT",
+  "SELECT_OPTION",
+  "RESCHEDULE_APPOINTMENT",
+  "CANCEL_APPOINTMENT",
+]);
+
 /**
  * Payload from an inbound WhatsApp message, normalized for agent processing.
  */
@@ -86,24 +93,48 @@ export class AgentMessageBridgeService {
         return;
       }
 
+      const systemActor = this.buildSystemActor(payload.tenantId);
+      const correlationId = payload.correlationId ?? randomUUID();
+
+      // Decide which agent handles this message
+      const threadCtx = await this.resolveThreadContext(
+        payload.tenantId,
+        payload.threadId,
+      );
+      const isBookingMode =
+        threadCtx.patientId !== null &&
+        threadCtx.lastIntent !== null &&
+        BOOKING_INTENTS.has(threadCtx.lastIntent);
+
+      if (isBookingMode) {
+        this.logger.debug(
+          `AgentBridge: Triggering AgendamentoAgent for thread ${payload.threadId} (intent=${threadCtx.lastIntent})`,
+        );
+
+        const result = await this.orchestrator.executeAgendamento(systemActor, {
+          threadId: payload.threadId,
+          patientId: threadCtx.patientId!,
+          messageText: payload.messageText.trim(),
+          correlationId,
+        });
+
+        this.logger.debug(
+          `AgentBridge: AgendamentoAgent completed for thread ${payload.threadId} — status: ${result.meta.status}`,
+        );
+        return;
+      }
+
       this.logger.debug(
         `AgentBridge: Triggering CaptacaoAgent for thread ${payload.threadId} (tenant: ${payload.tenantId})`,
       );
 
-      // Build a synthetic AuthenticatedUser for the agent runtime context.
-      // The agent runs as a system actor, not a real clinic user.
-      const systemActor = this.buildSystemActor(payload.tenantId);
-
-      const result = await this.orchestrator.executeCaptacao(
-        systemActor,
-        {
-          threadId: payload.threadId,
-          messageText: payload.messageText.trim(),
-          patientPhone: payload.senderPhoneNumber,
-          patientName: payload.senderDisplayName ?? undefined,
-          correlationId: payload.correlationId ?? randomUUID(),
-        },
-      );
+      const result = await this.orchestrator.executeCaptacao(systemActor, {
+        threadId: payload.threadId,
+        messageText: payload.messageText.trim(),
+        patientPhone: payload.senderPhoneNumber,
+        patientName: payload.senderDisplayName ?? undefined,
+        correlationId,
+      });
 
       this.logger.debug(
         `AgentBridge: CaptacaoAgent completed for thread ${payload.threadId} — status: ${result.meta.status}`,
@@ -117,6 +148,24 @@ export class AgentMessageBridgeService {
         }`,
       );
     }
+  }
+
+  /**
+   * Resolve lightweight thread context to decide agent routing.
+   */
+  private async resolveThreadContext(
+    tenantId: string,
+    threadId: string,
+  ): Promise<{ patientId: string | null; lastIntent: string | null }> {
+    const thread = await this.prisma.messageThread.findUnique({
+      where: { id: threadId, tenantId },
+      select: { patientId: true, lastIntent: true },
+    });
+
+    return {
+      patientId: thread?.patientId ?? null,
+      lastIntent: thread?.lastIntent ?? null,
+    };
   }
 
   /**

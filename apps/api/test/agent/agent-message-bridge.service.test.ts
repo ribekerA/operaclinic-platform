@@ -12,6 +12,9 @@ function buildService(
     handoffRequest: {
       findFirst: makeHandoffFind(hasActiveHandoff),
     },
+    messageThread: {
+      findUnique: vi.fn().mockResolvedValue({ patientId: null, lastIntent: null }),
+    },
   };
 
   const orchestrator = {

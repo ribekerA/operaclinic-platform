@@ -75,7 +75,7 @@ describe("AgendamentoAgentService V2 (Selection Flow)", () => {
       slotHoldId: "hold-123"
     }));
     expect(result.replyText).toContain("confirmado");
-    expect(result.replyText).toContain("01/04/2026");
+    expect(result.replyText).toContain("01 de abril");
   });
 
   it("should process ordinal selection (o segundo) and confirm appointment", async () => {
@@ -111,9 +111,26 @@ describe("AgendamentoAgentService V2 (Selection Flow)", () => {
     // Eventually it will search_availability again or wait for input.
     
     const result = await service.execute(session, input);
-    
+
     // In this case, it didn't find the slot, so it proceeded to offer slots again (re-search)
     expect(session.executeSkill).not.toHaveBeenCalledWith("hold_slot", expect.anything());
     expect(session.executeSkill).toHaveBeenCalledWith("search_availability", expect.anything());
+  });
+
+  it("fails fast when context validation does not pass", async () => {
+    guardrails.validateContext = vi.fn(() => ({ passed: false }));
+
+    const input = {
+      threadId: "thread-123",
+      patientId: "patient-456",
+      messageText: "oi",
+      professionalId: "prof-1",
+      consultationTypeId: "type-1",
+    };
+
+    const result = await service.execute(session, input);
+
+    expect(result.status).toBe("FAILED");
+    expect(session.executeSkill).not.toHaveBeenCalledWith("search_availability", expect.anything());
   });
 });
