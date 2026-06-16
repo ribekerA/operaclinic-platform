@@ -553,6 +553,7 @@ model ConsultationType {
   isReturnVisit       Boolean  @default(false) @map("is_return_visit")
   isOnline            Boolean  @default(false) @map("is_online")
   isActive            Boolean  @default(true) @map("is_active")
+  priceCents          Int      @default(0) @map("price_cents")
   aestheticArea       AestheticArea? @map("aesthetic_area")
   invasivenessLevel   InvasivenessLevel? @map("invasiveness_level")
   recoveryDays        Int?     @map("recovery_days")
@@ -581,6 +582,9 @@ model Patient {
   birthDate      DateTime? @map("birth_date") @db.Date
   documentNumber String?  @map("document_number") @db.VarChar(40)
   notes          String?  @db.Text
+  allergies      String?  @db.Text
+  aestheticGoals String?  @map("aesthetic_goals") @db.Text
+  contraindications String? @map("contraindications") @db.Text
   intentHistory  Json?    @map("intent_history") // Sprint 8: Memory Context
   isActive       Boolean  @default(true) @map("is_active")
   mergedIntoPatientId String? @map("merged_into_patient_id") @db.Uuid
@@ -1003,6 +1007,7 @@ model Appointment {
   noShowAt           DateTime?         @map("no_show_at") @db.Timestamptz(6)
   idempotencyKey     String            @map("idempotency_key") @db.VarChar(120)
   cancellationReason String?           @map("cancellation_reason") @db.VarChar(255)
+  outsideSchedule    Boolean           @default(false) @map("outside_schedule")
   notes              String?           @db.Text
   createdByUserId    String?           @map("created_by_user_id") @db.Uuid
   updatedByUserId    String?           @map("updated_by_user_id") @db.Uuid
