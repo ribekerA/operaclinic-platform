@@ -32,6 +32,21 @@ export class ScheduleBlocksService {
     private readonly auditService: AuditService,
   ) {}
 
+  async listBlocks(
+    actor: AuthenticatedUser,
+    professionalId: string,
+  ): Promise<ScheduleBlockResponse[]> {
+    this.accessService.ensureAdminAccess(actor);
+    const tenantId = this.accessService.resolveActiveTenantId(actor);
+
+    const blocks = await this.prisma.scheduleBlock.findMany({
+      where: { tenantId, professionalId },
+      orderBy: { startsAt: "desc" },
+    });
+
+    return blocks.map((b) => this.mapBlock(b));
+  }
+
   async createBlock(
     actor: AuthenticatedUser,
     input: CreateScheduleBlockDto,

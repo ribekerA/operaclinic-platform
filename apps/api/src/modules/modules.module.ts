@@ -14,6 +14,8 @@ import { FollowUpsModule } from "./follow-ups/follow-ups.module";
 import { SkillRegistryModule } from "./skill-registry/skill-registry.module";
 import { AgentModule } from "./agent/agent.module";
 import { ProcedureProtocolsModule } from "./procedure-protocols/procedure-protocols.module";
+import { PublicBookingModule } from "./public-booking/public-booking.module";
+import { ReportsModule } from "./reports/reports.module";
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { ProcedureProtocolsModule } from "./procedure-protocols/procedure-protoc
     SkillRegistryModule,
     AgentModule,
     ProcedureProtocolsModule,
+    PublicBookingModule,
+    ReportsModule,
   ],
 })
 export class ModulesModule {}

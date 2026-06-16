@@ -25,6 +25,7 @@ export interface AppointmentResponse {
   noShowAt: Date | null;
   idempotencyKey: string;
   cancellationReason: string | null;
+  outsideSchedule: boolean;
   notes: string | null;
   createdByUserId: string | null;
   updatedByUserId: string | null;

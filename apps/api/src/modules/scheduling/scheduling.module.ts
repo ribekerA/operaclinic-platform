@@ -14,6 +14,7 @@ import { SchedulesService } from "./schedules.service";
 import { SchedulingAccessService } from "./scheduling-access.service";
 import { SchedulingPoliciesService } from "./scheduling-policies.service";
 import { ProfessionalWorkspaceGateway } from "./gateways/professional-workspace.gateway";
+import { ReceptionGateway } from "./gateways/reception.gateway";
 import { NoShowSchedulerService } from "./no-show-scheduler.service";
 import { WaitlistController } from "./waitlist.controller";
 import { WaitlistService } from "./waitlist.service";
@@ -38,6 +39,7 @@ import { WaitlistService } from "./waitlist.service";
     AvailabilityService,
     AppointmentsService,
     ProfessionalWorkspaceGateway,
+    ReceptionGateway,
     NoShowSchedulerService,
     WaitlistService,
   ],
@@ -49,6 +51,7 @@ import { WaitlistService } from "./waitlist.service";
     SchedulingReferencesService,
     SchedulingTimezoneService,
     ProfessionalWorkspaceGateway,
+    ReceptionGateway,
   ],
 })
 export class SchedulingModule {}

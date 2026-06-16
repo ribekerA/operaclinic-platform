@@ -3,4 +3,5 @@ export class RescheduleAppointmentDto {
   unitId?: string;
   room?: string;
   reason?: string;
+  scheduleOverride?: boolean;
 }

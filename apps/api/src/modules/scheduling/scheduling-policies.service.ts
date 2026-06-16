@@ -58,6 +58,7 @@ export interface SchedulingConflictCheckInput {
   unitId?: string | null;
   excludeAppointmentId?: string;
   ignoreHoldId?: string;
+  scheduleOverride?: boolean;
 }
 
 @Injectable()
@@ -166,17 +167,19 @@ export class SchedulingPoliciesService {
       bufferAfterMinutes: input.bufferAfterMinutes,
     });
 
-    await this.assertCoveredByProfessionalSchedule(
-      {
-        tenantId: input.tenantId,
-        professionalId: input.professionalId,
-        unitId: input.unitId ?? null,
-        startsAt: input.startsAt,
-        occupancyStartsAt: window.occupancyStartsAt,
-        occupancyEndsAt: window.occupancyEndsAt,
-      },
-      db,
-    );
+    if (!input.scheduleOverride) {
+      await this.assertCoveredByProfessionalSchedule(
+        {
+          tenantId: input.tenantId,
+          professionalId: input.professionalId,
+          unitId: input.unitId ?? null,
+          startsAt: input.startsAt,
+          occupancyStartsAt: window.occupancyStartsAt,
+          occupancyEndsAt: window.occupancyEndsAt,
+        },
+        db,
+      );
+    }
 
     const conflictingBlock = await db.scheduleBlock.findFirst({
       where: {

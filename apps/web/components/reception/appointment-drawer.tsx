@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import type { ReceptionAppointmentDetail } from "@operaclinic/shared";
 import { useEffect, useMemo, useState } from "react";
@@ -6,7 +6,7 @@ import {
   adminInputClassName,
   adminTextareaClassName,
 } from "@/components/platform/platform-admin";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import {
@@ -27,6 +27,7 @@ import {
   toDateInputInTimeZone,
 } from "@/lib/formatters";
 import { toErrorMessage } from "@/lib/client/http";
+import { Analytics } from "@/lib/analytics";
 
 interface AppointmentDrawerProps {
   appointment: ReceptionAppointmentDetail | null;
@@ -100,6 +101,7 @@ export function AppointmentDrawer({
         : false,
     [appointment],
   );
+
   const canComplete = useMemo(
     () => (appointment ? appointment.status === "AWAITING_PAYMENT" : false),
     [appointment],
@@ -119,9 +121,10 @@ export function AppointmentDrawer({
       const updated = await confirmReceptionAppointment(currentAppointment.id, {
         reason: reason.trim() || undefined,
       });
+      Analytics.appointmentStatusChanged("pre_confirmed", "CONFIRMED");
       onUpdated(updated);
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Nao foi possivel confirmar o agendamento."));
+      setError(toErrorMessage(requestError, "Não foi possível confirmar o agendamento."));
     } finally {
       setIsSubmitting(false);
     }
@@ -135,9 +138,11 @@ export function AppointmentDrawer({
       const updated = await checkInReceptionAppointment(currentAppointment.id, {
         reason: reason.trim() || undefined,
       });
+      Analytics.firstCheckIn();
+      Analytics.appointmentStatusChanged("pre_checkin", "CHECKED_IN");
       onUpdated(updated);
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Nao foi possivel registrar check-in."));
+      setError(toErrorMessage(requestError, "Não foi possível registrar check-in."));
     } finally {
       setIsSubmitting(false);
     }
@@ -153,7 +158,7 @@ export function AppointmentDrawer({
       });
       onUpdated(updated);
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Nao foi possivel marcar no-show."));
+      setError(toErrorMessage(requestError, "Não foi possível marcar no-show."));
     } finally {
       setIsSubmitting(false);
     }
@@ -174,7 +179,7 @@ export function AppointmentDrawer({
       });
       onUpdated(updated);
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Nao foi possivel cancelar o agendamento."));
+      setError(toErrorMessage(requestError, "Não foi possível cancelar o agendamento."));
     } finally {
       setIsSubmitting(false);
     }
@@ -194,7 +199,7 @@ export function AppointmentDrawer({
       setError(
         toErrorMessage(
           requestError,
-          "Nao foi possivel registrar pagamento e baixa do atendimento.",
+          "Não foi possível registrar pagamento e baixa do atendimento.",
         ),
       );
     } finally {
@@ -215,7 +220,7 @@ export function AppointmentDrawer({
       });
       setRescheduleSlots(slots);
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Nao foi possivel buscar novos slots."));
+      setError(toErrorMessage(requestError, "Não foi possível buscar novos horários."));
     } finally {
       setIsSearchingSlots(false);
     }
@@ -234,7 +239,7 @@ export function AppointmentDrawer({
       });
       onUpdated(updated);
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Nao foi possivel remarcar o agendamento."));
+      setError(toErrorMessage(requestError, "Não foi possível remarcar o agendamento."));
     } finally {
       setIsSubmitting(false);
     }
@@ -253,13 +258,14 @@ export function AppointmentDrawer({
               {formatDateTime(appointment.startsAt, {
                 timeZone: timezone ?? undefined,
               })}{" "}
-              • {appointment.consultationTypeName}
+              · {appointment.consultationTypeName}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-border px-3 py-2 text-sm font-semibold text-ink transition hover:bg-accentSoft"
+            aria-label="Fechar painel do agendamento"
+            className={buttonVariants({ variant: "secondary", size: "sm" })}
           >
             Fechar
           </button>
@@ -275,7 +281,7 @@ export function AppointmentDrawer({
         </div>
 
         {error ? (
-          <Card className="mt-4 border-red-200 bg-red-50">
+          <Card className="mt-4 border-red-200 bg-red-50" role="alert">
             <p className="text-sm text-red-700">{error}</p>
           </Card>
         ) : null}
@@ -287,18 +293,18 @@ export function AppointmentDrawer({
               <p>Nome: {appointment.patient.fullName ?? "-"}</p>
               <p>Documento: {appointment.patient.documentNumber ?? "-"}</p>
               <p>
-                Contato principal: {" "}
-                {appointment.patient.contacts[0]?.value ?? "Nao informado"}
+                Contato principal:{" "}
+                {appointment.patient.contacts[0]?.value ?? "Não informado"}
               </p>
-              <p>Notas: {appointment.patient.notes ?? "Sem observacoes."}</p>
+              <p>Notas: {appointment.patient.notes ?? "Sem observações."}</p>
             </div>
           </Card>
 
           <Card className="space-y-3">
-            <h3 className="text-lg font-semibold text-ink">Operacao</h3>
+            <h3 className="text-lg font-semibold text-ink">Operação</h3>
             <div className="space-y-1 text-sm text-muted">
               <p>
-                Inicio:{" "}
+                Início:{" "}
                 {formatDateTime(appointment.startsAt, {
                   timeZone: timezone ?? undefined,
                 })}
@@ -335,7 +341,7 @@ export function AppointmentDrawer({
                   : "-"}
               </p>
               <p>
-                Inicio do atendimento:{" "}
+                Início do atendimento:{" "}
                 {appointment.startedAt
                   ? formatDateTime(appointment.startedAt, {
                       timeZone: timezone ?? undefined,
@@ -343,7 +349,7 @@ export function AppointmentDrawer({
                   : "-"}
               </p>
               <p>
-                Liberado para recepcao:{" "}
+                Liberado para recepção:{" "}
                 {appointment.awaitingPaymentAt
                   ? formatDateTime(appointment.awaitingPaymentAt, {
                       timeZone: timezone ?? undefined,
@@ -363,32 +369,54 @@ export function AppointmentDrawer({
         </div>
 
         <Card className="mt-4 space-y-3">
-          <h3 className="text-lg font-semibold text-ink">Acao rapida</h3>
+          <h3 className="text-lg font-semibold text-ink">Ação rápida</h3>
           <textarea
+            id="action-reason"
             className={adminTextareaClassName}
-            placeholder="Motivo ou observacao da acao"
+            placeholder="Motivo ou observação da ação (opcional)"
+            aria-label="Motivo ou observação da ação"
             value={reason}
             onChange={(event) => setReason(event.target.value)}
           />
           <div className="flex flex-wrap gap-2">
-            <Button type="button" onClick={() => void handleConfirm()} disabled={!canConfirm || isSubmitting}>
+            <Button
+              type="button"
+              variant="accent"
+              onClick={() => void handleConfirm()}
+              disabled={!canConfirm || isSubmitting}
+            >
               Confirmar
             </Button>
-            <Button type="button" onClick={() => void handleCheckIn()} disabled={!canCheckIn || isSubmitting}>
+            <Button
+              type="button"
+              variant="accent"
+              onClick={() => void handleCheckIn()}
+              disabled={!canCheckIn || isSubmitting}
+            >
               Check-in
             </Button>
             <Button
               type="button"
+              variant="warning"
               onClick={() => void handleComplete()}
               disabled={!canComplete || isSubmitting}
-              className="bg-amber-700"
             >
               Pagamento e baixa
             </Button>
-            <Button type="button" onClick={() => void handleCancel()} disabled={!canCancel || isSubmitting} className="bg-amber-700">
+            <Button
+              type="button"
+              variant="danger"
+              onClick={() => void handleCancel()}
+              disabled={!canCancel || isSubmitting}
+            >
               Cancelar
             </Button>
-            <Button type="button" onClick={() => void handleNoShow()} disabled={!canNoShow || isSubmitting} className="bg-rose-600">
+            <Button
+              type="button"
+              variant="danger"
+              onClick={() => void handleNoShow()}
+              disabled={!canNoShow || isSubmitting}
+            >
               No-show
             </Button>
           </div>
@@ -399,25 +427,32 @@ export function AppointmentDrawer({
             <div>
               <h3 className="text-lg font-semibold text-ink">Remarcar</h3>
               <p className="text-sm text-muted">
-                Buscar novos slots no mesmo profissional e procedimento estetico.
+                Busca slots no mesmo profissional e procedimento estético.
               </p>
             </div>
             <Button
               type="button"
+              variant="secondary"
               onClick={() => void handleSearchSlots()}
               disabled={!canReschedule || !rescheduleDate || isSearchingSlots}
             >
-              {isSearchingSlots ? "Buscando..." : "Buscar slots"}
+              {isSearchingSlots ? "Buscando..." : "Buscar horários"}
             </Button>
           </div>
 
-          <input
-            type="date"
-            className={adminInputClassName}
-            value={rescheduleDate}
-            onChange={(event) => setRescheduleDate(event.target.value)}
-            disabled={!canReschedule}
-          />
+          <div>
+            <label htmlFor="reschedule-date" className="sr-only">
+              Data para remarcação
+            </label>
+            <input
+              id="reschedule-date"
+              type="date"
+              className={adminInputClassName}
+              value={rescheduleDate}
+              onChange={(event) => setRescheduleDate(event.target.value)}
+              disabled={!canReschedule}
+            />
+          </div>
 
           {rescheduleSlots.length > 0 ? (
             <div className="grid gap-2 sm:grid-cols-2">
@@ -426,14 +461,14 @@ export function AppointmentDrawer({
                   key={slot.startsAt}
                   type="button"
                   onClick={() => void handleReschedule(slot)}
-                  className="rounded-lg border border-border px-3 py-2 text-left text-sm transition hover:bg-accentSoft"
+                  className="rounded-xl border border-border px-3 py-3 text-left text-sm transition hover:border-accent hover:bg-accentSoft"
                   disabled={isSubmitting}
                 >
                   <p className="font-semibold text-ink">
                     {formatTime(slot.startsAt, {
                       timeZone: timezone ?? undefined,
                     })}{" "}
-                    -{" "}
+                    –{" "}
                     {formatTime(slot.endsAt, {
                       timeZone: timezone ?? undefined,
                     })}
@@ -448,18 +483,19 @@ export function AppointmentDrawer({
             </div>
           ) : (
             <p className="text-sm text-muted">
-              Busque slots para remarcar este atendimento.
+              Selecione uma data e clique em "Buscar horários" para ver as opções disponíveis.
             </p>
           )}
         </Card>
 
         <Card className="mt-4 space-y-3">
-          <h3 className="text-lg font-semibold text-ink">Historico de status</h3>
+          <h3 className="text-lg font-semibold text-ink">Histórico de status</h3>
           <div className="space-y-2">
             {appointment.statusHistory.map((entry) => (
               <div key={entry.id} className="rounded-xl border border-border bg-white px-3 py-3 text-sm">
                 <p className="font-semibold text-ink">
-                  {entry.fromStatus ? getAppointmentStatusLabel(entry.fromStatus) : "Inicial"} {"->"}{" "}
+                  {entry.fromStatus ? getAppointmentStatusLabel(entry.fromStatus) : "Inicial"}{" "}
+                  →{" "}
                   {getAppointmentStatusLabel(entry.toStatus)}
                 </p>
                 <p className="text-xs text-muted">

@@ -8,4 +8,5 @@ export class CreateAppointmentDto {
   startsAt!: string;
   notes?: string;
   idempotencyKey!: string;
+  scheduleOverride?: boolean;
 }

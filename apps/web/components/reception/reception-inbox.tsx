@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import type {
   MessagingHandoffListItemPayload,
@@ -166,7 +166,7 @@ export function ReceptionInbox() {
       {
         label: "Alta prioridade",
         value: String(stats.high),
-        helper: "Pedem atencao imediata.",
+        helper: "Pedem atenção imediata.",
         tone: stats.high > 0 ? ("danger" as const) : ("default" as const),
       },
       {
@@ -284,7 +284,7 @@ export function ReceptionInbox() {
                 </div>
                 <h3 className="mt-4 text-lg font-semibold text-ink">Carregando conversa</h3>
                 <p className="mt-2 text-sm text-muted">
-                  Buscando o historico completo para atendimento humano.
+                  Buscando o histórico completo para atendimento humano.
                 </p>
               </div>
             </div>
@@ -296,7 +296,7 @@ export function ReceptionInbox() {
             <div className="w-full max-w-xl">
               <AdminEmptyState
                 title="Nenhum transbordo ativo"
-                description="A automacao esta dando conta das conversas neste momento."
+                description="A automação esta dando conta das conversas neste momento."
               />
             </div>
           </div>
@@ -367,7 +367,7 @@ export function ReceptionInbox() {
                   </div>
                   <h3 className="mt-4 text-lg font-semibold text-ink">Carregando conversa</h3>
                   <p className="mt-2 text-sm text-muted">
-                    Buscando o historico completo para atendimento humano.
+                    Buscando o histórico completo para atendimento humano.
                   </p>
                 </div>
               </div>
@@ -416,7 +416,7 @@ export function ReceptionInbox() {
                       </Button>
                     ) : selectedThread.openHandoff.assignedToUserId === user?.id ? (
                       <>
-                        <StatusPill label="Voce esta atendendo" tone="success" />
+                        <StatusPill label="Você está atendendo" tone="success" />
                         <Button
                           onClick={() =>
                             handleCloseHandoff(selectedThread.openHandoff!.id)

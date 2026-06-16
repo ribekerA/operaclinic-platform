@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { CurrentUser } from "../../auth/decorators/current-user.decorator";
 import { Roles } from "../../auth/decorators/roles.decorator";
 import { AuthGuard } from "../../auth/guards/auth.guard";
@@ -15,6 +15,14 @@ import { SchedulesService } from "./schedules.service";
 @Roles(...SCHEDULING_ADMIN_ROLES)
 export class SchedulesController {
   constructor(private readonly schedulesService: SchedulesService) {}
+
+  @Get()
+  async listSchedules(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Query("professionalId") professionalId: string,
+  ): Promise<ScheduleResponse[]> {
+    return this.schedulesService.listSchedules(actor, professionalId);
+  }
 
   @Post()
   async createSchedule(

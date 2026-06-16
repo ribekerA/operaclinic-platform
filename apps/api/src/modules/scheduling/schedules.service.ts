@@ -33,6 +33,21 @@ export class SchedulesService {
     private readonly auditService: AuditService,
   ) {}
 
+  async listSchedules(
+    actor: AuthenticatedUser,
+    professionalId: string,
+  ): Promise<ScheduleResponse[]> {
+    this.accessService.ensureAdminAccess(actor);
+    const tenantId = this.accessService.resolveActiveTenantId(actor);
+
+    const schedules = await this.prisma.professionalSchedule.findMany({
+      where: { tenantId, professionalId },
+      orderBy: [{ startTime: "asc" }],
+    });
+
+    return schedules.map((s) => this.mapSchedule(s));
+  }
+
   async createSchedule(
     actor: AuthenticatedUser,
     input: CreateScheduleDto,

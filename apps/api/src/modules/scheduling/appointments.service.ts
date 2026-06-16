@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -12,6 +13,7 @@ import {
   SlotHoldStatus,
 } from "@prisma/client";
 import { AuthenticatedUser } from "../../auth/interfaces/authenticated-user.interface";
+import { SCHEDULING_ADMIN_ROLES } from "./scheduling.constants";
 import { AUDIT_ACTIONS } from "../../common/audit/audit.constants";
 import { AuditService } from "../../common/audit/audit.service";
 import { PrismaService } from "../../database/prisma.service";
@@ -21,6 +23,7 @@ import { ListAppointmentsQueryDto } from "./dto/list-appointments-query.dto";
 import { RescheduleAppointmentDto } from "./dto/reschedule-appointment.dto";
 import { AppointmentResponse } from "./interfaces/appointment.response";
 import { ProfessionalWorkspaceGateway } from "./gateways/professional-workspace.gateway";
+import { ReceptionGateway } from "./gateways/reception.gateway";
 import { SchedulingAccessService } from "./scheduling-access.service";
 import { SchedulingConcurrencyService } from "./scheduling-concurrency.service";
 import {
@@ -99,6 +102,7 @@ export class AppointmentsService {
     private readonly timezoneService: SchedulingTimezoneService,
     private readonly auditService: AuditService,
     private readonly professionalWorkspaceGateway: ProfessionalWorkspaceGateway,
+    private readonly receptionGateway: ReceptionGateway,
   ) {}
 
   async createAppointment(
@@ -124,6 +128,16 @@ export class AppointmentsService {
     const room = this.normalizeOptionalText(input.room, 80, "room");
     const notes = this.normalizeOptionalText(input.notes, 5000, "notes");
     const startsAt = this.parseDateTime(input.startsAt, "startsAt");
+    const scheduleOverride = input.scheduleOverride === true;
+
+    if (scheduleOverride) {
+      const hasAdminRole = actor.roles.some((role) => SCHEDULING_ADMIN_ROLES.includes(role));
+      if (!hasAdminRole) {
+        throw new ForbiddenException(
+          "Only clinic managers and admins can schedule appointments outside configured hours.",
+        );
+      }
+    }
 
     if (startsAt.getTime() <= currentInstant.getTime()) {
       throw new BadRequestException("startsAt must be a future datetime.");
@@ -282,6 +296,7 @@ export class AppointmentsService {
               bufferAfterMinutes: bookingSnapshot.bufferAfterMinutes,
               unitId,
               ignoreHoldId: holdContext?.id,
+              scheduleOverride,
             },
             tx,
           );
@@ -315,6 +330,7 @@ export class AppointmentsService {
               bufferBeforeMinutes: bookingSnapshot.bufferBeforeMinutes,
               bufferAfterMinutes: bookingSnapshot.bufferAfterMinutes,
               status: AppointmentStatus.BOOKED,
+              outsideSchedule: scheduleOverride,
               idempotencyKey,
               notes,
               createdByUserId: actor.id,
@@ -365,6 +381,7 @@ export class AppointmentsService {
                 startsAt: created.startsAt.toISOString(),
                 endsAt: created.endsAt.toISOString(),
                 idempotencyKey,
+                ...(scheduleOverride && { outsideSchedule: true }),
               },
             },
             tx,
@@ -489,6 +506,16 @@ export class AppointmentsService {
     const currentInstant = await this.timezoneService.getCurrentInstant();
     const startsAt = this.parseDateTime(input.startsAt, "startsAt");
     const reason = this.normalizeOptionalText(input.reason, 255, "reason");
+    const scheduleOverride = input.scheduleOverride === true;
+
+    if (scheduleOverride) {
+      const hasAdminRole = actor.roles.some((role) => SCHEDULING_ADMIN_ROLES.includes(role));
+      if (!hasAdminRole) {
+        throw new ForbiddenException(
+          "Only clinic managers and admins can reschedule appointments outside configured hours.",
+        );
+      }
+    }
 
     if (startsAt.getTime() <= currentInstant.getTime()) {
       throw new BadRequestException("startsAt must be a future datetime.");
@@ -541,6 +568,7 @@ export class AppointmentsService {
               bufferAfterMinutes: appointment.bufferAfterMinutes,
               unitId,
               excludeAppointmentId: appointment.id,
+              scheduleOverride,
             },
             tx,
           );
@@ -563,6 +591,7 @@ export class AppointmentsService {
               unitId,
               slotHoldId: null,
               status: AppointmentStatus.RESCHEDULED,
+              outsideSchedule: scheduleOverride || appointment.outsideSchedule,
               confirmedAt: null,
               checkedInAt: null,
               calledAt: null,
@@ -1609,6 +1638,7 @@ export class AppointmentsService {
       noShowAt: appointment.noShowAt,
       idempotencyKey: appointment.idempotencyKey,
       cancellationReason: appointment.cancellationReason,
+      outsideSchedule: appointment.outsideSchedule,
       notes: appointment.notes,
       createdByUserId: appointment.createdByUserId,
       updatedByUserId: appointment.updatedByUserId,
@@ -1659,6 +1689,20 @@ export class AppointmentsService {
     } catch (error) {
       this.logger.warn(
         `Failed to emit professional workspace realtime event appointment=${appointment.id}: ${String(error)}`,
+      );
+    }
+
+    try {
+      this.receptionGateway.emitAppointmentUpdated({
+        appointmentId: appointment.id,
+        tenantId: appointment.tenantId,
+        status: appointment.status,
+        event,
+        occurredAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Failed to emit reception realtime event appointment=${appointment.id}: ${String(error)}`,
       );
     }
   }
