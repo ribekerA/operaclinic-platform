@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -15,8 +16,11 @@ import { RoleGuard } from "../../auth/guards/role.guard";
 import { AuthenticatedUser } from "../../auth/interfaces/authenticated-user.interface";
 import {
   CreateProcedureProtocolDto,
+  EnrollPatientInProtocolDto,
   ProcedureProtocolsService,
   UpdateProcedureProtocolDto,
+  UpdateProtocolInstanceDto,
+  UpdateProtocolSessionDto,
 } from "./procedure-protocols.service";
 import { RoleCode } from "@prisma/client";
 
@@ -71,5 +75,55 @@ export class ProcedureProtocolsController {
     @Body() input: UpdateProcedureProtocolDto,
   ) {
     return this.service.update(actor, protocolId, input);
+  }
+
+  // Patient protocol instances
+
+  @Post("instances/enroll")
+  @Roles(...PROTOCOL_ADMIN_ROLES, RoleCode.RECEPTION)
+  enrollPatient(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Body() input: EnrollPatientInProtocolDto,
+  ) {
+    return this.service.enrollPatient(actor, input);
+  }
+
+  @Get("instances/patient/:patientId")
+  @Roles(...PROTOCOL_READ_ROLES)
+  listPatientInstances(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param("patientId") patientId: string,
+  ) {
+    return this.service.listPatientInstances(actor, patientId);
+  }
+
+  @Get("instances/:instanceId")
+  @Roles(...PROTOCOL_READ_ROLES)
+  getPatientInstance(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param("instanceId") instanceId: string,
+  ) {
+    return this.service.getPatientInstance(actor, instanceId);
+  }
+
+  @Patch("instances/:instanceId")
+  @Roles(...PROTOCOL_ADMIN_ROLES, RoleCode.RECEPTION)
+  updatePatientInstance(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param("instanceId") instanceId: string,
+    @Body() input: UpdateProtocolInstanceDto,
+  ) {
+    return this.service.updatePatientInstance(actor, instanceId, input);
+  }
+
+  @Patch("instances/:instanceId/sessions/:seq")
+  @Roles(...PROTOCOL_ADMIN_ROLES, RoleCode.RECEPTION, RoleCode.PROFESSIONAL)
+  updateProtocolSession(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param("instanceId") instanceId: string,
+    @Param("seq", ParseIntPipe) seq: number,
+    @Body() input: UpdateProtocolSessionDto,
+  ) {
+    return this.service.updateProtocolSession(actor, instanceId, seq, input);
   }
 }
