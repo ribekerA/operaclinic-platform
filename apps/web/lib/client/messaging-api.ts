@@ -66,6 +66,18 @@ export async function createMessagingIntegration(
   );
 }
 
+export async function completeWhatsAppEmbeddedSignup(
+  code: string,
+): Promise<CreateMessagingIntegrationConnectionResponsePayload> {
+  return requestJson<CreateMessagingIntegrationConnectionResponsePayload>(
+    "/api/integrations/embedded-signup",
+    {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    },
+  );
+}
+
 export async function getMessagingThread(
   threadId: string,
 ): Promise<MessagingThreadDetailPayload> {

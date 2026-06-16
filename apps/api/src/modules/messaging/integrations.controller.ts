@@ -9,6 +9,7 @@ import { Roles } from "../../auth/decorators/roles.decorator";
 import { AuthGuard } from "../../auth/guards/auth.guard";
 import { RoleGuard } from "../../auth/guards/role.guard";
 import { AuthenticatedUser } from "../../auth/interfaces/authenticated-user.interface";
+import { CompleteEmbeddedSignupDto } from "./dto/complete-embedded-signup.dto";
 import { CreateIntegrationConnectionDto } from "./dto/create-integration-connection.dto";
 import { IntegrationConnectionsService } from "./integration-connections.service";
 
@@ -33,5 +34,13 @@ export class IntegrationsController {
     @Body() input: CreateIntegrationConnectionDto,
   ): Promise<CreateMessagingIntegrationConnectionResponsePayload> {
     return this.integrationConnectionsService.createConnection(actor, input);
+  }
+
+  @Post("whatsapp/embedded-signup")
+  async completeEmbeddedSignup(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Body() input: CompleteEmbeddedSignupDto,
+  ): Promise<CreateMessagingIntegrationConnectionResponsePayload> {
+    return this.integrationConnectionsService.completeEmbeddedSignup(actor, input.code);
   }
 }

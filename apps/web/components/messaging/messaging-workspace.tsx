@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import type {
   MessageEventDirection,
@@ -82,7 +82,7 @@ function getAssigneeLabel(handoff: MessagingHandoffPayload | null): string {
   return (
     handoff.assignedToUser?.fullName ??
     handoff.assignedToUser?.email ??
-    "Fila da recepcao"
+    "Fila da recepção"
   );
 }
 
@@ -115,11 +115,11 @@ function getEventSummary(event: MessagingEventPayload): string {
     case "MESSAGE_RECEIVED":
       return event.contentText ?? "Mensagem inbound registrada.";
     case "MESSAGE_SENT":
-      return event.contentText ?? "Mensagem enviada pela recepcao.";
+      return event.contentText ?? "Mensagem enviada pela recepção.";
     case "MESSAGE_SEND_FAILED":
       return readMetadataText(event.metadata, "error") ?? "Falha no envio da mensagem.";
     case "HANDOFF_OPENED":
-      return readMetadataText(event.metadata, "reason") ?? "Handoff aberto para recepcao.";
+      return readMetadataText(event.metadata, "reason") ?? "Handoff aberto para recepção.";
     case "HANDOFF_ASSIGNED":
       return "Handoff atribuido para atendimento humano.";
     case "HANDOFF_CLOSED":
@@ -154,7 +154,7 @@ function getLastInboundPreview(thread: MessagingThreadDetailPayload): string {
     .reverse()
     .find((event) => event.direction === "INBOUND" && event.contentText);
 
-  return inboundEvent?.contentText ?? thread.lastMessagePreview ?? "Sem mensagem legivel.";
+  return inboundEvent?.contentText ?? thread.lastMessagePreview ?? "Sem mensagem legível.";
 }
 
 export function MessagingWorkspace() {
@@ -274,7 +274,7 @@ export function MessagingWorkspace() {
       setHandoffs(handoffList);
     } catch (requestError) {
       setError(
-        toErrorMessage(requestError, "Nao foi possivel carregar a inbox de mensagens."),
+        toErrorMessage(requestError, "Não foi possível carregar a inbox de mensagens."),
       );
     } finally {
       setIsLoading(false);
@@ -289,7 +289,7 @@ export function MessagingWorkspace() {
       setSelectedThread(await getMessagingThread(threadId));
     } catch (requestError) {
       setError(
-        toErrorMessage(requestError, "Nao foi possivel abrir a thread selecionada."),
+        toErrorMessage(requestError, "Não foi possível abrir a thread selecionada."),
       );
     } finally {
       setIsLoadingThread(false);
@@ -353,7 +353,7 @@ export function MessagingWorkspace() {
       setError(
         toErrorMessage(
           requestError,
-          "Nao foi possivel buscar pacientes para esta thread.",
+          "Não foi possível buscar pacientes para esta thread.",
         ),
       );
     } finally {
@@ -369,7 +369,7 @@ export function MessagingWorkspace() {
     }
 
     if (!handoffReason.trim()) {
-      setError("Informe o motivo do handoff para a recepcao.");
+      setError("Informe o motivo do handoff para a recepção.");
       return;
     }
 
@@ -390,7 +390,7 @@ export function MessagingWorkspace() {
       await refreshAfterMutation(selectedThread.id);
     } catch (requestError) {
       setError(
-        toErrorMessage(requestError, "Nao foi possivel abrir o handoff desta thread."),
+        toErrorMessage(requestError, "Não foi possível abrir o handoff desta thread."),
       );
     } finally {
       setActiveAction(null);
@@ -410,10 +410,10 @@ export function MessagingWorkspace() {
       await assignMessagingHandoff(handoff.id, {
         assignedToUserId: sessionUser.id,
       });
-      setSuccess("Handoff atribuido para sua recepcao.");
+      setSuccess("Handoff atribuido para sua recepção.");
       await refreshAfterMutation(handoff.threadId);
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Nao foi possivel assumir este handoff."));
+      setError(toErrorMessage(requestError, "Não foi possível assumir este handoff."));
     } finally {
       setActiveAction(null);
     }
@@ -441,7 +441,7 @@ export function MessagingWorkspace() {
       await refreshAfterMutation(activeHandoff.threadId);
     } catch (requestError) {
       setError(
-        toErrorMessage(requestError, "Nao foi possivel fechar o handoff desta thread."),
+        toErrorMessage(requestError, "Não foi possível fechar o handoff desta thread."),
       );
     } finally {
       setActiveAction(null);
@@ -465,7 +465,7 @@ export function MessagingWorkspace() {
       setError(
         toErrorMessage(
           requestError,
-          "Nao foi possivel atualizar o paciente desta thread.",
+          "Não foi possível atualizar o paciente desta thread.",
         ),
       );
     } finally {
@@ -492,7 +492,7 @@ export function MessagingWorkspace() {
       setResolveNote("");
       await refreshAfterMutation(selectedThread.id);
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Nao foi possivel resolver esta thread."));
+      setError(toErrorMessage(requestError, "Não foi possível resolver esta thread."));
     } finally {
       setActiveAction(null);
     }
@@ -525,7 +525,7 @@ export function MessagingWorkspace() {
       setError(
         toErrorMessage(
           requestError,
-          "Nao foi possivel enviar a mensagem desta thread.",
+          "Não foi possível enviar a mensagem desta thread.",
         ),
       );
     } finally {
@@ -538,7 +538,7 @@ export function MessagingWorkspace() {
       <Card className="space-y-3 bg-white">
         <h1 className="text-2xl font-semibold text-ink">Mensagens e handoffs</h1>
         <p className="text-sm leading-6 text-muted">
-          Esta area e reservada para recepcao, gestores e administracao da clinica
+          Esta área é reservada para recepção, gestores e administração da clínica
           tratarem conversas que exigem atendimento humano.
         </p>
       </Card>
@@ -550,7 +550,7 @@ export function MessagingWorkspace() {
       <AdminPageHeader
         eyebrow="Clinica | Mensageria"
         title="Conversas que pedem atendimento humano"
-        description="A recepcao assume a excecao, vincula o paciente com seguranca e resolve o caso sem poluir a agenda."
+        description="A recepção assume a exceção, vincula o paciente com seguranca e resolve o caso sem poluir a agenda."
         actions={
           <Button type="button" onClick={() => void loadWorkspace()} disabled={isLoading}>
             {isLoading ? "Atualizando..." : "Atualizar inbox"}
@@ -571,7 +571,7 @@ export function MessagingWorkspace() {
               tone: metrics.openHandoffs > 0 ? ("warning" as const) : ("default" as const),
             },
             {
-              label: "Fila da recepcao",
+              label: "Fila da recepção",
               value: String(metrics.queue),
               helper: "Casos sem dono no momento.",
             },
@@ -590,7 +590,7 @@ export function MessagingWorkspace() {
           <AdminSectionHeader
             eyebrow="Filtros"
             title="Encontre a conversa certa"
-            description="Busque por paciente, contato ou estado da thread e atualize a fila sem recarregar a pagina inteira."
+            description="Busque por paciente, contato ou estado da thread e atualize a fila sem recarregar a página inteira."
           />
 
           <div className="grid gap-3 lg:grid-cols-[1fr_210px_190px_210px]">
@@ -641,7 +641,7 @@ export function MessagingWorkspace() {
         <Card className="space-y-4 bg-white">
           <AdminSectionHeader
             eyebrow="Fluxo"
-            title="Regras da operacao"
+            title="Regras da operação"
             description="Como tratar a conversa sem misturar atendimento humano com agendamento."
             actions={<StatusPill label={`${metrics.openHandoffs} ativos`} tone="warning" />}
           />
@@ -652,7 +652,7 @@ export function MessagingWorkspace() {
                 <p className="font-semibold text-ink">Handoff antes da resposta humana</p>
               </div>
               <p className="mt-2 text-sm leading-6 text-muted">
-                A recepcao so envia mensagem pela thread depois que o handoff esta aberto.
+                A recepção so envia mensagem pela thread depois que o handoff esta aberto.
               </p>
             </div>
             <div className="rounded-2xl border border-border bg-panel/50 px-4 py-4">
@@ -661,7 +661,7 @@ export function MessagingWorkspace() {
                 <p className="font-semibold text-ink">Vinculo de paciente seguro</p>
               </div>
               <p className="mt-2 text-sm leading-6 text-muted">
-                A thread pode seguir sem paciente definitivo ate a recepcao confirmar o vinculo certo.
+                A thread pode seguir sem paciente definitivo ate a recepção confirmar o vinculo certo.
               </p>
             </div>
             <div className="rounded-2xl border border-border bg-panel/50 px-4 py-4">
@@ -670,7 +670,7 @@ export function MessagingWorkspace() {
                 <p className="font-semibold text-ink">Agenda continua fora da thread</p>
               </div>
               <p className="mt-2 text-sm leading-6 text-muted">
-                Esta area trata conversa, contexto e excecao. Agendamento continua na recepcao e no scheduling.
+                Esta area trata conversa, contexto e exceção. Agendamento continua na recepção e no scheduling.
               </p>
             </div>
           </div>
@@ -742,7 +742,7 @@ export function MessagingWorkspace() {
                       </div>
                       <p className="text-xs text-muted">{thread.contactDisplayValue}</p>
                       <p className="text-sm text-muted">
-                        {thread.lastMessagePreview ?? "Thread sem mensagem legivel ainda."}
+                        {thread.lastMessagePreview ?? "Thread sem mensagem legível ainda."}
                       </p>
                     </div>
 
@@ -770,7 +770,7 @@ export function MessagingWorkspace() {
             <div>
               <h2 className="text-lg font-semibold text-ink">Handoffs abertos</h2>
               <p className="text-sm text-muted">
-                Fila da recepcao com prioridade para o que ainda nao tem dono.
+                Fila da recepção com prioridade para o que ainda não tem dono.
               </p>
             </div>
             <StatusPill label={`${filteredHandoffs.length} itens`} tone="warning" />
@@ -779,7 +779,7 @@ export function MessagingWorkspace() {
           {filteredHandoffs.length === 0 ? (
             <AdminEmptyState
               title="Nenhum handoff aberto"
-              description="Nao ha itens na fila para o filtro atual."
+              description="Não ha itens na fila para o filtro atual."
             />
           ) : (
             <div className="space-y-3">
@@ -841,7 +841,7 @@ export function MessagingWorkspace() {
           <Card className="space-y-3 bg-white xl:col-span-2">
             <AdminEmptyState
               title="Selecione uma thread para operar"
-              description="A recepcao escolhe a conversa certa e trabalha o contexto sem sair do painel."
+              description="A recepção escolhe a conversa certa e trabalha o contexto sem sair do painel."
             />
           </Card>
         ) : isLoadingThread || !selectedThread ? (
@@ -908,7 +908,7 @@ export function MessagingWorkspace() {
                   <div>
                     <h3 className="text-base font-semibold text-ink">Conversa e rastreabilidade</h3>
                     <p className="text-sm text-muted">
-                      O historico mostra mensagem, sistema e handoff no mesmo fluxo.
+                      O histórico mostra mensagem, sistema e handoff no mesmo fluxo.
                     </p>
                   </div>
                   <StatusPill label={`${selectedThread.events.length} eventos`} />
@@ -918,7 +918,7 @@ export function MessagingWorkspace() {
                   {selectedThread.events.length === 0 ? (
                     <AdminEmptyState
                       title="Timeline vazia"
-                      description="Ainda nao ha eventos legiveis para esta conversa."
+                      description="Ainda não ha eventos legiveis para esta conversa."
                     />
                   ) : (
                     selectedThread.events.map((event) => (
@@ -956,7 +956,7 @@ export function MessagingWorkspace() {
                   <div>
                     <h3 className="text-base font-semibold text-ink">Resposta humana</h3>
                     <p className="text-sm text-muted">
-                      A recepcao continua a conversa somente com handoff aberto.
+                      A recepção continua a conversa somente com handoff aberto.
                     </p>
                   </div>
                   {activeHandoff ? (
@@ -972,12 +972,12 @@ export function MessagingWorkspace() {
                       value={replyText}
                       onChange={(event) => setReplyText(event.target.value)}
                       rows={4}
-                      placeholder="Escreva a resposta da recepcao para a paciente."
+                      placeholder="Escreva a resposta da recepção para a paciente."
                       className={adminTextareaClassName}
                     />
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs text-muted">
-                        Use esta resposta para orientar e fechar contexto. Agendamento continua no painel de recepcao.
+                        Use esta resposta para orientar e fechar contexto. Agendamento continua no painel de recepção.
                       </p>
                       <Button
                         type="submit"
@@ -1004,7 +1004,7 @@ export function MessagingWorkspace() {
                   <div>
                     <h3 className="text-base font-semibold text-ink">Contexto operacional</h3>
                     <p className="text-sm text-muted">
-                      Paciente, handoff e acoes rapidas no mesmo lado da operacao.
+                      Paciente, handoff e ações rápidas no mesmo lado da operação.
                     </p>
                   </div>
                   <StatusPill label={selectedThread.integration.displayName} />
@@ -1033,7 +1033,7 @@ export function MessagingWorkspace() {
                       {activeHandoff.note ?? "Sem observacao complementar."}
                     </p>
                     <p className="mt-3 text-xs text-muted">
-                      Responsavel: {getAssigneeLabel(activeHandoff)}
+                      Responsável: {getAssigneeLabel(activeHandoff)}
                     </p>
                     <p className="mt-1 text-xs text-muted">
                       Origem {getHandoffSourceLabel(activeHandoff.source).toLowerCase()} - {formatDateTime(activeHandoff.openedAt)}
@@ -1061,7 +1061,7 @@ export function MessagingWorkspace() {
                 <div>
                   <h3 className="text-base font-semibold text-ink">Paciente e cadastro</h3>
                   <p className="text-sm text-muted">
-                    Vincule com seguranca para a recepcao continuar o fluxo certo.
+                    Vincule com seguranca para a recepção continuar o fluxo certo.
                   </p>
                 </div>
 
@@ -1145,7 +1145,7 @@ export function MessagingWorkspace() {
 
               <Card className="space-y-4 bg-white">
                 <div>
-                  <h3 className="text-base font-semibold text-ink">Acoes da thread</h3>
+                  <h3 className="text-base font-semibold text-ink">Ações da thread</h3>
                   <p className="text-sm text-muted">
                     Encaminhe, feche o handoff ou resolva a conversa sem misturar agenda aqui.
                   </p>
@@ -1157,7 +1157,7 @@ export function MessagingWorkspace() {
                       value={closeNote}
                       onChange={(event) => setCloseNote(event.target.value)}
                       rows={3}
-                      placeholder="Resumo rapido do atendimento humano."
+                      placeholder="Resumo rápido do atendimento humano."
                       className={adminTextareaClassName}
                     />
                     <label className="flex items-center gap-3 rounded-2xl border border-border px-4 py-3 text-sm text-ink">
@@ -1175,7 +1175,7 @@ export function MessagingWorkspace() {
                 ) : selectedThread.status === "CLOSED" ? (
                   <AdminEmptyState
                     title="Thread resolvida"
-                    description="Esta conversa ja foi encerrada e nao precisa de novas acoes."
+                    description="Esta conversa já foi encerrada e nao precisa de novas ações."
                   />
                 ) : (
                   <form onSubmit={(event) => void handleOpenHandoff(event)} className="space-y-3">
@@ -1190,7 +1190,7 @@ export function MessagingWorkspace() {
                       value={handoffNote}
                       onChange={(event) => setHandoffNote(event.target.value)}
                       rows={3}
-                      placeholder="Contexto util para a recepcao."
+                      placeholder="Contexto util para a recepção."
                       className={adminTextareaClassName}
                     />
                     <Button type="submit" disabled={activeAction === "open-handoff"}>

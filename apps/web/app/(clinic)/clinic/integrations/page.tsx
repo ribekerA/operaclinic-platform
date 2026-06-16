@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -16,6 +16,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { useSession } from "@/hooks/use-session";
 import { toErrorMessage } from "@/lib/client/http";
 import {
+  completeWhatsAppEmbeddedSignup,
   createMessagingIntegration,
   listMessagingIntegrations,
 } from "@/lib/client/messaging-api";
@@ -86,6 +87,13 @@ export default function ClinicIntegrationsPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
+  const [fbSdkReady, setFbSdkReady] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
+
+  const metaAppId = process.env.NEXT_PUBLIC_META_APP_ID ?? "";
+  const metaConfigId = process.env.NEXT_PUBLIC_META_EMBEDDED_SIGNUP_CONFIG_ID ?? "";
+  const embeddedSignupAvailable = Boolean(metaAppId && metaConfigId);
 
   const loadIntegrations = useCallback(async () => {
     setIsLoading(true);
@@ -99,7 +107,7 @@ export default function ClinicIntegrationsPage() {
       setIntegrations(nextIntegrations);
       setReadiness(nextReadiness);
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Nao foi possivel carregar integracoes."));
+      setError(toErrorMessage(requestError, "Não foi possível carregar integrações."));
     } finally {
       setIsLoading(false);
     }
@@ -108,6 +116,27 @@ export default function ClinicIntegrationsPage() {
   useEffect(() => {
     void loadIntegrations();
   }, [loadIntegrations]);
+
+  // Load Meta FB SDK when embedded signup is available
+  useEffect(() => {
+    if (!embeddedSignupAvailable || typeof window === "undefined") return;
+
+    if (window.FB) {
+      setFbSdkReady(true);
+      return;
+    }
+
+    window.fbAsyncInit = function () {
+      window.FB.init({ appId: metaAppId, version: "v21.0", xfbml: false, autoLogAppEvents: true });
+      setFbSdkReady(true);
+    };
+
+    const script = document.createElement("script");
+    script.src = "https://connect.facebook.net/pt_BR/sdk.js";
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+  }, [embeddedSignupAvailable, metaAppId]);
 
   const metrics = useMemo(() => {
     const active = integrations.filter((item) => item.status === "ACTIVE").length;
@@ -120,18 +149,18 @@ export default function ClinicIntegrationsPage() {
       {
         label: "Conexoes",
         value: String(integrations.length),
-        helper: "Integrações registradas para a clinica.",
+        helper: "Integrações registradas para a clínica.",
       },
       {
         label: "Ativas",
         value: String(active),
-        helper: "Disponiveis para inbound, outbound e handoff.",
+        helper: "Disponíveis para inbound, outbound e handoff.",
         tone: active > 0 ? ("accent" as const) : ("default" as const),
       },
       {
         label: "Meta",
         value: String(meta),
-        helper: "Conexoes oficiais do WhatsApp Cloud API.",
+        helper: "Conexões oficiais do WhatsApp Cloud API.",
       },
       {
         label: "Pendencias",
@@ -145,8 +174,8 @@ export default function ClinicIntegrationsPage() {
   const shortcuts = useMemo(
     () => [
       {
-        label: "Nova conexao",
-        description: "Cadastrar WhatsApp da clinica.",
+        label: "Nova conexão",
+        description: "Cadastrar WhatsApp da clínica.",
         href: "#nova-integracao",
       },
       {
@@ -155,7 +184,7 @@ export default function ClinicIntegrationsPage() {
         href: "/clinic/messaging",
       },
       {
-        label: "Recepcao",
+        label: "Recepção",
         description: "Validar agenda e atendimento.",
         href: "/clinic/reception",
       },
@@ -179,30 +208,30 @@ export default function ClinicIntegrationsPage() {
         details: readiness
           ? readiness.checks.database.latencyMs !== null
             ? `${readiness.checks.database.latencyMs} ms no readiness.`
-            : "Sem latencia disponivel."
-          : "Readiness ainda nao carregado.",
+            : "Sem latência disponível."
+          : "Readiness ainda não carregado.",
       },
       {
         label: "Meta habilitado",
         status: readiness?.checks.messaging.metaEnabled ? "ok" : "degraded",
         details: readiness?.checks.messaging.metaEnabled
-          ? "Variaveis Meta estao habilitadas no ambiente."
+          ? "Variáveis Meta estão habilitadas no ambiente."
           : "Ative MESSAGING_WHATSAPP_META_ENABLED e credenciais Meta.",
       },
       {
-        label: "Conexao ativa",
+        label: "Conexão ativa",
         status: activeConnections.length > 0 ? "ok" : "degraded",
         details:
           activeConnections.length > 0
-            ? `${activeConnections.length} conexao(oes) ativa(s) nesta clinica.`
-            : "Crie uma conexao antes do teste de webhook.",
+            ? `${activeConnections.length} conexão(ões) ativa(s) nesta clínica.`
+            : "Crie uma conexão antes do teste de webhook.",
       },
       {
         label: "Phone number id",
         status: hasExternalAccountId ? "ok" : "degraded",
         details: hasExternalAccountId
-          ? "Existe conexao Meta com phone number id preenchido."
-          : "Preencha o phone number id da Meta na conexao oficial.",
+          ? "Existe conexão Meta com phone number id preenchido."
+          : "Preencha o phone number id da Meta na conexão oficial.",
       },
       {
         label: "Stripe",
@@ -214,8 +243,8 @@ export default function ClinicIntegrationsPage() {
         details: readiness
           ? readiness.checks.payment.webhookConfigured
             ? `Provider ${readiness.checks.payment.provider.toUpperCase()} com webhook configurado.`
-            : "Webhook Stripe ainda nao configurado."
-          : "Readiness ainda nao carregado.",
+            : "Webhook Stripe ainda não configurado."
+          : "Readiness ainda não carregado.",
       },
       {
         label: "Agentes",
@@ -226,8 +255,8 @@ export default function ClinicIntegrationsPage() {
         details: readiness
           ? readiness.checks.agent.enabled
             ? `Rollout em ${readiness.checks.agent.rolloutPercentage}%.`
-            : "Agent layer esta desligado."
-          : "Readiness ainda nao carregado.",
+            : "Agent layer está desligado."
+          : "Readiness ainda não carregado.",
       },
     ] satisfies Array<{
       label: string;
@@ -246,6 +275,43 @@ export default function ClinicIntegrationsPage() {
     }
 
     return "warning";
+  }
+
+  function handleEmbeddedSignup(): void {
+    if (!canManage || !fbSdkReady || isSigningUp) return;
+
+    setIsSigningUp(true);
+    setError(null);
+    setSuccess(null);
+
+    window.FB.login(
+      async (response: { authResponse?: { code?: string } }) => {
+        if (!response.authResponse?.code) {
+          setIsSigningUp(false);
+          setError("Conexão cancelada ou não autorizada pelo Meta.");
+          return;
+        }
+
+        try {
+          const result = await completeWhatsAppEmbeddedSignup(response.authResponse.code);
+          setLastCreated(result);
+          setSuccess(
+            "WhatsApp conectado com sucesso! Configure o webhook no Meta usando os dados abaixo.",
+          );
+          await loadIntegrations();
+        } catch (requestError) {
+          setError(toErrorMessage(requestError, "Falha ao finalizar conexão com a Meta."));
+        } finally {
+          setIsSigningUp(false);
+        }
+      },
+      {
+        config_id: metaConfigId,
+        response_type: "code",
+        override_default_response_type: true,
+        extras: { setup: {}, featureType: "", sessionInfoVersion: "2" },
+      },
+    );
   }
 
   async function handleCreate(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -271,10 +337,10 @@ export default function ClinicIntegrationsPage() {
 
       setLastCreated(response);
       setForm(defaultForm);
-      setSuccess("Conexao criada. Configure o webhook no provedor antes do piloto.");
+      setSuccess("Conexão criada. Configure o webhook no provedor antes do piloto.");
       await loadIntegrations();
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Falha ao criar integracao."));
+      setError(toErrorMessage(requestError, "Falha ao criar integração."));
     } finally {
       setIsCreating(false);
     }
@@ -283,9 +349,9 @@ export default function ClinicIntegrationsPage() {
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Clinica | Setup"
-        title="Integracoes"
-        description="Configure as conexoes externas que precisam estar prontas antes de WhatsApp, handoff e automacoes entrarem em operacao real."
+        eyebrow="Clínica | Setup"
+        title="Integrações"
+        description="Configure as conexões externas que precisam estar prontas antes de WhatsApp, handoff e automações entrarem em operação real."
         actions={
           <Button
             type="button"
@@ -300,13 +366,13 @@ export default function ClinicIntegrationsPage() {
         }
       >
         <AdminMetricGrid items={metrics} isLoading={isLoading && integrations.length === 0} />
-        <AdminShortcutPanel title="Acoes rapidas" items={shortcuts} />
+        <AdminShortcutPanel title="Ações rápidas" items={shortcuts} />
       </AdminPageHeader>
 
       {!canManage ? (
         <Card className="border-amber-200 bg-amber-50" role="alert">
           <p className="text-sm text-amber-700">
-            Apenas admin e gestor da clinica podem criar conexoes externas.
+            Apenas admin e gestor da clínica podem criar conexões externas.
           </p>
         </Card>
       ) : null}
@@ -326,9 +392,9 @@ export default function ClinicIntegrationsPage() {
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="space-y-4">
           <AdminSectionHeader
-            eyebrow="Conexoes"
+            eyebrow="Conexões"
             title="WhatsApp cadastrado"
-            description="A readiness considera a conexao ativa e o phone number id preenchido para liberar validacao real."
+            description="A readiness considera a conexão ativa e o phone number id preenchido para liberar validação real."
             actions={<AdminCountBadge value={integrations.length} loading={isLoading} />}
           />
 
@@ -367,13 +433,13 @@ export default function ClinicIntegrationsPage() {
                     <div>
                       <dt className="text-muted">Numero</dt>
                       <dd className="font-medium text-ink">
-                        {integration.phoneNumber || "Nao informado"}
+                        {integration.phoneNumber || "Não informado"}
                       </dd>
                     </div>
                     <div>
                       <dt className="text-muted">Phone number id</dt>
                       <dd className="font-medium text-ink">
-                        {integration.externalAccountId || "Nao informado"}
+                        {integration.externalAccountId || "Não informado"}
                       </dd>
                     </div>
                     <div>
@@ -394,8 +460,8 @@ export default function ClinicIntegrationsPage() {
             </div>
           ) : (
             <AdminEmptyState
-              title="Nenhuma integracao criada"
-              description="Cadastre uma conexao WhatsApp para liberar webhook, inbox e testes de campo controlados."
+              title="Nenhuma integração criada"
+              description="Cadastre uma conexão WhatsApp para liberar webhook, inbox e testes de campo controlados."
             />
           )}
         </Card>
@@ -405,7 +471,7 @@ export default function ClinicIntegrationsPage() {
           <AdminSectionHeader
             eyebrow="Readiness"
             title="Pronto para piloto?"
-            description="Checklist tecnico minimo para liberar WhatsApp real, billing e agentes em operacao controlada."
+            description="Checklist técnico mínimo para liberar WhatsApp real, billing e agentes em operação controlada."
             actions={
               readiness ? (
                 <StatusPill label={readiness.status} tone={getStatusTone(readiness.status)} />
@@ -432,110 +498,169 @@ export default function ClinicIntegrationsPage() {
         <Card id="nova-integracao" className="space-y-4">
           <AdminSectionHeader
             eyebrow="Setup WhatsApp"
-            title="Nova conexao"
-            description="Use os dados da Meta Cloud API. O token global e app secret continuam no ambiente da API."
+            title="Conectar WhatsApp"
+            description={
+              embeddedSignupAvailable
+                ? "Conecte o número da clínica em poucos cliques via conta Meta Business. Sem copiar tokens manualmente."
+                : "Configure manualmente usando os dados da Meta Cloud API."
+            }
           />
 
-          <form className="space-y-4" onSubmit={handleCreate}>
-            <label className="block space-y-2 text-sm font-medium text-ink">
-              <span>Provedor</span>
-              <select
-                className={adminInputClassName}
-                value={form.provider}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    provider: event.target.value as MessagingIntegrationProvider,
-                  }))
-                }
-                disabled={!canManage || isCreating}
+          {/* ── Primary: Meta Embedded Signup ── */}
+          {embeddedSignupAvailable && canManage ? (
+            <div className="rounded-[20px] border border-slate-200 bg-slate-50/80 p-5 text-center">
+              <div className="mb-3 text-3xl">💬</div>
+              <p className="text-sm font-semibold text-ink">
+                Conectar via conta Meta Business
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                Selecione sua conta e número de WhatsApp Business. A autorização é feita
+                diretamente no painel da Meta — sem precisar copiar tokens.
+              </p>
+              <Button
+                type="button"
+                className="mt-4 w-full bg-[#1877F2] text-white hover:bg-[#166FE5] disabled:opacity-60"
+                onClick={handleEmbeddedSignup}
+                disabled={!fbSdkReady || isSigningUp || integrations.length > 0}
               >
-                <option value="WHATSAPP_META">Meta WhatsApp</option>
-                <option value="WHATSAPP_MOCK">WhatsApp mock</option>
-              </select>
-            </label>
+                {isSigningUp
+                  ? "Aguardando autorização..."
+                  : !fbSdkReady
+                    ? "Carregando SDK Meta..."
+                    : integrations.length > 0
+                      ? "Conexão já configurada"
+                      : "Entrar com Meta Business"}
+              </Button>
+              {integrations.length > 0 ? (
+                <p className="mt-2 text-xs text-muted">
+                  Esta clínica já possui uma conexão WhatsApp ativa.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
-            <label className="block space-y-2 text-sm font-medium text-ink">
-              <span>Nome da conexao</span>
-              <input
-                className={adminInputClassName}
-                value={form.displayName}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, displayName: event.target.value }))
-                }
-                placeholder="WhatsApp oficial da Clinica"
-                required
-                disabled={!canManage || isCreating}
-              />
-            </label>
+          {/* ── Toggle: Manual form ── */}
+          {canManage ? (
+            <button
+              type="button"
+              onClick={() => setShowManualForm((v) => !v)}
+              className="w-full text-left text-xs font-semibold uppercase tracking-[0.14em] text-muted hover:text-ink"
+            >
+              {showManualForm ? "▲" : "▼"}{" "}
+              {embeddedSignupAvailable
+                ? "Configuração avançada (manual)"
+                : "Configurar manualmente"}
+            </button>
+          ) : null}
 
-            <label className="block space-y-2 text-sm font-medium text-ink">
-              <span>Numero WhatsApp</span>
-              <input
-                className={adminInputClassName}
-                value={form.phoneNumber}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, phoneNumber: event.target.value }))
-                }
-                placeholder="+5511999999999"
-                disabled={!canManage || isCreating}
-              />
-            </label>
+          {showManualForm || !embeddedSignupAvailable ? (
+            <form className="space-y-4" onSubmit={(e) => void handleCreate(e)}>
+              <label className="block space-y-2 text-sm font-medium text-ink">
+                <span>Provedor</span>
+                <select
+                  className={adminInputClassName}
+                  value={form.provider}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      provider: event.target.value as MessagingIntegrationProvider,
+                    }))
+                  }
+                  disabled={!canManage || isCreating}
+                >
+                  <option value="WHATSAPP_META">Meta WhatsApp</option>
+                  <option value="WHATSAPP_MOCK">WhatsApp mock</option>
+                </select>
+              </label>
 
-            <label className="block space-y-2 text-sm font-medium text-ink">
-              <span>Phone number id da Meta</span>
-              <input
-                className={adminInputClassName}
-                value={form.externalAccountId}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    externalAccountId: event.target.value,
-                  }))
-                }
-                placeholder="123456789012345"
-                disabled={!canManage || isCreating}
-              />
-            </label>
+              <label className="block space-y-2 text-sm font-medium text-ink">
+                <span>Nome da conexão</span>
+                <input
+                  className={adminInputClassName}
+                  value={form.displayName}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, displayName: event.target.value }))
+                  }
+                  placeholder="WhatsApp oficial da Clínica"
+                  required
+                  disabled={!canManage || isCreating}
+                />
+              </label>
 
-            <label className="block space-y-2 text-sm font-medium text-ink">
-              <span>Verify token opcional</span>
-              <input
-                className={adminInputClassName}
-                value={form.webhookVerifyToken}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    webhookVerifyToken: event.target.value,
-                  }))
-                }
-                placeholder="Deixe vazio para gerar"
-                disabled={!canManage || isCreating}
-              />
-            </label>
+              <label className="block space-y-2 text-sm font-medium text-ink">
+                <span>Número WhatsApp</span>
+                <input
+                  className={adminInputClassName}
+                  value={form.phoneNumber}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, phoneNumber: event.target.value }))
+                  }
+                  placeholder="+5511999999999"
+                  disabled={!canManage || isCreating}
+                />
+              </label>
 
-            <Button type="submit" disabled={!canManage || isCreating}>
-              {isCreating ? "Criando..." : "Criar conexao"}
-            </Button>
-          </form>
+              <label className="block space-y-2 text-sm font-medium text-ink">
+                <span>Phone number id da Meta</span>
+                <input
+                  className={adminInputClassName}
+                  value={form.externalAccountId}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      externalAccountId: event.target.value,
+                    }))
+                  }
+                  placeholder="123456789012345"
+                  disabled={!canManage || isCreating}
+                />
+              </label>
 
+              <label className="block space-y-2 text-sm font-medium text-ink">
+                <span>Verify token (opcional)</span>
+                <input
+                  className={adminInputClassName}
+                  value={form.webhookVerifyToken}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      webhookVerifyToken: event.target.value,
+                    }))
+                  }
+                  placeholder="Deixe vazio para gerar automaticamente"
+                  disabled={!canManage || isCreating}
+                />
+              </label>
+
+              <Button type="submit" disabled={!canManage || isCreating}>
+                {isCreating ? "Criando..." : "Criar conexão manual"}
+              </Button>
+            </form>
+          ) : null}
+
+          {/* ── Webhook info after creation ── */}
           {lastCreated ? (
             <div className="rounded-2xl border border-teal-200 bg-teal-50 p-4 text-sm">
-              <p className="font-semibold text-ink">Webhook para configurar no provedor</p>
+              <p className="font-semibold text-ink">
+                Configure este webhook no painel da Meta Business
+              </p>
               <dl className="mt-3 space-y-2">
                 <div>
-                  <dt className="text-muted">Path</dt>
+                  <dt className="text-muted">URL do webhook</dt>
                   <dd className="break-all font-medium text-ink">
-                    {lastCreated.webhook.path}
+                    {`https://seudominio.com.br${lastCreated.webhook.path}`}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-muted">Verify token</dt>
-                  <dd className="font-medium text-ink">
-                    {maskToken(lastCreated.webhook.verifyToken)}
+                  <dd className="font-mono text-xs font-medium text-ink">
+                    {lastCreated.webhook.verifyToken}
                   </dd>
                 </div>
               </dl>
+              <p className="mt-3 text-xs text-muted">
+                Copie o verify token agora — ele não será exibido novamente.
+              </p>
             </div>
           ) : null}
         </Card>
