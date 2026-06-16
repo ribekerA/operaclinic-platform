@@ -480,4 +480,111 @@ export class ClinicInsightsService {
       hour12: false,
     }).format(value);
   }
+
+  async getFinanceDashboard(
+    actor: AuthenticatedUser,
+    query: AestheticClinicExecutiveDashboardQuery,
+  ) {
+    const tenantId = this.schedulingAccessService.resolveActiveTenantId(actor);
+    const periodDays = this.resolvePeriodDays(query.periodDays);
+    const now = await this.timezoneService.getCurrentInstant();
+    const timezone = await this.timezoneService.getTenantTimezone(tenantId);
+    const currentDateKey = this.timezoneService.getTenantDateKey(now, timezone);
+    const currentDayContext = this.timezoneService.buildDayContext(currentDateKey, timezone);
+    const rangeStartUtc = new Date(
+      currentDayContext.dayStartUtc.getTime() - (periodDays - 1) * 86400000,
+    );
+
+    const appointments = await this.prisma.appointment.findMany({
+      where: {
+        tenantId,
+        status: AppointmentStatus.COMPLETED,
+        completedAt: { gte: rangeStartUtc, lte: now },
+      },
+      select: {
+        id: true,
+        completedAt: true,
+        durationMinutes: true,
+        professional: { select: { id: true, displayName: true } },
+        consultationType: { select: { id: true, name: true, priceCents: true, aestheticArea: true } },
+      },
+    });
+
+    const totalRevenueCents = appointments.reduce(
+      (sum, a) => sum + (a.consultationType.priceCents ?? 0),
+      0,
+    );
+    const completedCount = appointments.length;
+
+    // By professional
+    const byProfessional = new Map<
+      string,
+      { professionalId: string; professionalName: string; count: number; revenueCents: number }
+    >();
+    for (const a of appointments) {
+      const key = a.professional.id;
+      const cur = byProfessional.get(key) ?? {
+        professionalId: a.professional.id,
+        professionalName: a.professional.displayName,
+        count: 0,
+        revenueCents: 0,
+      };
+      cur.count += 1;
+      cur.revenueCents += a.consultationType.priceCents ?? 0;
+      byProfessional.set(key, cur);
+    }
+
+    // By consultation type
+    const byConsultationType = new Map<
+      string,
+      { consultationTypeId: string; consultationTypeName: string; count: number; revenueCents: number }
+    >();
+    for (const a of appointments) {
+      const key = a.consultationType.id;
+      const cur = byConsultationType.get(key) ?? {
+        consultationTypeId: a.consultationType.id,
+        consultationTypeName: a.consultationType.name,
+        count: 0,
+        revenueCents: 0,
+      };
+      cur.count += 1;
+      cur.revenueCents += a.consultationType.priceCents ?? 0;
+      byConsultationType.set(key, cur);
+    }
+
+    // Revenue timeline (daily)
+    const dailyRevenue = new Map<string, { dayKey: string; dayLabel: string; count: number; revenueCents: number }>();
+    for (const a of appointments) {
+      if (!a.completedAt) continue;
+      const dayKey = this.toDateKey(a.completedAt, timezone);
+      const cur = dailyRevenue.get(dayKey) ?? {
+        dayKey,
+        dayLabel: this.toDateLabel(a.completedAt, timezone),
+        count: 0,
+        revenueCents: 0,
+      };
+      cur.count += 1;
+      cur.revenueCents += a.consultationType.priceCents ?? 0;
+      dailyRevenue.set(dayKey, cur);
+    }
+
+    // Determine if prices are configured
+    const hasPrices = appointments.some((a) => (a.consultationType.priceCents ?? 0) > 0);
+
+    return {
+      generatedAt: now.toISOString(),
+      timezone,
+      periodDays,
+      range: { startsAt: rangeStartUtc.toISOString(), endsAt: now.toISOString() },
+      hasPrices,
+      summary: {
+        completedAppointments: completedCount,
+        totalRevenueCents,
+        averageTicketCents: completedCount > 0 ? Math.round(totalRevenueCents / completedCount) : 0,
+      },
+      byProfessional: Array.from(byProfessional.values()).sort((a, b) => b.revenueCents - a.revenueCents),
+      byConsultationType: Array.from(byConsultationType.values()).sort((a, b) => b.revenueCents - a.revenueCents),
+      revenueTimeline: Array.from(dailyRevenue.values()).sort((a, b) => a.dayKey.localeCompare(b.dayKey)),
+    };
+  }
 }

@@ -37,4 +37,12 @@ export class ClinicInsightsController {
   ): Promise<AestheticClinicOperationalKpisResponse> {
     return this.clinicOperationalKpisService.getOperationalKpis(actor, query);
   }
+
+  @Get("finance-dashboard")
+  async getFinanceDashboard(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Query() query: AestheticClinicExecutiveDashboardQueryDto,
+  ) {
+    return this.clinicInsightsService.getFinanceDashboard(actor, query);
+  }
 }

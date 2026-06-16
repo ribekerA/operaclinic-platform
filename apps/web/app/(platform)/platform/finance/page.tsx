@@ -1,6 +1,7 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 import {
   AdminMetricGrid,
   AdminPageHeader,
@@ -26,7 +27,7 @@ export default function PlatformFinancePage() {
         {
           label: "Tenants em atraso",
           value: String(dashboard.subscriptions.pastDue),
-          helper: "Sinal direto de risco em MRR e sustentacao.",
+          helper: "Sinal direto de risco em MRR e sustentação.",
           tone:
             dashboard.subscriptions.pastDue > 0
               ? ("danger" as const)
@@ -85,7 +86,7 @@ export default function PlatformFinancePage() {
         items={[
           {
             label: "Abrir pagamentos",
-            description: "Ver fila comercial e onboardings em execucao.",
+            description: "Ver fila comercial e onboardings em execução.",
             href: "/platform/payments",
           },
           {
@@ -128,13 +129,13 @@ export default function PlatformFinancePage() {
           <AdminSectionHeader
             eyebrow="Ainda parcial"
             title="O que falta para o modulo financeiro ficar definitivo"
-            description="O modulo ainda nao sustenta previsao de caixa 30/60/90 dias, custo operacional estimado ou margem."
+            description="O modulo ainda nao sustenta previsão de caixa 30/60/90 dias, custo operacional estimado ou margem."
             actions={<StatusPill label="Parcial" tone="warning" />}
           />
           <div className="mt-4 space-y-3">
             {[
-              "Conectar custos operacionais reais por ambiente e integracao.",
-              "Persistir setup vendido e inadimplencia com historico.",
+              "Conectar custos operacionais reais por ambiente e integração.",
+              "Persistir setup vendido e inadimplencia com histórico.",
               "Adicionar projeção de caixa e cenarios de ARR/LTV com base auditavel.",
             ].map((item) => (
               <div key={item} className="rounded-[20px] border border-slate-200 bg-slate-50 p-4">
@@ -165,7 +166,7 @@ export default function PlatformFinancePage() {
         <div className="mt-5">
           <Link
             href="/platform/payments"
-            className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+            className={buttonVariants({ variant: "secondary" })}
           >
             Abrir fila financeira
           </Link>
