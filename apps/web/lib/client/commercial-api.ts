@@ -48,6 +48,15 @@ export function completeCommercialOnboarding(
   );
 }
 
+export function createStripeCheckout(
+  onboardingToken: string,
+): Promise<{ checkoutUrl: string; sessionId: string }> {
+  return requestJson<{ checkoutUrl: string; sessionId: string }>(
+    `/api/commercial/onboarding/${onboardingToken}/create-checkout`,
+    { method: "POST" },
+  );
+}
+
 export function confirmCommercialCheckout(
   onboardingToken: string,
   sessionId?: string,

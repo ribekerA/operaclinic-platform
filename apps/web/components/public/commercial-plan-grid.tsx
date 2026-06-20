@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -15,6 +15,7 @@ import {
   listPublicCommercialPlans,
   startCommercialOnboarding,
 } from "@/lib/client/commercial-api";
+import { Analytics } from "@/lib/analytics";
 
 interface CommercialPlanGridProps {
   mode?: "summary" | "detailed";
@@ -61,7 +62,7 @@ export function CommercialPlanGrid({
       setError(
         toErrorMessage(
           loadError,
-          "Nao foi possivel carregar os planos agora.",
+          "Não foi possível carregar os planos agora.",
         ),
       );
     } finally {
@@ -79,17 +80,19 @@ export function CommercialPlanGrid({
     setError(null);
 
     try {
+      Analytics.planSelected(plan.id, plan.name);
       const response = await startCommercialOnboarding({
         planId: plan.id,
       });
 
+      Analytics.checkoutStarted(plan.id);
       router.push(`/checkout?token=${encodeURIComponent(response.onboardingToken)}`);
       router.refresh();
     } catch (startError) {
       setError(
         toErrorMessage(
           startError,
-          "Nao foi possivel iniciar o onboarding comercial agora.",
+          "Não foi possível iniciar o onboarding comercial agora.",
         ),
       );
     } finally {
@@ -112,13 +115,13 @@ export function CommercialPlanGrid({
       <Card className="rounded-[30px] border-slate-200 bg-white p-8">
         <div className="space-y-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
-            Planos indisponiveis
+            Planos indisponíveis
           </p>
           <h3 className="text-3xl font-semibold leading-tight text-ink">
-            Nenhum plano publico esta disponivel agora.
+            Nenhum plano público está disponível agora.
           </h3>
           <p className="max-w-2xl text-sm leading-7 text-muted">
-            O catalogo comercial da clinica estetica ainda nao foi liberado neste
+            O catálogo comercial da clínica estética ainda não foi liberado neste
             ambiente. Tente novamente em instantes ou volte para o hub de acesso.
           </p>
           <div className="flex flex-wrap gap-3">
@@ -164,10 +167,13 @@ export function CommercialPlanGrid({
       ) : null}
 
       {isStarting ? (
-        <div className="rounded-[24px] border border-teal-200 bg-teal-50 px-5 py-4 text-sm leading-6 text-slate-700">
-          <div className="flex items-center gap-2">
-            <LoaderCircle className="h-4 w-4 animate-spin text-accent" />
-            <span>Preparando a jornada comercial da sua clinica estetica...</span>
+        <div className="rounded-[24px] border border-teal-200 bg-gradient-to-r from-teal-50 to-emerald-50 px-5 py-4 text-sm leading-6 text-slate-700">
+          <div className="flex items-center gap-3">
+            <LoaderCircle className="h-4 w-4 shrink-0 animate-spin text-accent" />
+            <div>
+              <p className="font-semibold text-ink">Sua jornada está começando!</p>
+              <p className="mt-0.5 text-xs text-muted">Criando seu onboarding exclusivo...</p>
+            </div>
           </div>
         </div>
       ) : null}

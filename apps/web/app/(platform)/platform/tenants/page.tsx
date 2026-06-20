@@ -15,11 +15,13 @@ import {
   adminMutedPanelClassName,
   adminSelectClassName,
 } from "@/components/platform/platform-admin";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { toErrorMessage } from "@/lib/client/http";
 import {
+  cancelTenantSubscription,
+  CancelTenantSubscriptionPayload,
   changeTenantPlan,
   createTenant,
   listPlans,
@@ -110,6 +112,13 @@ export default function PlatformTenantsPage() {
   const [isUpdatingTenant, setIsUpdatingTenant] = useState(false);
   const [isChangingPlan, setIsChangingPlan] = useState(false);
 
+  const [cancelForm, setCancelForm] = useState<CancelTenantSubscriptionPayload & { confirmed: boolean }>({
+    cancelAtPeriodEnd: true,
+    reason: "",
+    confirmed: false,
+  });
+  const [isCanceling, setIsCanceling] = useState(false);
+
   const selectedTenant = useMemo(
     () => tenants.find((tenant) => tenant.id === selectedTenantId) ?? null,
     [tenants, selectedTenantId],
@@ -170,13 +179,13 @@ export default function PlatformTenantsPage() {
         href: "#novo-tenant",
       },
       {
-        label: "Usuarios",
+        label: "Usuários",
         description: "Revisar acessos vinculados aos tenants.",
         href: "/platform/users",
       },
       {
         label: "Planos",
-        description: "Ajustar catalogo e contratos disponiveis.",
+        description: "Ajustar catálogo e contratos disponíveis.",
         href: "/platform/plans",
       },
     ],
@@ -205,7 +214,7 @@ export default function PlatformTenantsPage() {
       });
     } catch (requestError) {
       setError(
-        toErrorMessage(requestError, "Nao foi possivel carregar tenants e planos."),
+        toErrorMessage(requestError, "Não foi possível carregar tenants e planos."),
       );
     } finally {
       setIsLoading(false);
@@ -225,6 +234,7 @@ export default function PlatformTenantsPage() {
 
     setDetailForm(buildDetailFormState(selectedTenant));
     setSelectedPlanId(selectedTenant.currentPlan?.id ?? "");
+    setCancelForm({ cancelAtPeriodEnd: true, reason: "", confirmed: false });
   }, [selectedTenant]);
 
   async function handleCreateTenant(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -330,6 +340,37 @@ export default function PlatformTenantsPage() {
     }
   }
 
+  async function handleCancelSubscription(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+
+    if (!selectedTenant || !cancelForm.confirmed) return;
+
+    setIsCanceling(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const updatedTenant = await cancelTenantSubscription(selectedTenant.id, {
+        cancelAtPeriodEnd: cancelForm.cancelAtPeriodEnd,
+        reason: cancelForm.reason?.trim() || undefined,
+      });
+
+      setTenants((current) =>
+        current.map((t) => (t.id === updatedTenant.id ? updatedTenant : t)),
+      );
+      setCancelForm({ cancelAtPeriodEnd: true, reason: "", confirmed: false });
+      setSuccessMessage(
+        cancelForm.cancelAtPeriodEnd
+          ? "Assinatura marcada para cancelamento ao fim do período."
+          : "Assinatura cancelada imediatamente.",
+      );
+    } catch (requestError) {
+      setError(toErrorMessage(requestError, "Falha ao cancelar assinatura."));
+    } finally {
+      setIsCanceling(false);
+    }
+  }
+
   function handleFilterSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
 
@@ -350,7 +391,7 @@ export default function PlatformTenantsPage() {
       <AdminPageHeader
         eyebrow="Super Admin | Tenants"
         title="Governanca dos tenants da plataforma"
-        description="Centralize cadastro, manutencao e contrato dos tenants sem depender de tabelas rigidas. O fluxo prioriza leitura rapida, selecao contextual e edicao ao lado."
+        description="Centralize cadastro, manutencao e contrato dos tenants sem depender de tabelas rigidas. O fluxo prioriza leitura rápida, seleção contextual e edição ao lado."
         actions={
           <Button
             type="button"
@@ -384,8 +425,8 @@ export default function PlatformTenantsPage() {
         <Card className="space-y-5">
           <AdminSectionHeader
             eyebrow="Carteira ativa"
-            title="Tenants em operacao"
-            description="Use os filtros para reduzir ruido e selecione um tenant para editar nome, configuracao e contrato no painel lateral."
+            title="Tenants em operação"
+            description="Use os filtros para reduzir ruido e selecione um tenant para editar nome, configuração e contrato no painel lateral."
             actions={<AdminCountBadge value={tenants.length} loading={isLoading} />}
           />
 
@@ -415,7 +456,7 @@ export default function PlatformTenantsPage() {
             <button
               type="button"
               onClick={clearFilters}
-              className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+              className={buttonVariants({ variant: "secondary" })}
             >
               Limpar
             </button>
@@ -503,14 +544,14 @@ export default function PlatformTenantsPage() {
                     <button
                       type="button"
                       onClick={clearFilters}
-                      className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+                      className={buttonVariants({ variant: "secondary" })}
                     >
                       Limpar filtros
                     </button>
                   ) : (
                     <a
                       href="#novo-tenant"
-                      className="inline-flex h-11 items-center justify-center rounded-2xl bg-accent px-4 text-sm font-semibold text-white transition hover:opacity-90"
+                      className={buttonVariants({ variant: "accent" })}
                     >
                       Criar tenant
                     </a>
@@ -526,7 +567,7 @@ export default function PlatformTenantsPage() {
             <AdminSectionHeader
               eyebrow="Provisionamento"
               title="Novo tenant"
-              description="Crie a estrutura inicial com slug, timezone e configuracao basica de locale e moeda."
+              description="Crie a estrutura inicial com slug, timezone e configuração basica de locale e moeda."
             />
 
             <form className="space-y-3" onSubmit={(event) => void handleCreateTenant(event)}>
@@ -557,7 +598,7 @@ export default function PlatformTenantsPage() {
                   onChange={(event) =>
                     setCreateForm((current) => ({ ...current, name: event.target.value }))
                   }
-                  placeholder="Clinica Porto"
+                  placeholder="Clínica Porto"
                   className={adminInputClassName}
                   autoComplete="organization"
                   required
@@ -619,7 +660,7 @@ export default function PlatformTenantsPage() {
               title={selectedTenant ? selectedTenant.name : "Detalhes do tenant"}
               description={
                 selectedTenant
-                  ? "Atualize nome, status e configuracao operacional sem sair da tela."
+                  ? "Atualize nome, status e configuração operacional sem sair da tela."
                   : "Selecione um tenant na lista para visualizar ou editar."
               }
             />
@@ -771,11 +812,11 @@ export default function PlatformTenantsPage() {
             ) : (
               <AdminEmptyState
                 title="Nenhum tenant selecionado"
-                description="Escolha um tenant na coluna principal para habilitar a edicao contextual."
+                description="Escolha um tenant na coluna principal para habilitar a edição contextual."
                 action={
                   <a
                     href="#novo-tenant"
-                    className="inline-flex h-11 items-center justify-center rounded-2xl bg-accent px-4 text-sm font-semibold text-white transition hover:opacity-90"
+                    className={buttonVariants({ variant: "accent" })}
                   >
                     Criar tenant
                   </a>
@@ -845,7 +886,7 @@ export default function PlatformTenantsPage() {
                 action={
                   <a
                     href="#novo-tenant"
-                    className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+                    className={buttonVariants({ variant: "secondary" })}
                   >
                     Provisionar tenant
                   </a>
@@ -853,6 +894,124 @@ export default function PlatformTenantsPage() {
               />
             )}
           </Card>
+          {/* Cancel subscription card */}
+          {(() => {
+            const cancelableStatuses = ["TRIAL", "ACTIVE", "PAST_DUE"];
+            const isCancelable =
+              selectedTenant?.currentPlan &&
+              cancelableStatuses.includes(selectedTenant.currentPlan.status);
+
+            if (!selectedTenant || !isCancelable) return null;
+
+            return (
+              <Card className="space-y-4 border-red-200">
+                <AdminSectionHeader
+                  eyebrow="Zona de risco"
+                  title="Cancelar assinatura"
+                  description="Cancela o contrato ativo deste tenant no Stripe. Ação registrada em audit log."
+                />
+
+                <div className="rounded-[20px] border border-red-100 bg-red-50/60 px-4 py-3">
+                  <p className="text-sm font-semibold text-red-800">
+                    {selectedTenant.name}
+                  </p>
+                  <p className="mt-1 text-xs text-red-600">
+                    Plano: {selectedTenant.currentPlan?.name} ·{" "}
+                    {selectedTenant.currentPlan
+                      ? getSubscriptionStatusLabel(selectedTenant.currentPlan.status)
+                      : ""}
+                  </p>
+                </div>
+
+                <form
+                  className="space-y-4"
+                  onSubmit={(e) => void handleCancelSubscription(e)}
+                >
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                      Modo de cancelamento
+                    </p>
+                    <label className="flex cursor-pointer items-start gap-3 rounded-[16px] border border-slate-200 bg-white px-4 py-3 text-sm">
+                      <input
+                        type="radio"
+                        name="cancelMode"
+                        checked={cancelForm.cancelAtPeriodEnd === true}
+                        onChange={() =>
+                          setCancelForm((c) => ({ ...c, cancelAtPeriodEnd: true }))
+                        }
+                        className="mt-0.5"
+                      />
+                      <span>
+                        <span className="font-semibold text-ink">Ao fim do período atual</span>
+                        <span className="mt-0.5 block text-xs text-muted">
+                          Acesso mantido até o fim do ciclo de cobrança. Recomendado.
+                        </span>
+                      </span>
+                    </label>
+                    <label className="flex cursor-pointer items-start gap-3 rounded-[16px] border border-red-200 bg-red-50/40 px-4 py-3 text-sm">
+                      <input
+                        type="radio"
+                        name="cancelMode"
+                        checked={cancelForm.cancelAtPeriodEnd === false}
+                        onChange={() =>
+                          setCancelForm((c) => ({ ...c, cancelAtPeriodEnd: false }))
+                        }
+                        className="mt-0.5"
+                      />
+                      <span>
+                        <span className="font-semibold text-red-700">Imediatamente</span>
+                        <span className="mt-0.5 block text-xs text-red-500">
+                          Acesso encerrado agora. Sem estorno proporcional.
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                      Motivo (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={cancelForm.reason}
+                      onChange={(e) =>
+                        setCancelForm((c) => ({ ...c, reason: e.target.value }))
+                      }
+                      placeholder="Ex.: Solicitação do cliente, inadimplência"
+                      className={adminInputClassName}
+                      maxLength={255}
+                    />
+                  </div>
+
+                  <label className="flex cursor-pointer items-center gap-3 rounded-[16px] border border-red-200 bg-red-50/60 px-4 py-3 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={cancelForm.confirmed}
+                      onChange={(e) =>
+                        setCancelForm((c) => ({ ...c, confirmed: e.target.checked }))
+                      }
+                    />
+                    <span className="font-medium text-red-700">
+                      Confirmo que desejo cancelar a assinatura de{" "}
+                      <strong>{selectedTenant.name}</strong>
+                    </span>
+                  </label>
+
+                  <Button
+                    type="submit"
+                    className="w-full border border-red-300 bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                    disabled={isCanceling || !cancelForm.confirmed}
+                  >
+                    {isCanceling
+                      ? "Cancelando..."
+                      : cancelForm.cancelAtPeriodEnd
+                        ? "Cancelar ao fim do período"
+                        : "Cancelar imediatamente"}
+                  </Button>
+                </form>
+              </Card>
+            );
+          })()}
         </div>
       </div>
     </div>

@@ -17,6 +17,7 @@ import type {
   CompleteCommercialOnboardingPayload,
 } from "@operaclinic/shared";
 import { CommercialPlanGrid } from "@/components/public/commercial-plan-grid";
+import { OnboardingProgress } from "@/components/public/onboarding-progress";
 import { mapCommercialPlanToPublicPlan } from "@/components/public/public-content";
 import { Card } from "@/components/ui/card";
 import { toErrorMessage } from "@/lib/client/http";
@@ -148,7 +149,7 @@ export function CommercialRegistrationWorkspace({
       setError(
         toErrorMessage(
           loadError,
-          "Nao foi possivel carregar o cadastro comercial agora.",
+          "Não foi possível carregar o cadastro agora. Tente novamente.",
         ),
       );
     } finally {
@@ -198,7 +199,7 @@ export function CommercialRegistrationWorkspace({
       setOnboarding(response);
       setForm(toFormState(response));
       setSuccess(
-        "Cadastro comercial salvo. O proximo passo agora e confirmar o checkout. A senha sera definida somente apos o pagamento confirmado.",
+        "Cadastro salvo. Redirecionando para o checkout...",
       );
       router.push(`/checkout?token=${encodeURIComponent(onboardingToken)}`);
       router.refresh();
@@ -206,7 +207,7 @@ export function CommercialRegistrationWorkspace({
       setError(
         toErrorMessage(
           submitError,
-          "Nao foi possivel salvar o cadastro comercial agora.",
+          "Não foi possível salvar o cadastro agora. Tente novamente.",
         ),
       );
     } finally {
@@ -220,15 +221,15 @@ export function CommercialRegistrationWorkspace({
         <Card className="rounded-[30px] border-slate-200 bg-white p-8">
           <div className="space-y-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-accent">
-              Cadastro nasce do plano
+              Escolha um plano primeiro
             </p>
             <h2 className="text-3xl font-semibold leading-tight text-ink">
-              Escolha o plano da sua clinica estetica antes de preencher o cadastro.
+              O cadastro começa com a escolha do plano da sua clínica estética.
             </h2>
             <p className="max-w-3xl text-sm leading-7 text-muted">
-              O backend cria um onboarding comercial proprio para o plano
-              escolhido. Isso evita cadastro solto e mantem o fluxo publico separado
-              da area autenticada.
+              Selecione o plano que melhor se encaixa na sua operação. O OperaClinic
+              cria um onboarding exclusivo para a sua clínica e segue com o fluxo
+              até o acesso.
             </p>
           </div>
         </Card>
@@ -247,14 +248,14 @@ export function CommercialRegistrationWorkspace({
       <Card className="rounded-[30px] border-slate-200 bg-white p-8">
         <div className="space-y-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-red-600">
-            Cadastro indisponivel
+            Cadastro não encontrado
           </p>
           <h2 className="text-3xl font-semibold leading-tight text-ink">
-            Nao encontramos este onboarding comercial.
+            Não encontramos este cadastro.
           </h2>
           <p className="text-sm leading-7 text-muted">
-            O link pode ter expirado ou a jornada ainda nao foi iniciada
-            corretamente. Escolha um plano para recomecar.
+            O link pode ter expirado ou a jornada ainda não foi iniciada
+            corretamente. Escolha um plano para começar.
           </p>
           {error ? (
             <div className="rounded-[24px] border border-red-200 bg-red-50 px-5 py-4 text-sm leading-6 text-red-700">
@@ -290,6 +291,8 @@ export function CommercialRegistrationWorkspace({
 
   return (
     <div className="space-y-6">
+      <OnboardingProgress currentStep={2} token={onboardingToken} />
+
       {success ? (
         <div className="rounded-[24px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm leading-6 text-emerald-700">
           <div className="flex items-start gap-2">
@@ -314,16 +317,15 @@ export function CommercialRegistrationWorkspace({
             <div className="space-y-5">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-accent">
-                  Cadastro comercial real
+                  Plano selecionado
                 </p>
                 <h2 className="mt-3 text-4xl font-semibold leading-tight text-ink">
-                  Dados da clinica e do admin
+                  Dados da clínica
                 </h2>
                 <p className="mt-3 text-sm leading-7 text-muted">
-                  O plano ja esta selecionado no backend. Agora este formulario
-                  grava a base inicial da clinica, da unidade e do admin responsavel
-                  dentro do onboarding comercial. A definicao da senha fica para
-                  depois da confirmacao do pagamento.
+                  Preencha os dados principais da sua clínica estética e do
+                  responsável pelo acesso. A senha será definida após a confirmação
+                  do pagamento.
                 </p>
               </div>
 
@@ -332,7 +334,7 @@ export function CommercialRegistrationWorkspace({
                   Plano escolhido
                 </p>
                 <p className="mt-2 text-lg font-semibold text-ink">{plan.name}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-700">{plan.summary}</p>
+                <p className="mt-1 text-sm leading-6 text-slate-700">{plan.priceLabel}</p>
               </div>
             </div>
           </Card>
@@ -340,184 +342,147 @@ export function CommercialRegistrationWorkspace({
           {canEditRegistration ? (
             <Card className="rounded-[30px] border-slate-200 bg-white p-7">
               <form className="space-y-6" onSubmit={(event) => void handleSubmit(event)}>
-                <div className="space-y-4">
+                <fieldset className="space-y-4">
+                  <legend className="sr-only">Dados da clínica</legend>
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
-                      Clinica
+                      Clínica
                     </p>
                     <h3 className="mt-3 text-2xl font-semibold leading-tight text-ink">
-                      Dados principais da operacao
+                      Dados principais
                     </h3>
                   </div>
 
                   <div className="grid gap-4">
                     <div>
-                      <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                        Nome da clinica
+                      <label
+                        htmlFor="clinicDisplayName"
+                        className="text-xs font-semibold uppercase tracking-[0.12em] text-muted"
+                      >
+                        Nome da clínica
                       </label>
                       <input
+                        id="clinicDisplayName"
                         type="text"
                         value={form.clinicDisplayName}
                         onChange={(event) =>
                           updateFormField("clinicDisplayName", event.target.value)
                         }
                         placeholder="Ex.: Atelier Face Jardins"
-                        className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent"
+                        autoComplete="organization"
+                        className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/20"
                         required
                       />
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
                       <div>
-                        <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                          Razao social
+                        <label
+                          htmlFor="clinicContactEmail"
+                          className="text-xs font-semibold uppercase tracking-[0.12em] text-muted"
+                        >
+                          E-mail da clínica
                         </label>
                         <input
-                          type="text"
-                          value={form.clinicLegalName}
-                          onChange={(event) =>
-                            updateFormField("clinicLegalName", event.target.value)
-                          }
-                          placeholder="Opcional"
-                          className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                          Documento
-                        </label>
-                        <input
-                          type="text"
-                          value={form.clinicDocumentNumber}
-                          onChange={(event) =>
-                            updateFormField("clinicDocumentNumber", event.target.value)
-                          }
-                          placeholder="CNPJ ou documento interno"
-                          className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div>
-                        <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                          Email da clinica
-                        </label>
-                        <input
+                          id="clinicContactEmail"
                           type="email"
                           value={form.clinicContactEmail}
                           onChange={(event) =>
                             updateFormField("clinicContactEmail", event.target.value)
                           }
-                          placeholder="contato@sua-clinica-estetica.com"
-                          className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent"
+                          placeholder="contato@suaclinica.com"
+                          autoComplete="email"
+                          className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/20"
                           required
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                          Telefone da clinica
+                        <label
+                          htmlFor="clinicContactPhone"
+                          className="text-xs font-semibold uppercase tracking-[0.12em] text-muted"
+                        >
+                          WhatsApp / Telefone
                         </label>
                         <input
+                          id="clinicContactPhone"
                           type="tel"
                           value={form.clinicContactPhone}
                           onChange={(event) =>
                             updateFormField("clinicContactPhone", event.target.value)
                           }
                           placeholder="(11) 99999-9999"
-                          className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent"
+                          autoComplete="tel"
+                          className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/20"
                           required
                         />
                       </div>
                     </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div>
-                        <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                          Unidade inicial
-                        </label>
-                        <input
-                          type="text"
-                          value={form.initialUnitName}
-                          onChange={(event) =>
-                            updateFormField("initialUnitName", event.target.value)
-                          }
-                          placeholder="Unidade Principal"
-                          className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                          Fuso horario
-                        </label>
-                        <input
-                          type="text"
-                          value={form.timezone}
-                          onChange={(event) =>
-                            updateFormField("timezone", event.target.value)
-                          }
-                          placeholder="America/Sao_Paulo"
-                          className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent"
-                        />
-                      </div>
-                    </div>
                   </div>
-                </div>
+                </fieldset>
 
-                <div className="space-y-4 border-t border-slate-200 pt-6">
+                <fieldset className="space-y-4 border-t border-slate-200 pt-6">
+                  <legend className="sr-only">Responsável pelo acesso</legend>
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
-                      Responsavel admin
+                      Responsável pelo acesso
                     </p>
                     <h3 className="mt-3 text-2xl font-semibold leading-tight text-ink">
-                      Quem vai entrar primeiro na clinica estetica
+                      Quem vai entrar primeiro
                     </h3>
                     <p className="mt-3 text-sm leading-7 text-muted">
-                      O email do admin fica registrado agora para controle do onboarding.
-                      A senha nao e coletada nesta etapa publica.
+                      O e-mail do responsável fica registrado nesta etapa. A senha
+                      é criada somente após a confirmação do pagamento.
                     </p>
                   </div>
 
-                  <div className="grid gap-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div>
-                        <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                          Nome completo
-                        </label>
-                        <input
-                          type="text"
-                          value={form.adminFullName}
-                          onChange={(event) =>
-                            updateFormField("adminFullName", event.target.value)
-                          }
-                          placeholder="Nome do responsavel"
-                          className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                          Email do admin
-                        </label>
-                        <input
-                          type="email"
-                          value={form.adminEmail}
-                          onChange={(event) =>
-                            updateFormField("adminEmail", event.target.value)
-                          }
-                          placeholder="admin@sua-clinica-estetica.com"
-                          className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent"
-                          required
-                        />
-                      </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label
+                        htmlFor="adminFullName"
+                        className="text-xs font-semibold uppercase tracking-[0.12em] text-muted"
+                      >
+                        Nome completo
+                      </label>
+                      <input
+                        id="adminFullName"
+                        type="text"
+                        value={form.adminFullName}
+                        onChange={(event) =>
+                          updateFormField("adminFullName", event.target.value)
+                        }
+                        placeholder="Nome do responsável"
+                        autoComplete="name"
+                        className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/20"
+                        required
+                      />
                     </div>
-
-                    <div className="rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
-                      A senha do admin sera ativada so depois do pagamento confirmado.
-                      Isso evita credencial sensivel solta em onboarding que ainda nao virou cliente ativo.
+                    <div>
+                      <label
+                        htmlFor="adminEmail"
+                        className="text-xs font-semibold uppercase tracking-[0.12em] text-muted"
+                      >
+                        E-mail do responsável
+                      </label>
+                      <input
+                        id="adminEmail"
+                        type="email"
+                        value={form.adminEmail}
+                        onChange={(event) =>
+                          updateFormField("adminEmail", event.target.value)
+                        }
+                        placeholder="voce@suaclinica.com"
+                        autoComplete="email"
+                        className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/20"
+                        required
+                      />
                     </div>
                   </div>
-                </div>
+
+                  <div className="rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-800">
+                    A senha será ativada somente após a confirmação do pagamento,
+                    garantindo que o acesso seja liberado no momento certo.
+                  </div>
+                </fieldset>
 
                 <div className="flex flex-wrap gap-3">
                   <button
@@ -528,7 +493,8 @@ export function CommercialRegistrationWorkspace({
                     {isSubmitting ? (
                       <LoaderCircle className="h-4 w-4 animate-spin" />
                     ) : null}
-                    {isSubmitting ? "Salvando cadastro..." : "Salvar e voltar ao checkout"}
+                    {isSubmitting ? "Salvando..." : "Salvar e avançar para pagamento"}
+                    {!isSubmitting ? <ArrowRight className="h-4 w-4" /> : null}
                   </button>
 
                   <Link
@@ -544,17 +510,17 @@ export function CommercialRegistrationWorkspace({
             <Card className="rounded-[30px] border-slate-200 bg-white p-7">
               <div className="space-y-4">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
-                  Cadastro bloqueado para edicao
+                  Cadastro encerrado
                 </p>
                 <h3 className="text-2xl font-semibold leading-tight text-ink">
                   {isExpired
-                    ? "Este onboarding comercial expirou."
-                    : "Esta etapa ja passou do ponto de alteracao manual."}
+                    ? "Este cadastro expirou."
+                    : "O cadastro já foi concluído."}
                 </h3>
                 <p className="text-sm leading-7 text-muted">
                   {isExpired
-                    ? "Por seguranca, a jornada comercial precisa ser reiniciada a partir da escolha do plano."
-                    : "O onboarding ja avancou para pagamento confirmado ou ambiente criado. Continue pelo checkout ou entre na clinica estetica se a criacao inicial ja foi concluida."}
+                    ? "Por segurança, inicie novamente a partir da escolha do plano."
+                    : "A jornada já avançou para o checkout. Continue por lá ou acesse a clínica se o ambiente já foi criado."}
                 </p>
                 <div className="flex flex-wrap gap-3">
                   {isExpired ? (
@@ -562,7 +528,7 @@ export function CommercialRegistrationWorkspace({
                       href="/planos"
                       className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
                     >
-                      Reiniciar pelos planos
+                      Escolher plano novamente
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   ) : (
@@ -579,7 +545,7 @@ export function CommercialRegistrationWorkspace({
                       href={buildClinicLoginHref(onboarding)}
                       className="inline-flex items-center rounded-xl border border-border px-4 py-3 text-sm font-semibold text-ink transition hover:bg-slate-50"
                     >
-                      Ir para login da clinica estetica
+                      Acessar a clínica
                     </Link>
                   ) : null}
                 </div>
@@ -597,23 +563,44 @@ export function CommercialRegistrationWorkspace({
                 </div>
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-200">
-                    O que fica salvo
+                    Faltam 2 passos
                   </p>
                   <h3 className="mt-2 text-2xl font-semibold leading-tight">
-                    Clinica, unidade inicial e admin responsavel.
+                    Complete o cadastro e confirme o pagamento.
                   </h3>
                 </div>
               </div>
               <p className="text-sm leading-7 text-slate-300">
-                O cadastro comercial persiste o contexto da clinica estetica no backend.
-                Quando o onboarding for finalizado, esse mesmo estado vira tenant,
-                clinica, unidade inicial, usuario admin convidado e vinculo do plano.
+                Após o pagamento, criamos automaticamente o ambiente completo da
+                sua clínica estética: estrutura inicial, unidade e acesso do
+                administrador — tudo em uma única etapa.
               </p>
-              <div className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4 text-sm leading-7 text-slate-300">
-                {onboarding.admin.email
-                  ? `Email do admin registrado ate agora: ${onboarding.admin.email}.`
-                  : "O email do admin ainda nao foi salvo neste onboarding."}
+              <div className="grid gap-2 rounded-[20px] border border-white/10 bg-white/5 px-4 py-4">
+                <div className="flex items-center gap-2 text-xs">
+                  <CircleCheckBig className="h-3.5 w-3.5 shrink-0 text-teal-300" />
+                  <span className="text-slate-300">Plano escolhido</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="h-3.5 w-3.5 shrink-0 flex items-center justify-center">
+                    <span className="h-2 w-2 rounded-full bg-teal-300 animate-pulse" />
+                  </span>
+                  <span className="font-medium text-slate-200">Dados da clínica</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <span className="h-3.5 w-3.5 shrink-0 flex items-center justify-center rounded-full bg-white/10 text-[10px]">·</span>
+                  <span>Pagamento</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <span className="h-3.5 w-3.5 shrink-0 flex items-center justify-center rounded-full bg-white/10 text-[10px]">·</span>
+                  <span>Acesso ao painel</span>
+                </div>
               </div>
+              {onboarding.admin.email ? (
+                <div className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4 text-sm leading-7 text-slate-300">
+                  E-mail registrado:{" "}
+                  <span className="font-semibold text-white">{onboarding.admin.email}</span>
+                </div>
+              ) : null}
             </div>
           </Card>
 
@@ -625,17 +612,17 @@ export function CommercialRegistrationWorkspace({
                 </div>
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
-                    Jornada segura
+                    Seus dados em segurança
                   </p>
                   <h3 className="mt-2 text-2xl font-semibold leading-tight text-ink">
-                    A camada publica segue separada da area autenticada.
+                    Acesso liberado somente após o pagamento.
                   </h3>
                 </div>
               </div>
               <p className="text-sm leading-7 text-muted">
-                O formulario nao cria sessao nem tenta entrar na clinica estetica. Ele so
-                grava o estado comercial real. O acesso autenticado continua em
-                rotas separadas.
+                Nenhuma credencial é criada antes do pagamento ser confirmado. O
+                acesso ao painel só é liberado quando o ambiente da clínica está
+                completamente pronto.
               </p>
             </div>
           </Card>

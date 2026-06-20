@@ -10,15 +10,17 @@ import {
   LoaderCircle,
   RefreshCcw,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 import type { CommercialOnboardingSummaryPayload } from "@operaclinic/shared";
 import { CommercialPlanGrid } from "@/components/public/commercial-plan-grid";
+import { OnboardingProgress } from "@/components/public/onboarding-progress";
 import { mapCommercialPlanToPublicPlan } from "@/components/public/public-content";
+import { PublicSectionHeading } from "@/components/public/public-section-heading";
 import { Card } from "@/components/ui/card";
 import { toErrorMessage } from "@/lib/client/http";
 import {
   confirmCommercialCheckout,
+  createStripeCheckout,
   finalizeCommercialOnboarding,
   getCommercialOnboarding,
 } from "@/lib/client/commercial-api";
@@ -31,70 +33,57 @@ interface CommercialCheckoutWorkspaceProps {
   checkoutCancelled?: boolean;
 }
 
-type CheckoutAction = "confirm" | "finalize" | "setup_access" | null;
+type CheckoutAction = "confirm" | "finalize" | "setup_access" | "stripe_redirect" | null;
 
 const statusCopy: Record<
   CommercialOnboardingSummaryPayload["status"],
-  {
-    label: string;
-    description: string;
-  }
+  { label: string; description: string }
 > = {
   INITIATED: {
-    label: "Cadastro pendente",
+    label: "Plano escolhido",
     description:
-      "O plano ja foi escolhido. Agora faltam os dados da clinica estetica e do admin para seguir.",
+      "O plano foi reservado. Preencha os dados da sua clínica estética para continuar.",
   },
   AWAITING_PAYMENT: {
-    label: "Checkout aguardando confirmacao",
+    label: "Dados preenchidos",
     description:
-      "Os dados da clinica estetica ja foram gravados. Falta confirmar a etapa comercial desta demonstracao.",
+      "Tudo certo com o cadastro. O próximo passo é confirmar o pagamento.",
   },
   PAID: {
-    label: "Pronto para criar o ambiente",
+    label: "Pagamento confirmado",
     description:
-      "O checkout ja foi marcado como pago neste ambiente. Agora o onboarding pode criar tenant, clinica e admin.",
+      "Perfeito! Agora vamos criar o ambiente inicial da sua clínica estética.",
   },
   ONBOARDING_STARTED: {
-    label: "Onboarding em andamento",
+    label: "Criando seu ambiente",
     description:
-      "A criacao inicial da clinica estetica ja foi iniciada. Aguarde a finalizacao do ambiente.",
+      "Estamos configurando tudo para a sua clínica estética. Aguarde um instante.",
   },
   ONBOARDING_COMPLETED: {
-    label: "Ambiente inicial pronto",
+    label: "Ambiente pronto",
     description:
-      "A clinica estetica ja tem tenant, unidade inicial, admin convidado e caminho seguro para ativar a senha antes do login.",
+      "Sua clínica estética está criada e pronta para o primeiro acesso.",
   },
   ESCALATED_TO_STAFF: {
-    label: "Solicitação escalada para suporte",
+    label: "Solicitação em análise",
     description:
-      "Sua solicitação foi direcionada para nosso time de suporte. Entraremos em contato em breve.",
+      "Nossa equipe está verificando sua solicitação e entrará em contato em breve.",
   },
   EXPIRED: {
-    label: "Onboarding expirado",
+    label: "Link expirado",
     description:
-      "A jornada comercial passou do prazo seguro e precisa ser reiniciada a partir da escolha do plano.",
+      "Por segurança, este link expirou. Inicie novamente a partir da escolha do plano.",
   },
 };
 
 function buildClinicLoginHref(
   onboarding: CommercialOnboardingSummaryPayload,
 ): string {
-  const params = new URLSearchParams({
-    source: "checkout",
-  });
+  const params = new URLSearchParams({ source: "checkout" });
 
-  if (onboarding.login.email) {
-    params.set("email", onboarding.login.email);
-  }
-
-  if (onboarding.clinic.displayName) {
-    params.set("clinic", onboarding.clinic.displayName);
-  }
-
-  if (onboarding.clinic.contactEmail) {
-    params.set("clinicEmail", onboarding.clinic.contactEmail);
-  }
+  if (onboarding.login.email) params.set("email", onboarding.login.email);
+  if (onboarding.clinic.displayName) params.set("clinic", onboarding.clinic.displayName);
+  if (onboarding.clinic.contactEmail) params.set("clinicEmail", onboarding.clinic.contactEmail);
 
   return `/login/clinic?${params.toString()}`;
 }
@@ -122,6 +111,76 @@ function CheckoutSkeleton() {
           <div className="h-14 rounded-2xl bg-slate-100" />
         </div>
       </Card>
+    </div>
+  );
+}
+
+function CelebrationBanner({ clinicName }: { clinicName: string | null }) {
+  return (
+    <div className="relative overflow-hidden rounded-[30px] bg-gradient-to-br from-teal-600 to-teal-800 px-7 py-8 shadow-[0_20px_60px_-20px_rgba(15,118,110,0.5)]">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <span className="absolute left-[8%] top-[25%] h-3 w-3 rounded-full bg-white/30 animate-ping [animation-duration:2.2s]" />
+        <span className="absolute right-[12%] top-[35%] h-2 w-2 rounded-full bg-white/20 animate-ping [animation-duration:3.1s] [animation-delay:0.4s]" />
+        <span className="absolute left-[28%] bottom-[25%] h-2 w-2 rounded-full bg-white/25 animate-ping [animation-duration:2.7s] [animation-delay:0.9s]" />
+        <span className="absolute right-[22%] bottom-[30%] h-4 w-4 rounded-full bg-white/10 animate-ping [animation-duration:4s] [animation-delay:0.2s]" />
+        <span className="absolute left-[60%] top-[15%] h-2 w-2 rounded-full bg-white/15 animate-ping [animation-duration:3.5s] [animation-delay:0.6s]" />
+        <span className="absolute left-[18%] bottom-[40%] h-1.5 w-1.5 rounded-full bg-white/20 animate-ping [animation-duration:2.9s] [animation-delay:1.2s]" />
+      </div>
+      <div className="relative flex items-center gap-5">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/15 ring-2 ring-white/30">
+          <CheckCircle2 className="h-7 w-7 text-white" />
+        </div>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-teal-200">
+            Missão cumprida
+          </p>
+          <h2 className="mt-1 text-2xl font-semibold leading-tight text-white">
+            {clinicName
+              ? `${clinicName} está pronta!`
+              : "Sua clínica estética está pronta!"}
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-teal-100">
+            Ambiente criado. Ative a senha do responsável para acessar o painel.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MiniProgress({
+  steps,
+}: {
+  steps: Array<{ label: string; status: "done" | "active" | "pending" }>;
+}) {
+  return (
+    <div className="grid gap-2 rounded-[20px] border border-white/10 bg-white/5 px-4 py-4">
+      {steps.map((step) => (
+        <div key={step.label} className="flex items-center gap-2 text-xs">
+          {step.status === "done" ? (
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-teal-300" />
+          ) : step.status === "active" ? (
+            <span className="h-3.5 w-3.5 shrink-0 flex items-center justify-center">
+              <span className="h-2 w-2 rounded-full bg-teal-300 animate-pulse" />
+            </span>
+          ) : (
+            <span className="h-3.5 w-3.5 shrink-0 flex items-center justify-center rounded-full bg-white/10 text-[10px] text-slate-500">
+              ·
+            </span>
+          )}
+          <span
+            className={
+              step.status === "done"
+                ? "text-slate-300"
+                : step.status === "active"
+                  ? "font-medium text-slate-200"
+                  : "text-slate-500"
+            }
+          >
+            {step.label}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -158,7 +217,7 @@ export function CommercialCheckoutWorkspace({
       setError(
         toErrorMessage(
           loadError,
-          "Nao foi possivel carregar o checkout comercial agora.",
+          "Não foi possível carregar o checkout agora. Tente novamente.",
         ),
       );
     } finally {
@@ -183,17 +242,38 @@ export function CommercialCheckoutWorkspace({
 
     hasHandledStripeReturnRef.current = true;
     void handleConfirmCheckout(checkoutSessionId);
-  }, [
-    onboardingToken,
-    checkoutSucceeded,
-    checkoutSessionId,
-    checkoutCancelled,
-  ]);
+  }, [onboardingToken, checkoutSucceeded, checkoutSessionId, checkoutCancelled]);
+
+  // Auto-finaliza o ambiente assim que o pagamento é confirmado
+  useEffect(() => {
+    if (
+      onboarding?.nextStep === "finalize_onboarding" &&
+      action === null &&
+      !error
+    ) {
+      void handleFinalizeOnboarding();
+    }
+  }, [onboarding?.nextStep, action, error]);
+
+  async function handleStripeRedirect(): Promise<void> {
+    if (!onboardingToken) return;
+
+    setAction("stripe_redirect");
+    setError(null);
+
+    try {
+      const { checkoutUrl } = await createStripeCheckout(onboardingToken);
+      window.location.href = checkoutUrl;
+    } catch (actionError) {
+      setError(
+        toErrorMessage(actionError, "Não foi possível iniciar o pagamento. Tente novamente."),
+      );
+      setAction(null);
+    }
+  }
 
   async function handleConfirmCheckout(sessionId?: string): Promise<void> {
-    if (!onboardingToken) {
-      return;
-    }
+    if (!onboardingToken) return;
 
     setAction("confirm");
     setError(null);
@@ -205,10 +285,7 @@ export function CommercialCheckoutWorkspace({
       setOnboarding(response);
     } catch (actionError) {
       setError(
-        toErrorMessage(
-          actionError,
-          "Nao foi possivel confirmar a etapa comercial agora.",
-        ),
+        toErrorMessage(actionError, "Não foi possível confirmar o pagamento agora."),
       );
     } finally {
       setAction(null);
@@ -216,9 +293,7 @@ export function CommercialCheckoutWorkspace({
   }
 
   async function handleFinalizeOnboarding(): Promise<void> {
-    if (!onboardingToken) {
-      return;
-    }
+    if (!onboardingToken) return;
 
     setAction("finalize");
     setError(null);
@@ -230,10 +305,7 @@ export function CommercialCheckoutWorkspace({
       setOnboarding(response);
     } catch (actionError) {
       setError(
-        toErrorMessage(
-          actionError,
-          "Nao foi possivel finalizar o onboarding inicial agora.",
-        ),
+        toErrorMessage(actionError, "Não foi possível criar o ambiente agora. Tente novamente."),
       );
     } finally {
       setAction(null);
@@ -242,7 +314,7 @@ export function CommercialCheckoutWorkspace({
 
   async function handlePrepareAccess(): Promise<void> {
     if (!onboarding?.admin.email) {
-      setError("O email do admin ainda nao esta disponivel para ativacao do acesso.");
+      setError("O e-mail do responsável ainda não está disponível para ativação do acesso.");
       return;
     }
 
@@ -252,22 +324,17 @@ export function CommercialCheckoutWorkspace({
     setAccessPreviewUrl(null);
 
     try {
-      const response = await requestPasswordReset({
-        email: onboarding.admin.email,
-      });
+      const response = await requestPasswordReset({ email: onboarding.admin.email });
 
       setAccessMessage(
         response.resetUrlPreview
-          ? "A ativacao da senha foi preparada. Neste ambiente, o link seguro aparece abaixo."
-          : "A ativacao da senha foi preparada. O proximo passo e concluir a definicao da senha pelo fluxo seguro de recuperacao.",
+          ? "A senha está pronta para ser ativada. Use o link abaixo para definir sua senha e acessar o painel."
+          : "Um e-mail foi enviado com o link para ativar sua senha. Verifique sua caixa de entrada.",
       );
       setAccessPreviewUrl(response.resetUrlPreview ?? null);
     } catch (requestError) {
       setError(
-        toErrorMessage(
-          requestError,
-          "Nao foi possivel preparar a ativacao de acesso agora.",
-        ),
+        toErrorMessage(requestError, "Não foi possível preparar o acesso agora. Tente novamente."),
       );
     } finally {
       setAction(null);
@@ -283,12 +350,11 @@ export function CommercialCheckoutWorkspace({
               Escolha um plano primeiro
             </p>
             <h2 className="text-3xl font-semibold leading-tight text-ink">
-              O checkout comercial precisa nascer de um plano publico real.
+              O checkout começa com a escolha do plano da sua clínica estética.
             </h2>
             <p className="max-w-3xl text-sm leading-7 text-muted">
-              Escolha o plano que melhor encaixa a operacao da sua clinica
-              estetica. O OperaClinic cria um onboarding comercial proprio para
-              esse contexto e segue com o fluxo ate o acesso.
+              Selecione o plano que melhor se encaixa na sua operação. O OperaClinic
+              cria um onboarding exclusivo e acompanha a jornada até o acesso.
             </p>
           </div>
         </Card>
@@ -307,14 +373,14 @@ export function CommercialCheckoutWorkspace({
       <Card className="rounded-[30px] border-slate-200 bg-white p-8">
         <div className="space-y-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-red-600">
-            Checkout indisponivel
+            Checkout não encontrado
           </p>
           <h2 className="text-3xl font-semibold leading-tight text-ink">
-            Nao encontramos este onboarding comercial.
+            Não encontramos este cadastro.
           </h2>
           <p className="text-sm leading-7 text-muted">
-            O link pode ter expirado ou a jornada comercial ainda nao foi
-            iniciada corretamente. Escolha um plano publico para recomecar.
+            O link pode ter expirado ou a jornada ainda não foi iniciada. Escolha
+            um plano para começar.
           </p>
           {error ? (
             <div className="rounded-[24px] border border-red-200 bg-red-50 px-5 py-4 text-sm leading-6 text-red-700">
@@ -347,15 +413,90 @@ export function CommercialCheckoutWorkspace({
   const status = statusCopy[onboarding.status];
   const isConfirming = action === "confirm";
   const isFinalizing = action === "finalize";
+  const isRedirecting = action === "stripe_redirect";
+  const isClinicReady = onboarding.nextStep === "login_clinic";
+
+  // Dark card dynamic header based on current step
+  const cardEyebrow = (() => {
+    if (isFinalizing || onboarding.nextStep === "finalize_onboarding") return "Criando seu ambiente";
+    if (isClinicReady) return "Missão cumprida";
+    if (onboarding.nextStep === "complete_registration") return "Etapa 1 concluída";
+    if (onboarding.nextStep === "confirm_checkout") return "Quase lá";
+    if (onboarding.nextStep === "restart_onboarding") return "Link expirado";
+    return "Próximo passo";
+  })();
+
+  const cardTitle = (() => {
+    if (isFinalizing || onboarding.nextStep === "finalize_onboarding")
+      return "Estamos montando tudo para a sua clínica estética.";
+    if (isClinicReady) return "Tudo pronto. Ative a senha para começar.";
+    if (onboarding.nextStep === "complete_registration")
+      return "Plano reservado. Complete o cadastro para avançar ao pagamento.";
+    if (onboarding.nextStep === "confirm_checkout")
+      return "Confirme o pagamento e sua clínica será criada.";
+    if (onboarding.nextStep === "restart_onboarding")
+      return "Inicie novamente para criar sua clínica estética.";
+    return "Continue a jornada da sua clínica estética.";
+  })();
+
+  const pageHeading = (() => {
+    if (isClinicReady) return null;
+    if (onboarding.nextStep === "complete_registration") return {
+      eyebrow: "Sua clínica estética",
+      title: "Plano reservado. Complete o cadastro para avançar ao pagamento.",
+      description: "Preencha os dados da clínica e do responsável pelo acesso. O pagamento só ocorre na próxima etapa.",
+    };
+    if (onboarding.nextStep === "confirm_checkout") return {
+      eyebrow: "Quase lá",
+      title: "Confirme o pagamento e sua clínica será criada.",
+      description: "Você será redirecionado para o ambiente seguro de pagamento. Após confirmar, voltará automaticamente para continuar.",
+    };
+    if (onboarding.nextStep === "restart_onboarding") return {
+      eyebrow: "Link expirado",
+      title: "Este link não é mais válido.",
+      description: "Por segurança, onboardings expiram após 48 horas. Escolha o plano novamente para iniciar uma nova jornada.",
+    };
+    return {
+      eyebrow: "Sua clínica estética",
+      title: "Complete o cadastro e ative o acesso ao painel da sua clínica.",
+      description: "Acompanhe cada etapa da jornada: plano escolhido, dados da clínica, pagamento e acesso do responsável.",
+    };
+  })();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-8">
+      {pageHeading ? (
+        <section>
+          <PublicSectionHeading
+            eyebrow={pageHeading.eyebrow}
+            title={pageHeading.title}
+            description={pageHeading.description}
+          />
+        </section>
+      ) : null}
+
+      <div className="space-y-6">
+      <OnboardingProgress
+        currentStep={
+          isClinicReady
+            ? 4
+            : onboarding.nextStep === "complete_registration"
+              ? 2
+              : 3
+        }
+        token={onboardingToken}
+      />
+
+      {isClinicReady ? (
+        <CelebrationBanner clinicName={onboarding.clinic.displayName} />
+      ) : null}
+
       {checkoutCancelled ? (
         <div className="rounded-[24px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-800">
           <div className="flex items-start gap-2">
             <CircleAlert className="mt-0.5 h-5 w-5 shrink-0" />
             <span>
-              O checkout foi cancelado antes da confirmacao. Quando quiser, voce pode retomar a cobranca com seguranca por esta mesma jornada.
+              O pagamento foi cancelado. Quando quiser, você pode retomar por esta mesma jornada.
             </span>
           </div>
         </div>
@@ -382,7 +523,7 @@ export function CommercialCheckoutWorkspace({
                 href={accessPreviewUrl}
                 className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
               >
-                Definir senha do admin agora
+                Definir minha senha agora
                 <ArrowRight className="h-4 w-4" />
               </Link>
             ) : null}
@@ -397,7 +538,7 @@ export function CommercialCheckoutWorkspace({
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-accent">
-                    Checkout comercial real
+                    Plano selecionado
                   </p>
                   <h2 className="mt-3 text-4xl font-semibold leading-tight text-ink">
                     {plan.name}
@@ -427,7 +568,7 @@ export function CommercialCheckoutWorkspace({
             <div className="space-y-5">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
-                  Estado atual
+                  Status da jornada
                 </p>
                 <h3 className="mt-3 text-2xl font-semibold leading-tight text-ink">
                   {status.label}
@@ -440,125 +581,208 @@ export function CommercialCheckoutWorkspace({
               <div className="grid gap-3">
                 <div className="rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-4">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-                    Proximo passo
+                    Próximo passo
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-700">
                     {onboarding.nextStep === "complete_registration"
-                      ? "Completar os dados da clinica estetica e do admin."
+                      ? "Preencha os dados da sua clínica estética para continuar."
                       : onboarding.nextStep === "confirm_checkout"
-                        ? "Confirmar a etapa comercial neste ambiente."
+                        ? "Confirme o pagamento para criar o ambiente da clínica."
                         : onboarding.nextStep === "finalize_onboarding"
-                          ? "Criar tenant, clinica estetica, unidade inicial e admin."
+                          ? "Criar o ambiente inicial da sua clínica estética."
                           : onboarding.nextStep === "restart_onboarding"
-                            ? "Reiniciar a jornada comercial com um novo onboarding."
-                            : "Seguir para o login da clinica estetica com o admin criado."}
+                            ? "Iniciar novamente a partir da escolha do plano."
+                            : "Definir a senha e acessar o painel da sua clínica."}
                   </p>
                 </div>
 
-                <div className="rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-                    Dados da clinica
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-700">
-                    {onboarding.clinic.displayName
-                      ? `${onboarding.clinic.displayName} · ${onboarding.clinic.contactEmail ?? "email pendente"}`
-                      : "A clinica estetica ainda nao teve os dados principais preenchidos."}
-                  </p>
-                </div>
+                {onboarding.clinic.displayName ? (
+                  <div className="rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                      Dados da clínica
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      {onboarding.clinic.displayName}
+                      {onboarding.clinic.contactEmail
+                        ? ` · ${onboarding.clinic.contactEmail}`
+                        : null}
+                    </p>
+                  </div>
+                ) : null}
 
-                <div className="rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-                    Admin responsavel
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-slate-700">
-                    {onboarding.admin.email
-                      ? `${onboarding.admin.fullName ?? "Responsavel"} · ${onboarding.admin.email}`
-                      : "O responsavel pela clinica estetica ainda nao foi definido."}
-                  </p>
-                </div>
+                {onboarding.admin.email ? (
+                  <div className="rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                      Responsável pelo acesso
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      {onboarding.admin.fullName
+                        ? `${onboarding.admin.fullName} · `
+                        : null}
+                      {onboarding.admin.email}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             </div>
           </Card>
         </div>
 
         <div className="space-y-6">
-          <Card tone="dark" className="rounded-[30px] border-slate-200 p-7 shadow-[0_30px_100px_-56px_rgba(15,23,42,0.92)]">
-            <div className="space-y-5">
+          <Card
+            tone="dark"
+            className={`rounded-[30px] border-slate-200 p-7 shadow-[0_30px_100px_-56px_rgba(15,23,42,0.92)] ${isClinicReady ? "relative overflow-hidden" : ""}`}
+          >
+            {/* Sparkle orbs for clinic-ready state */}
+            {isClinicReady ? (
+              <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                <span className="absolute left-[5%] top-[20%] h-3 w-3 rounded-full bg-teal-400/20 animate-ping [animation-duration:3s]" />
+                <span className="absolute right-[10%] top-[40%] h-2 w-2 rounded-full bg-teal-300/15 animate-ping [animation-duration:4s] [animation-delay:0.6s]" />
+                <span className="absolute left-[35%] bottom-[15%] h-2 w-2 rounded-full bg-white/10 animate-ping [animation-duration:3.5s] [animation-delay:1s]" />
+                <span className="absolute right-[30%] top-[15%] h-1.5 w-1.5 rounded-full bg-teal-200/20 animate-ping [animation-duration:2.8s] [animation-delay:0.3s]" />
+              </div>
+            ) : null}
+
+            <div className="relative space-y-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-200">
-                    Acao principal
+                    {cardEyebrow}
                   </p>
                   <h3 className="mt-3 text-3xl font-semibold leading-tight">
-                    Continue a jornada comercial da clinica estetica.
+                    {cardTitle}
                   </h3>
                 </div>
-                <div className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-white/10">
-                  <CreditCard className="h-6 w-6 text-teal-200" />
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-white/10">
+                  {isClinicReady ? (
+                    <CheckCircle2 className="h-6 w-6 text-emerald-300" />
+                  ) : isFinalizing || onboarding.nextStep === "finalize_onboarding" ? (
+                    <LoaderCircle className="h-6 w-6 animate-spin text-teal-200" />
+                  ) : onboarding.nextStep === "restart_onboarding" ? (
+                    <CircleAlert className="h-6 w-6 text-amber-300" />
+                  ) : (
+                    <CreditCard className="h-6 w-6 text-teal-200" />
+                  )}
                 </div>
               </div>
 
               {onboarding.nextStep === "complete_registration" ? (
                 <>
                   <p className="text-sm leading-7 text-slate-300">
-                    O plano ja esta reservado neste onboarding. Agora faltam os
-                    dados da clinica estetica, da unidade inicial e do admin.
+                    Seu plano está reservado. Preencha os dados da sua clínica estética
+                    e do responsável pelo acesso para seguir ao pagamento.
                   </p>
                   <Link
                     href={`/cadastro?token=${encodeURIComponent(onboardingToken)}`}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink transition hover:bg-slate-100"
                   >
-                    Ir para cadastro da clinica estetica
+                    Completar dados da clínica
                     <ArrowRight className="h-4 w-4" />
                   </Link>
+                  <MiniProgress
+                    steps={[
+                      { label: "Plano escolhido", status: "done" },
+                      { label: "Dados da clínica", status: "active" },
+                      { label: "Pagamento", status: "pending" },
+                      { label: "Acesso ao painel", status: "pending" },
+                    ]}
+                  />
                 </>
               ) : null}
 
               {onboarding.nextStep === "confirm_checkout" ? (
                 <>
-                  <p className="text-sm leading-7 text-slate-300">
-                    Neste ambiente, a etapa comercial continua simulada. O backend
-                    segue registrando o estado real do onboarding, sem misturar
-                    isso com o login ou com a operacao autenticada.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => void handleConfirmCheckout()}
-                    disabled={isConfirming || !onboarding.payment.mockConfirmationAvailable}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    {isConfirming ? (
-                      <LoaderCircle className="h-4 w-4 animate-spin" />
-                    ) : null}
-                    {isConfirming
-                      ? "Confirmando checkout..."
-                      : onboarding.payment.mockConfirmationAvailable
-                        ? "Confirmar checkout de demonstracao"
-                        : "Aguardando confirmacao externa"}
-                  </button>
+                  {onboarding.payment.mockConfirmationAvailable ? (
+                    <>
+                      <p className="text-sm leading-7 text-slate-300">
+                        Ambiente de demonstração — confirme o pagamento simulado para
+                        avançar.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void handleConfirmCheckout()}
+                        disabled={isConfirming}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {isConfirming ? (
+                          <LoaderCircle className="h-4 w-4 animate-spin" />
+                        ) : null}
+                        {isConfirming ? "Confirmando..." : "Confirmar pagamento (demo)"}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm leading-7 text-slate-300">
+                        Você será redirecionado para o ambiente seguro de pagamento.
+                        Após confirmar, voltará automaticamente para continuar.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void handleStripeRedirect()}
+                        disabled={isRedirecting}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {isRedirecting ? (
+                          <LoaderCircle className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <CreditCard className="h-4 w-4" />
+                        )}
+                        {isRedirecting ? "Redirecionando..." : "Pagar com cartão"}
+                      </button>
+                    </>
+                  )}
+                  <MiniProgress
+                    steps={[
+                      { label: "Plano escolhido", status: "done" },
+                      { label: "Dados da clínica", status: "done" },
+                      { label: "Pagamento", status: "active" },
+                      { label: "Acesso ao painel", status: "pending" },
+                    ]}
+                  />
                 </>
               ) : null}
 
               {onboarding.nextStep === "finalize_onboarding" ? (
                 <>
-                  <p className="text-sm leading-7 text-slate-300">
-                    Agora o backend pode criar tenant, clinica estetica, unidade inicial,
-                    usuario admin e vinculo do plano escolhido em uma unica
-                    operacao transacional.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => void handleFinalizeOnboarding()}
-                    disabled={isFinalizing}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    {isFinalizing ? (
-                      <LoaderCircle className="h-4 w-4 animate-spin" />
-                    ) : null}
-                    {isFinalizing
-                      ? "Criando ambiente inicial..."
-                      : "Criar ambiente inicial da clinica estetica"}
-                  </button>
+                  {isFinalizing ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <LoaderCircle className="h-5 w-5 shrink-0 animate-spin text-teal-200" />
+                        <p className="text-sm font-semibold text-white">
+                          Criando sua clínica estética...
+                        </p>
+                      </div>
+                      <div className="grid gap-2 rounded-[20px] border border-white/10 bg-white/5 px-4 py-4">
+                        <div className="flex items-center gap-2 text-xs text-slate-300">
+                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-teal-300" />
+                          <span>Pagamento confirmado</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-300">
+                          <LoaderCircle className="h-3.5 w-3.5 shrink-0 animate-spin text-teal-200" />
+                          <span>Criando perfil e unidade da clínica</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <span className="h-3.5 w-3.5 shrink-0 flex items-center justify-center text-base leading-none">·</span>
+                          <span>Preparando acesso do responsável</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm leading-7 text-slate-300">
+                        Com o pagamento confirmado, vamos criar sua clínica estética,
+                        unidade inicial e usuário administrador em uma única etapa.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void handleFinalizeOnboarding()}
+                        disabled={isFinalizing}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        Criar minha clínica estética
+                      </button>
+                    </>
+                  )}
                 </>
               ) : null}
 
@@ -569,31 +793,35 @@ export function CommercialCheckoutWorkspace({
                       <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-teal-200" />
                       <div>
                         <p className="font-semibold text-white">
-                          Tenant, clinica estetica, unidade inicial e admin criados.
+                          Clínica estética criada com sucesso.
                         </p>
                         <p className="mt-1">
-                          O proximo passo agora e ativar a senha do admin em um
-                          fluxo separado. So depois disso o login da clinica
-                          estetica fica liberado.
+                          Ative a senha do responsável para liberar o acesso ao
+                          painel.
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4 text-sm leading-7 text-slate-300">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-200">
-                      Dados consolidados da clinica
-                    </p>
-                    <p className="mt-2">
-                      Clinica: {onboarding.clinic.displayName ?? "nao informada"}
-                    </p>
-                    <p>
-                      Email da clinica: {onboarding.clinic.contactEmail ?? "nao informado"}
-                    </p>
-                    <p>
-                      Email do admin: {onboarding.admin.email ?? "nao informado"}
-                    </p>
-                  </div>
+                  {onboarding.clinic.displayName ? (
+                    <div className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4 text-sm leading-7 text-slate-300">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-200">
+                        Resumo do ambiente criado
+                      </p>
+                      <p className="mt-2">
+                        Clínica:{" "}
+                        <span className="font-semibold text-white">
+                          {onboarding.clinic.displayName}
+                        </span>
+                      </p>
+                      {onboarding.clinic.contactEmail ? (
+                        <p>E-mail da clínica: {onboarding.clinic.contactEmail}</p>
+                      ) : null}
+                      {onboarding.admin.email ? (
+                        <p>Responsável: {onboarding.admin.email}</p>
+                      ) : null}
+                    </div>
+                  ) : null}
 
                   <button
                     type="button"
@@ -605,15 +833,15 @@ export function CommercialCheckoutWorkspace({
                       <LoaderCircle className="h-4 w-4 animate-spin" />
                     ) : null}
                     {action === "setup_access"
-                      ? "Preparando ativacao..."
-                      : "Preparar ativacao da senha do admin"}
+                      ? "Preparando acesso..."
+                      : "Ativar minha senha"}
                   </button>
 
                   <Link
                     href={buildClinicLoginHref(onboarding)}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
                   >
-                    Ir para o login da clinica estetica
+                    Ir para o login da clínica
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </>
@@ -622,15 +850,14 @@ export function CommercialCheckoutWorkspace({
               {onboarding.nextStep === "restart_onboarding" ? (
                 <>
                   <p className="text-sm leading-7 text-slate-300">
-                    Este onboarding expirou para reduzir risco de abuso e
-                    evitar reaproveitamento indefinido do token publico. Escolha
-                    novamente o plano para gerar um novo fluxo comercial.
+                    Por segurança, este link expirou. Escolha o plano novamente para
+                    iniciar uma nova jornada.
                   </p>
                   <Link
                     href="/planos"
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink transition hover:bg-slate-100"
                   >
-                    Reiniciar pelos planos
+                    Escolher plano novamente
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </>
@@ -646,48 +873,28 @@ export function CommercialCheckoutWorkspace({
                 </div>
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
-                    Separacao correta
+                    Seus dados em segurança
                   </p>
                   <h3 className="mt-2 text-2xl font-semibold leading-tight text-ink">
-                    Checkout publico, acesso autenticado separado.
+                    Acesso liberado somente após o pagamento.
                   </h3>
                 </div>
               </div>
               <p className="text-sm leading-7 text-muted">
-                Esta etapa continua na camada publica/comercial. O login da
-                clinica estetica so entra em cena depois que o backend conclui o
-                onboarding inicial.
+                Nenhuma credencial é criada antes do pagamento ser confirmado. O
+                acesso ao painel da clínica só é liberado quando o ambiente está
+                completamente pronto.
               </p>
-              <div className="rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-700">
-                {onboarding.payment.reference
-                  ? `Referencia atual do checkout: ${onboarding.payment.reference}.`
-                  : "Ainda nao existe referencia de pagamento registrada para este onboarding."}
-              </div>
-            </div>
-          </Card>
-
-          <Card className="rounded-[30px] border-slate-200 bg-gradient-to-b from-white to-slate-50 p-7">
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accentSoft">
-                  <Sparkles className="h-5 w-5 text-accent" />
+              {onboarding.payment.reference ? (
+                <div className="rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                  Referência do pagamento:{" "}
+                  <span className="font-mono">{onboarding.payment.reference}</span>
                 </div>
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
-                    Jornada comercial
-                  </p>
-                  <h3 className="mt-2 text-2xl font-semibold leading-tight text-ink">
-                    O backend continua dono do estado do onboarding.
-                  </h3>
-                </div>
-              </div>
-              <p className="text-sm leading-7 text-muted">
-                O frontend nao simula status. Ele le o onboarding comercial real,
-                persiste os dados da clinica estetica e acompanha a transicao ate o login.
-              </p>
+              ) : null}
             </div>
           </Card>
         </div>
+      </div>
       </div>
     </div>
   );

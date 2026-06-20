@@ -14,7 +14,7 @@ import {
   adminSelectClassName,
   adminTextareaClassName,
 } from "@/components/platform/platform-admin";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";;
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { toErrorMessage } from "@/lib/client/http";
@@ -142,7 +142,7 @@ export default function PlatformPlansPage() {
       const nextPlans = await listPlans(filters);
       setPlans(nextPlans);
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Nao foi possivel carregar os planos."));
+      setError(toErrorMessage(requestError, "Não foi possível carregar os planos."));
     } finally {
       setIsLoading(false);
     }
@@ -240,7 +240,7 @@ export default function PlatformPlansPage() {
           <AdminSectionHeader
             eyebrow="Oferta ativa"
             title="Planos cadastrados"
-            description="Busque por nome ou codigo e filtre por estado para revisar rapidamente o catalogo comercial."
+            description="Busque por nome ou codigo e filtre por estado para revisar rápidamente o catalogo comercial."
             actions={<AdminCountBadge value={plans.length} loading={isLoading} />}
           />
 
@@ -269,7 +269,7 @@ export default function PlatformPlansPage() {
             <button
               type="button"
               onClick={clearFilters}
-              className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+              className={buttonVariants({ variant: "secondary" })}
             >
               Limpar
             </button>
@@ -304,7 +304,7 @@ export default function PlatformPlansPage() {
                   </p>
 
                   <p className="mt-3 text-sm leading-6 text-muted">
-                    {plan.description ?? "Sem descricao operacional cadastrada."}
+                    {plan.description ?? "Sem descrição operacional cadastrada."}
                   </p>
 
                   <div className="mt-4 grid gap-3 text-sm text-muted sm:grid-cols-2">
@@ -341,14 +341,14 @@ export default function PlatformPlansPage() {
                       <button
                         type="button"
                         onClick={clearFilters}
-                        className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+                        className={buttonVariants({ variant: "secondary" })}
                       >
                         Limpar filtros
                       </button>
                     ) : (
                       <a
                         href="#novo-plano"
-                        className="inline-flex h-11 items-center justify-center rounded-2xl bg-accent px-4 text-sm font-semibold text-white transition hover:opacity-90"
+                        className={buttonVariants({ variant: "accent" })}
                       >
                         Criar plano
                       </a>
@@ -364,7 +364,7 @@ export default function PlatformPlansPage() {
           <AdminSectionHeader
             eyebrow="Novo item do catalogo"
             title="Criar plano"
-            description="Defina codigo, nome, descricao e ticket para disponibilizar um novo plano na operacao comercial."
+            description="Defina codigo, nome, descrição e ticket para disponibilizar um novo plano na operação comercial."
           />
 
           <form className="space-y-3" onSubmit={(event) => void handleCreatePlan(event)}>
@@ -402,7 +402,7 @@ export default function PlatformPlansPage() {
 
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                Descricao
+                Descrição
               </label>
               <textarea
                 value={createForm.description}

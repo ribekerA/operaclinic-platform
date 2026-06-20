@@ -17,22 +17,9 @@ export interface PublicPlanDefinition {
 }
 
 export const publicNavigation = [
-  {
-    label: "Inicio",
-    href: "/",
-  },
-  {
-    label: "Planos",
-    href: "/planos",
-  },
-  {
-    label: "Cadastro",
-    href: "/cadastro",
-  },
-  {
-    label: "Acesso",
-    href: "/acesso",
-  },
+  { label: "Início",          href: "/" },
+  { label: "Como funciona",   href: "/#como-funciona" },
+  { label: "Planos",          href: "/planos" },
 ] as const;
 
 function formatPriceLabel(plan: CommercialPlanSummaryPayload): string {
@@ -45,7 +32,7 @@ function formatPriceLabel(plan: CommercialPlanSummaryPayload): string {
     currency: plan.currency || "BRL",
   }).format(plan.priceCents / 100);
 
-  return `A partir de ${formattedPrice}/mes`;
+  return `A partir de ${formattedPrice}/mês`;
 }
 
 function fallbackSlug(plan: CommercialPlanSummaryPayload): string {
@@ -64,14 +51,14 @@ function resolvePublicMetadata(
       slug: fallbackSlug(plan),
       summary:
         plan.description ??
-        "Plano comercial do OperaClinic para clinicas esteticas privadas.",
-      idealFor: "Clinicas esteticas privadas em operacao.",
+        "Plano comercial do OperaClinic para clínicas estéticas privadas.",
+      idealFor: "Clínicas estéticas privadas em operação.",
       implementation:
-        "Implantacao assistida com foco em recepcao, agenda e operacao do dia.",
+        "Implantação assistida com foco em recepção, agenda e operação do dia.",
       highlights: [
         "Agenda por profissional",
-        "Recepcao web",
-        "Fluxo comercial alinhado ao WhatsApp da clinica",
+        "Recepção web",
+        "Fluxo comercial alinhado ao WhatsApp da clínica",
       ],
     }
   );

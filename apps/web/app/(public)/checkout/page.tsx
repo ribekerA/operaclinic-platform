@@ -1,5 +1,4 @@
 import { CommercialCheckoutWorkspace } from "@/components/public/commercial-checkout-workspace";
-import { PublicSectionHeading } from "@/components/public/public-section-heading";
 
 interface CheckoutPageProps {
   searchParams?: Promise<{
@@ -19,14 +18,6 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
 
   return (
     <div className="space-y-12 pb-8">
-      <section className="space-y-5">
-        <PublicSectionHeading
-          eyebrow="Checkout comercial"
-          title="A jornada comercial agora le o onboarding real da sua clinica estetica"
-          description="O checkout nao depende mais de query string de placeholder. Ele acompanha o plano escolhido, o estado do onboarding e a transicao segura ate o acesso da clinica estetica."
-        />
-      </section>
-
       <CommercialCheckoutWorkspace
         onboardingToken={onboardingToken}
         checkoutSessionId={checkoutSessionId}

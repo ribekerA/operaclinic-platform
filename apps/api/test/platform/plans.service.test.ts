@@ -49,9 +49,9 @@ describe("PlansService", () => {
         create: vi.fn().mockResolvedValue({
           id: "plan-1",
           code: "ESTETICA_FLOW",
-          name: "Flow Estetica",
+          name: "Flow Estética",
           description:
-            "Para clinicas com forte operacao no WhatsApp, confirmacao e remarcacao frequente.",
+            "Para clínicas com forte operação no WhatsApp, confirmação e remarcação frequente.",
           priceCents: 34900,
           currency: "BRL",
           isPublic: true,
@@ -84,16 +84,16 @@ describe("PlansService", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           code: "ESTETICA_FLOW",
-          name: "Flow Estetica",
+          name: "Flow Estética",
           description:
-            "Para clinicas com forte operacao no WhatsApp, confirmacao e remarcacao frequente.",
+            "Para clínicas com forte operação no WhatsApp, confirmação e remarcação frequente.",
           priceCents: 34900,
           currency: "BRL",
           isPublic: true,
         }),
       }),
     );
-    expect(result.name).toBe("Flow Estetica");
+    expect(result.name).toBe("Flow Estética");
     expect(result.priceCents).toBe(34900);
   });
 });

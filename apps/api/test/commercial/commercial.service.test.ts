@@ -161,7 +161,7 @@ describe("CommercialService", () => {
     expect(result.onboarding.status).toBe(CommercialOnboardingStatus.INITIATED);
     expect(result.onboarding.selectedPlan.code).toBe("ESTETICA_FLOW");
     expect(result.onboarding.selectedPlan.publicMetadata?.slug).toBe(
-      "flow-estetica",
+      "flow-estética",
     );
     expect(txMock.commercialOnboarding.create).toHaveBeenCalledWith(
       expect.objectContaining({

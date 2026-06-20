@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { ArrowRight, CheckCircle2, LoaderCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -91,7 +91,7 @@ export function PublicPlanCard({
             <ArrowRight className="h-4 w-4" />
           </button>
           <div className="inline-flex items-center rounded-xl border border-border px-4 py-3 text-sm text-muted">
-            A jornada segue para checkout e cadastro da clinica estetica.
+            A jornada segue para checkout e cadastro da clínica estética.
           </div>
         </div>
       </div>

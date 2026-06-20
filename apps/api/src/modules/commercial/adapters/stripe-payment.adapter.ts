@@ -52,7 +52,7 @@ export class StripePaymentAdapter implements PaymentAdapter {
         "http://localhost:3000",
       );
       const session = await this.stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
+        payment_method_types: ["card", "boleto"],
         line_items: [
           {
             price_data: {
