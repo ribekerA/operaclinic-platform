@@ -20,6 +20,9 @@ RUN pnpm install --frozen-lockfile
 COPY apps/api      ./apps/api
 COPY packages/shared ./packages/shared
 
+# Gera o Prisma client antes de compilar (tipos são necessários para nest build)
+RUN pnpm --filter @operaclinic/api exec prisma generate
+
 RUN pnpm --filter @operaclinic/shared build
 RUN pnpm --filter @operaclinic/api run build
 
