@@ -62,6 +62,9 @@ importers:
       helmet:
         specifier: ^8.2.0
         version: 8.2.0
+      prisma:
+        specifier: ^6.6.0
+        version: 6.19.2(typescript@5.9.3)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -90,9 +93,6 @@ importers:
       '@types/node':
         specifier: ^22.13.10
         version: 22.19.15
-      prisma:
-        specifier: ^6.6.0
-        version: 6.19.2(typescript@5.9.3)
       rimraf:
         specifier: ^6.0.1
         version: 6.1.3
