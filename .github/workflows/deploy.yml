@@ -10,27 +10,38 @@ concurrency:
 
 jobs:
   deploy-api:
-    name: Deploy API → Railway
+    name: Deploy API → Render
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
+    if: ${{ vars.RENDER_API_DEPLOY_HOOK != '' || secrets.RENDER_API_DEPLOY_HOOK != '' }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Trigger Render deploy (API)
+        run: |
+          curl -s -X POST "${{ secrets.RENDER_API_DEPLOY_HOOK }}" \
+            -H "Accept: application/json" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print('Deploy triggered:', d.get('id', d))"
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Deploy API
-        run: railway up --service api --detach
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Aguardar API ficar healthy
+        run: |
+          echo "Aguardando API..."
+          for i in $(seq 1 24); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.PRODUCTION_API_URL }}/api/v1/health" || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "✓ API healthy após ${i}x30s"
+              exit 0
+            fi
+            echo "Tentativa $i/24: status=$STATUS — aguardando 30s..."
+            sleep 30
+          done
+          echo "⚠ API não ficou healthy em 12 minutos — verifique os logs no Render"
+          exit 1
 
   deploy-web:
-    name: Deploy Web → Railway
+    name: Deploy Web → Vercel
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     environment: production
     needs: deploy-api
 
@@ -38,10 +49,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
-      - name: Deploy Web
-        run: railway up --service web --detach
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Deploy Web to Vercel
+        run: |
+          vercel deploy \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --prod \
+            --yes \
+            --cwd apps/web
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

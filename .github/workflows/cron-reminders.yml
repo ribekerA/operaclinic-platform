@@ -1,0 +1,53 @@
+name: Cron — Appointment Reminders 24h
+
+on:
+  schedule:
+    # Runs at 11:00 UTC = 08:00 BRT (Brasília Time, UTC-3)
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (não envia mensagens, apenas simula)"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+jobs:
+  dispatch-reminders:
+    name: Disparar lembretes 24h
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+
+    steps:
+      - name: Disparar cron de lembretes
+        id: cron
+        run: |
+          DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+          echo "Disparando reminders... dryRun=$DRY_RUN"
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "x-cron-token: ${{ secrets.CRON_SECRET }}" \
+            -d "{\"dryRun\": $DRY_RUN, \"windowMinutes\": 90, \"limitPerTenant\": 200}" \
+            "${{ secrets.PRODUCTION_API_URL }}/api/v1/internal/cron/appointment-reminders")
+
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          echo "HTTP Status: $HTTP_STATUS"
+          echo "Response: $BODY"
+
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "Cron falhou com status $HTTP_STATUS"
+            exit 1
+          fi
+
+          # Extrair métricas do response JSON
+          PROCESSED=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('processedTenants',0))" 2>/dev/null || echo "?")
+          SKIPPED=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('skippedTenants',0))" 2>/dev/null || echo "?")
+          TOTAL=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('totalTenants',0))" 2>/dev/null || echo "?")
+
+          echo "Reminders: tenants=$TOTAL processados=$PROCESSED ignorados=$SKIPPED dryRun=$DRY_RUN"
