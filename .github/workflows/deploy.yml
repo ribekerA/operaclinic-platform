@@ -14,13 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
-    if: ${{ vars.RENDER_API_DEPLOY_HOOK != '' || secrets.RENDER_API_DEPLOY_HOOK != '' }}
 
     steps:
       - name: Trigger Render deploy (API)
         run: |
-          curl -s -X POST "${{ secrets.RENDER_API_DEPLOY_HOOK }}" \
-            -H "Accept: application/json" \
+          curl -s -X POST "https://api.render.com/v1/services/srv-d92nri5aeets73ab56j0/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
             | python3 -c "import sys,json; d=json.load(sys.stdin); print('Deploy triggered:', d.get('id', d))"
 
       - name: Aguardar API ficar healthy
@@ -39,37 +40,32 @@ jobs:
           exit 1
 
   deploy-web:
-    name: Deploy Web → Vercel
+    name: Deploy Web → Render
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     environment: production
     needs: deploy-api
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel
-
-      - name: Deploy Web to Vercel
+      - name: Trigger Render deploy (Web)
         run: |
-          vercel deploy \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --prod \
-            --yes \
-            --cwd apps/web
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          curl -s -X POST "https://api.render.com/v1/services/srv-d9381ue7r5hc7392d2g0/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print('Deploy triggered:', d.get('id', d))"
+
+      - name: Aguardar Web ficar healthy
+        run: |
+          echo "Aguardando Web..."
+          for i in $(seq 1 24); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.PRODUCTION_WEB_URL }}" || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "✓ Web healthy após ${i}x30s"
+              exit 0
+            fi
+            echo "Tentativa $i/24: status=$STATUS — aguardando 30s..."
+            sleep 30
+          done
+          echo "⚠ Web não ficou healthy em 12 minutos — verifique os logs no Render"
+          exit 1
