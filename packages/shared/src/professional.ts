@@ -58,6 +58,13 @@ export interface ProfessionalWorkspacePatientAppointmentSummary {
   notes: string | null;
 }
 
+export interface ProfessionalWorkspacePatientSearchResult {
+  id: string;
+  fullName: string | null;
+  birthDate: string | null;
+  primaryContact: string | null;
+}
+
 export interface ProfessionalWorkspacePatientSummaryResponse {
   patient: {
     id: string;
@@ -65,6 +72,9 @@ export interface ProfessionalWorkspacePatientSummaryResponse {
     birthDate: string | null;
     documentNumber: string | null;
     notes: string | null;
+    allergies: string | null;
+    aestheticGoals: string | null;
+    contraindications: string | null;
     isActive: boolean;
     contacts: ProfessionalWorkspacePatientContact[];
   };

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SessionProfile, SessionUser } from "@/lib/session/types";
@@ -50,7 +50,7 @@ export function useSession(options: UseSessionOptions = {}): UseSessionResult {
       setError(null);
     } catch {
       setUser(null);
-      setError("Nao foi possivel carregar sessao.");
+      setError("Não foi possível carregar sessão.");
     } finally {
       setLoading(false);
     }

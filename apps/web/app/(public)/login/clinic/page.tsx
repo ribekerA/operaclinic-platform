@@ -1,4 +1,4 @@
-import { LoginCard } from "@/components/auth/login-card";
+﻿import { LoginCard } from "@/components/auth/login-card";
 import { PublicAuthShell } from "@/components/public/public-auth-shell";
 
 interface ClinicLoginPageProps {
@@ -19,14 +19,14 @@ function resolveClinicContextMessage(
   switch (source) {
     case "cadastro":
       return clinic
-        ? `Cadastro comercial da clinica ${clinic} registrado. Email da clinica: ${clinicEmail ?? "nao informado"}. A senha do admin e ativada so depois do pagamento confirmado.`
-        : "O cadastro comercial salva os dados da clinica. A senha do admin e ativada so depois do pagamento confirmado.";
+        ? `Cadastro comercial da clínica ${clinic} registrado. Email da Clínica: ${clinicEmail ?? "não informado"}. A senha do admin é ativada somente após a confirmação do pagamento.`
+        : "O cadastro comercial salva os dados da clínica. A senha do admin é ativada somente após a confirmação do pagamento.";
     case "checkout":
       return email
-        ? `Onboarding inicial concluido para ${email}. Clinica: ${clinic ?? "nao informada"}. Email da clinica: ${clinicEmail ?? "nao informado"}. Se ainda nao ativou a senha, abra /clinic/password-reset e conclua a ativacao antes do login.`
-        : "Se o onboarding foi concluido, ative a senha do admin em /clinic/password-reset e depois entre na clinica estetica.";
+        ? `Onboarding inicial concluído para ${email}. Clínica: ${clinic ?? "não informada"}. Email da Clínica: ${clinicEmail ?? "não informado"}. Se ainda não ativou a senha, abra /clinic/password-reset e conclua a ativação antes do login.`
+        : "Se o onboarding foi concluído, ative a senha do admin em /clinic/password-reset e depois entre na clínica estética.";
     case "acesso":
-      return "Voce escolheu entrar na clinica estetica. Continue com o email e a senha da equipe.";
+      return "Você escolheu entrar na clínica estética. Continue com o email e a senha da equipe.";
     default:
       return undefined;
   }
@@ -42,13 +42,13 @@ export default async function ClinicLoginPage({
 
   return (
     <PublicAuthShell
-      eyebrow="Acesso da clinica"
-      title="Entre para operar a recepcao, a agenda e os pacientes da sua clinica estetica."
-      description="Este acesso e para a equipe da clinica estetica. Recepcao, administracao e gestao entram aqui para acompanhar o dia, confirmar atendimento, fazer check-in e manter a agenda organizada."
+      eyebrow="Acesso da clínica"
+      title="Entre para operar a recepção, a agenda e os pacientes da sua clínica estética."
+      description="Este acesso é para a equipe da clínica estética. Recepção, administração e gestão entram aqui para acompanhar o dia, confirmar atendimento, fazer check-in e manter a agenda organizada."
       bullets={[
-        "Recepcao web para confirmar, remarcar e acompanhar fila.",
-        "Agenda por profissional com contexto da clinica estetica ativa.",
-        "Fluxo alinhado ao uso forte de WhatsApp na clinica estetica.",
+        "Recepção web para confirmar, remarcar e acompanhar fila.",
+        "Agenda por profissional com contexto da clínica estética ativa.",
+        "Fluxo alinhado ao uso forte de WhatsApp na clínica estética.",
       ]}
       supportNote="A paciente continua fora do login. O canal dela segue sendo o WhatsApp."
     >

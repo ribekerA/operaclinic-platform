@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
@@ -35,7 +35,7 @@ function getLabel(status: RuntimeHealthStatus): string {
     case "ok":
       return "Online";
     case "degraded":
-      return "Atencao";
+      return "Atenção";
     default:
       return "Offline";
   }
@@ -66,7 +66,7 @@ export function RuntimeStatusPanel() {
         }
       } catch {
         if (!cancelled) {
-          setError("Nao foi possivel ler a saude do ambiente local.");
+          setError("Não foi possível ler a saude do ambiente local.");
         }
       }
     }
@@ -86,7 +86,7 @@ export function RuntimeStatusPanel() {
             Runtime local
           </p>
           <h2 className="mt-2 text-xl font-semibold text-ink">
-            Saude da suite em execucao
+            Saude da suite em execução
           </h2>
         </div>
         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-slate-600">

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -25,6 +25,7 @@ export default function ClinicAccountPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -32,7 +33,7 @@ export default function ClinicAccountPage() {
     setSuccess(null);
 
     if (newPassword !== confirmPassword) {
-      setError("A nova senha e a confirmacao precisam ser iguais.");
+      setError("A nova senha e a confirmação precisam ser iguais.");
       return;
     }
 
@@ -50,14 +51,14 @@ export default function ClinicAccountPage() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setSuccess("Senha alterada. Faca login novamente para continuar.");
+      setSuccess("Senha alterada. Faça login novamente para continuar.");
 
       window.setTimeout(() => {
         router.replace("/login/clinic");
         router.refresh();
       }, 900);
     } catch (err) {
-      setError(toErrorMessage(err, "Nao foi possivel trocar a senha."));
+      setError(toErrorMessage(err, "Não foi possível trocar a senha."));
     } finally {
       setIsSubmitting(false);
     }
@@ -81,25 +82,25 @@ export default function ClinicAccountPage() {
 
     return [
       {
-        label: "Usuario ativo",
+        label: "Usuário ativo",
         value: user.fullName ?? user.email,
         helper: user.email,
       },
       {
-        label: "Clinica ativa",
+        label: "Clínica ativa",
         value: user.activeClinic?.name ?? user.activeTenantId ?? "--",
-        helper: user.activeClinic?.slug ?? "Clinica aberta nesta sessao.",
+        helper: user.activeClinic?.slug ?? "Clínica aberta nesta sessão.",
         tone: "accent" as const,
       },
       {
-        label: "Papeis",
+        label: "Papéis",
         value: String(displayRoles.length),
-        helper: "Acessos aplicados a esta sessao.",
+        helper: "Acessos aplicados a esta sessão.",
       },
       {
-        label: "Seguranca",
+        label: "Segurança",
         value: isSubmitting ? "Atualizando" : "Pronta",
-        helper: "Troca de senha disponivel neste acesso.",
+        helper: "Troca de senha disponível neste acesso.",
       },
     ];
   }, [displayRoles.length, isSubmitting, user]);
@@ -107,18 +108,18 @@ export default function ClinicAccountPage() {
   const shortcutItems = useMemo(
     () => [
       {
-        label: "Usuarios",
-        description: "Abrir acessos e papeis da equipe.",
+        label: "Usuários",
+        description: "Abrir acessos e papéis da equipe.",
         href: "/clinic/users",
       },
       {
-        label: "Recepcao",
-        description: "Voltar para a operacao do dia.",
+        label: "Recepção",
+        description: "Voltar para a operação do dia.",
         href: "/clinic/reception",
       },
       {
         label: "Dashboard",
-        description: "Voltar para a tela principal da clinica.",
+        description: "Voltar para a tela principal da clínica.",
         href: "/clinic",
       },
     ],
@@ -128,9 +129,9 @@ export default function ClinicAccountPage() {
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Clinica | Minha conta"
-        title="Acesso e seguranca"
-        description="Revise sua sessao, confira seus acessos e troque a senha com um fluxo simples."
+        eyebrow="Clínica | Minha conta"
+        title="Acesso e segurança"
+        description="Revise sua sessão, confira seus acessos e troque a senha com um fluxo simples."
       >
         <AdminMetricGrid items={metrics} isLoading={loading && !user} />
         <AdminShortcutPanel items={shortcutItems} />
@@ -158,9 +159,9 @@ export default function ClinicAccountPage() {
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <Card className="space-y-5">
             <AdminSectionHeader
-              eyebrow="Sessao ativa"
+              eyebrow="Sessão ativa"
               title="Resumo do acesso"
-              description="Leitura rapida da clinica atual e dos papeis aplicados ao usuario logado."
+              description="Leitura rápida da clínica atual e dos papéis aplicados ao usuário logado."
             />
 
             <div>
@@ -171,10 +172,10 @@ export default function ClinicAccountPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-                  Clinica ativa
+                  Clínica ativa
                 </p>
                 <p className="mt-2 text-sm font-semibold text-ink">
-                  {user.activeClinic?.name ?? user.activeTenantId ?? "Nao identificada"}
+                  {user.activeClinic?.name ?? user.activeTenantId ?? "Não identificada"}
                 </p>
                 {user.activeClinic?.slug ? (
                   <p className="mt-1 text-xs text-muted">{user.activeClinic.slug}</p>
@@ -182,7 +183,7 @@ export default function ClinicAccountPage() {
               </div>
               <div className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-                  Papeis atuais
+                  Papéis atuais
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {displayRoles.map((role) => (
@@ -198,11 +199,40 @@ export default function ClinicAccountPage() {
             </div>
           </Card>
 
-          <Card className="space-y-5">
+          <div className="space-y-6">
+            {user.activeClinic?.slug ? (
+              <Card className="space-y-4">
+                <AdminSectionHeader
+                  eyebrow="Agendamento"
+                  title="Link público de agendamento"
+                  description="Compartilhe com pacientes para que agendem diretamente, sem precisar ligar."
+                />
+                <div className="flex items-center gap-2 rounded-[20px] border border-slate-200 bg-slate-50/80 p-3">
+                  <p className="flex-1 truncate text-sm font-mono text-ink">
+                    {process.env.NEXT_PUBLIC_APP_URL ?? ""}/agendar/{user.activeClinic.slug}
+                  </p>
+                  <Button
+                    type="button"
+                    className="shrink-0 border border-slate-200 bg-white text-ink hover:bg-slate-50"
+                    onClick={() => {
+                      const url = `${window.location.origin}/agendar/${user.activeClinic!.slug}`;
+                      void navigator.clipboard.writeText(url).then(() => {
+                        setLinkCopied(true);
+                        window.setTimeout(() => setLinkCopied(false), 2000);
+                      });
+                    }}
+                  >
+                    {linkCopied ? "Copiado!" : "Copiar link"}
+                  </Button>
+                </div>
+              </Card>
+            ) : null}
+
+            <Card className="space-y-5">
             <AdminSectionHeader
-              eyebrow="Seguranca"
+              eyebrow="Segurança"
               title="Trocar senha"
-              description="Depois da troca, a sessao atual sera encerrada e um novo login sera necessario."
+              description="Depois da troca, a sessão atual será encerrada e um novo login será necessário."
             />
 
             <form className="space-y-4" onSubmit={(event) => void handleSubmit(event)}>
@@ -233,7 +263,7 @@ export default function ClinicAccountPage() {
                   required
                 />
                 <p className="text-xs text-muted">
-                  Use pelo menos 8 caracteres com letras maiusculas, minusculas e numeros.
+                  Use pelo menos 8 caracteres com letras maiúsculas, minúsculas e números.
                 </p>
               </div>
 
@@ -256,6 +286,7 @@ export default function ClinicAccountPage() {
               </Button>
             </form>
           </Card>
+          </div>
         </div>
       ) : null}
     </div>

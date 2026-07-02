@@ -28,4 +28,5 @@ export class UpdateConsultationTypeDto {
   preparationNotes?: string | null;
   contraindications?: string | null;
   aftercareGuidance?: string | null;
+  priceCents?: number;
 }

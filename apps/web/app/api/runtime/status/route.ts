@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { requestBackendPublic } from "@/lib/server/backend-session";
 
 export const dynamic = "force-dynamic";
@@ -61,7 +61,7 @@ export async function GET(): Promise<NextResponse> {
     payload.api = {
       status: "down",
       statusCode: null,
-      message: "Nao foi possivel atingir o backend.",
+      message: "Não foi possível atingir o backend.",
     };
   }
 

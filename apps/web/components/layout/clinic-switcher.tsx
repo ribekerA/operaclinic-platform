@@ -46,7 +46,7 @@ function toErrorMessage(payload: unknown): string {
     return payload.message.join(", ");
   }
 
-  return "Nao foi possivel trocar de clinica.";
+  return "Não foi possível trocar de clínica.";
 }
 
 export function ClinicSwitcher({ user }: ClinicSwitcherProps) {
@@ -114,7 +114,7 @@ export function ClinicSwitcher({ user }: ClinicSwitcherProps) {
       window.location.assign(nextPath);
     } catch {
       setSelectedTenantId(user.activeTenantId ?? "");
-      setError("Nao foi possivel trocar de clinica.");
+      setError("Não foi possível trocar de clínica.");
     } finally {
       setIsSwitching(false);
     }
@@ -128,7 +128,7 @@ export function ClinicSwitcher({ user }: ClinicSwitcherProps) {
         </span>
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-            Clinica ativa
+            Clínica ativa
           </p>
           <p className="truncate text-sm font-semibold text-ink">{activeClinic.name}</p>
         </div>
@@ -136,6 +136,9 @@ export function ClinicSwitcher({ user }: ClinicSwitcherProps) {
 
       {clinics.length > 1 ? (
         <div className="mt-2 space-y-2">
+          <label htmlFor="clinic-switcher" className="sr-only">
+            Trocar de clínica
+          </label>
           <select
             id="clinic-switcher"
             value={selectedTenantId}
@@ -152,7 +155,7 @@ export function ClinicSwitcher({ user }: ClinicSwitcherProps) {
             ))}
           </select>
           <p className="text-xs text-muted">
-            {isSwitching ? "Atualizando contexto..." : `${clinics.length} clinicas disponiveis.`}
+            {isSwitching ? "Atualizando contexto..." : `${clinics.length} clínicas disponíveis.`}
           </p>
         </div>
       ) : (

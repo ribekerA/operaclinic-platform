@@ -1,4 +1,4 @@
-import { resolveAestheticClinicActor } from "@/lib/clinic-actor";
+﻿import { resolveAestheticClinicActor } from "@/lib/clinic-actor";
 import { platformCommandCenterDomains } from "@/lib/platform-command-center";
 
 export type UserProfile = "platform" | "clinic";
@@ -61,6 +61,12 @@ function buildClinicNavigation(roles: string[]): NavigationItem[] {
           enabled: true,
         },
         {
+          label: "Follow-ups",
+          href: "/clinic/follow-ups",
+          description: "Lembretes automáticos enviados aos pacientes antes das consultas",
+          enabled: true,
+        },
+        {
           label: "Usuarios",
           href: "/clinic/users",
           description: "Papeis e acessos da equipe da clinica",
@@ -94,6 +100,18 @@ function buildClinicNavigation(roles: string[]): NavigationItem[] {
           label: "Procedimentos esteticos",
           href: "/clinic/consultation-types",
           description: "Duracao, buffers e formato dos procedimentos",
+          enabled: true,
+        },
+        {
+          label: "Protocolos",
+          href: "/clinic/protocols",
+          description: "Protocolos multi-sessao por procedimento estetico",
+          enabled: true,
+        },
+        {
+          label: "Financeiro",
+          href: "/clinic/finance",
+          description: "Faturamento, ticket medio e receita por profissional",
           enabled: true,
         },
       ];
@@ -136,6 +154,12 @@ function buildClinicNavigation(roles: string[]): NavigationItem[] {
           enabled: true,
         },
         {
+          label: "Follow-ups",
+          href: "/clinic/follow-ups",
+          description: "Lembretes automáticos enviados aos pacientes antes das consultas",
+          enabled: true,
+        },
+        {
           label: "Minha conta",
           href: "/clinic/account",
           description: "Seguranca do acesso e dados do usuario ativo",
@@ -163,6 +187,18 @@ function buildClinicNavigation(roles: string[]): NavigationItem[] {
           label: "Procedimentos esteticos",
           href: "/clinic/consultation-types",
           description: "Configuracoes dos procedimentos usados na agenda",
+          enabled: true,
+        },
+        {
+          label: "Protocolos",
+          href: "/clinic/protocols",
+          description: "Protocolos multi-sessao por procedimento estetico",
+          enabled: true,
+        },
+        {
+          label: "Financeiro",
+          href: "/clinic/finance",
+          description: "Faturamento, ticket medio e receita por profissional",
           enabled: true,
         },
       ];
@@ -213,7 +249,7 @@ function buildClinicNavigation(roles: string[]): NavigationItem[] {
         {
           label: "Procedimentos esteticos",
           href: "/clinic/consultation-types",
-          description: "Referencia rapida dos procedimentos disponiveis",
+          description: "Referência rápida dos procedimentos disponíveis",
           enabled: true,
         },
       ];

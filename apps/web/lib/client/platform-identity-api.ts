@@ -134,6 +134,11 @@ export interface ListTenantsQuery {
   search?: string;
 }
 
+export interface CancelTenantSubscriptionPayload {
+  cancelAtPeriodEnd?: boolean;
+  reason?: string;
+}
+
 export interface ListPlansQuery {
   isActive?: boolean;
   search?: string;
@@ -216,6 +221,19 @@ export async function changeTenantPlan(
     {
       method: "PATCH",
       body: JSON.stringify({ planId }),
+    },
+  );
+}
+
+export async function cancelTenantSubscription(
+  tenantId: string,
+  payload: CancelTenantSubscriptionPayload,
+): Promise<TenantSummaryResponse> {
+  return requestJson<TenantSummaryResponse>(
+    `/api/platform/tenants/${tenantId}/subscription/cancel`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
     },
   );
 }

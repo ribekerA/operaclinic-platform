@@ -170,9 +170,9 @@ export default function ClinicUsersPage() {
 
     return [
       {
-        label: "Usuarios",
+        label: "Usuários",
         value: String(users.length),
-        helper: "Acessos carregados para a clinica ativa.",
+        helper: "Acessos carregados para a clínica ativa.",
       },
       {
         label: "Ativos",
@@ -186,9 +186,9 @@ export default function ClinicUsersPage() {
         helper: "Esperando primeiro acesso.",
       },
       {
-        label: "Vinculos pendentes",
+        label: "Vínculos pendentes",
         value: String(pendingLinkCount),
-        helper: "Profissionais ainda sem associacao correta.",
+        helper: "Profissionais ainda sem associação correta.",
         tone: pendingLinkCount > 0 ? ("danger" as const) : ("default" as const),
       },
     ];
@@ -196,13 +196,13 @@ export default function ClinicUsersPage() {
   const shortcutItems = useMemo(
     () => [
       {
-        label: "Novo usuario",
+        label: "Novo usuário",
         description: "Abrir cadastro inicial da equipe.",
         onClick: () => setShowCreateForm(true),
       },
       {
         label: "Profissionais",
-        description: "Cruzar equipe clinica e vinculos.",
+        description: "Cruzar equipe clínica e vínculos.",
         href: "/clinic/professionals",
       },
       {
@@ -231,7 +231,7 @@ export default function ClinicUsersPage() {
       setUsers(usersResponse);
       setProfessionals(professionalsResponse);
     } catch (err) {
-      setError(toErrorMessage(err, "Nao foi possivel carregar usuarios e profissionais."));
+      setError(toErrorMessage(err, "Não foi possível carregar usuários e profissionais."));
     } finally {
       setIsLoading(false);
     }
@@ -295,10 +295,10 @@ export default function ClinicUsersPage() {
 
       setCreateForm(defaultCreateForm);
       setShowCreateForm(false);
-      setSuccess("Usuario criado com sucesso.");
+      setSuccess("Usuário criado com sucesso.");
       await loadData();
     } catch (err) {
-      setError(toErrorMessage(err, "Nao foi possivel criar o usuario."));
+      setError(toErrorMessage(err, "Não foi possível criar o usuário."));
     } finally {
       setIsCreating(false);
     }
@@ -320,10 +320,10 @@ export default function ClinicUsersPage() {
         fullName: editForm.fullName.trim(),
         linkedProfessionalId: editForm.linkedProfessionalId,
       });
-      setSuccess("Usuario atualizado.");
+      setSuccess("Usuário atualizado.");
       await loadData();
     } catch (err) {
-      setError(toErrorMessage(err, "Nao foi possivel salvar o usuario."));
+      setError(toErrorMessage(err, "Não foi possível salvar o usuário."));
     } finally {
       setIsSavingProfile(false);
     }
@@ -353,10 +353,10 @@ export default function ClinicUsersPage() {
         tenantId: activeTenantId,
         roleCodes: editRoles,
       });
-      setSuccess("Papeis atualizados.");
+      setSuccess("Papéis atualizados.");
       await loadData();
     } catch (err) {
-      setError(toErrorMessage(err, "Nao foi possivel atualizar os papeis."));
+      setError(toErrorMessage(err, "Não foi possível atualizar os papéis."));
     } finally {
       setIsSavingRoles(false);
     }
@@ -374,10 +374,10 @@ export default function ClinicUsersPage() {
     try {
       if (nextAction === "deactivate") {
         await deactivateUser(selectedUserId);
-        setSuccess("Usuario desativado.");
+        setSuccess("Usuário desativado.");
       } else {
         await reactivateUser(selectedUserId);
-        setSuccess("Usuario reativado.");
+        setSuccess("Usuário reativado.");
       }
 
       await loadData();
@@ -386,8 +386,8 @@ export default function ClinicUsersPage() {
         toErrorMessage(
           err,
           nextAction === "deactivate"
-            ? "Nao foi possivel desativar o usuario."
-            : "Nao foi possivel reativar o usuario.",
+            ? "Não foi possível desativar o usuário."
+            : "Não foi possível reativar o usuário.",
         ),
       );
     } finally {
@@ -398,8 +398,8 @@ export default function ClinicUsersPage() {
   if (!sessionLoading && !canManage) {
     return (
       <AdminEmptyState
-        title="Usuarios da clinica"
-        description="Apenas o admin da clinica pode administrar usuarios, papeis e acessos."
+        title="Usuários da clínica"
+        description="Apenas o admin da clínica pode administrar usuários, papéis e acessos."
       />
     );
   }
@@ -407,9 +407,9 @@ export default function ClinicUsersPage() {
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Clinica | Usuarios"
-        title="Acessos e papeis da equipe"
-        description="Controle quem entra no painel, quais papeis cada pessoa tem e quais profissionais ainda precisam de acesso vinculado."
+        eyebrow="Clínica | Usuários"
+        title="Acessos e papéis da equipe"
+        description="Controle quem entra no painel, quais papéis cada pessoa tem e quais profissionais ainda precisam de acesso vinculado."
         actions={
           <>
             <input
@@ -429,7 +429,7 @@ export default function ClinicUsersPage() {
               Atualizar
             </button>
             <Button type="button" onClick={() => setShowCreateForm((current) => !current)}>
-              {showCreateForm ? "Fechar criacao" : "Novo usuario"}
+              {showCreateForm ? "Fechar criação" : "Novo usuário"}
             </Button>
           </>
         }
@@ -466,7 +466,7 @@ export default function ClinicUsersPage() {
           <AdminSectionHeader
             eyebrow="Provisionamento"
             title="Criar acesso da equipe"
-            description="Cadastre o usuario inicial da clinica e resolva profissionais ainda sem login."
+            description="Cadastre o usuário inicial da clínica e resolva profissionais ainda sem login."
           />
 
           <form className="space-y-5" onSubmit={(event) => void handleCreate(event)}>
@@ -524,8 +524,8 @@ export default function ClinicUsersPage() {
                   required
                 />
                 <p className="text-xs text-muted">
-                  Use pelo menos 8 caracteres com letras maiusculas, minusculas e
-                  numeros.
+                  Use pelo menos 8 caracteres com letras maiúsculas, minúsculas e
+                  números.
                 </p>
               </div>
 
@@ -589,7 +589,7 @@ export default function ClinicUsersPage() {
             {createForm.roleCodes.includes("PROFESSIONAL") ? (
               <div className="space-y-1">
                 <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                  Vinculo com profissional
+                  Vínculo com profissional
                 </label>
                 <select
                   value={createForm.linkedProfessionalId ?? ""}
@@ -612,13 +612,13 @@ export default function ClinicUsersPage() {
                 </select>
                 <p className="text-xs text-muted">
                   Use este campo para resolver profissionais legados que ainda
-                  estao sem acesso vinculado.
+                  estão sem acesso vinculado.
                 </p>
               </div>
             ) : null}
 
             <Button type="submit" disabled={isCreating}>
-              {isCreating ? "Criando..." : "Criar usuario"}
+              {isCreating ? "Criando..." : "Criar usuário"}
             </Button>
           </form>
         </Card>
@@ -627,15 +627,15 @@ export default function ClinicUsersPage() {
       <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
         <Card className="p-0">
           {isLoading ? (
-            <div className="px-6 py-8 text-sm text-muted">Carregando usuarios...</div>
+            <div className="px-6 py-8 text-sm text-muted">Carregando usuários...</div>
           ) : users.length === 0 ? (
             <div className="px-6 py-8">
               <AdminEmptyState
-                title="Nenhum usuario encontrado"
-                description="Crie o primeiro acesso da equipe ou ajuste a busca para recuperar usuarios existentes."
+                title="Nenhum usuário encontrado"
+                description="Crie o primeiro acesso da equipe ou ajuste a busca para recuperar usuários existentes."
                 action={
                   <Button type="button" onClick={() => setShowCreateForm(true)}>
-                    Novo usuario
+                    Novo usuário
                   </Button>
                 }
               />
@@ -648,9 +648,9 @@ export default function ClinicUsersPage() {
                     <th className="px-4 py-3">Pessoa</th>
                     <th className="px-4 py-3">Estado</th>
                     <th className="px-4 py-3">Papeis</th>
-                    <th className="px-4 py-3">Vinculo profissional</th>
+                    <th className="px-4 py-3">Vínculo profissional</th>
                     <th className="px-4 py-3">Criado em</th>
-                    <th className="px-4 py-3">Acoes</th>
+                    <th className="px-4 py-3">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border bg-white">
@@ -678,7 +678,7 @@ export default function ClinicUsersPage() {
                                 <StatusPill key={role} label={getRoleLabel(role)} />
                               ))
                             ) : (
-                              <span className="text-xs text-muted">Sem papel nesta clinica</span>
+                              <span className="text-xs text-muted">Sem papel nesta clínica</span>
                             )}
                           </div>
                         </td>
@@ -695,13 +695,13 @@ export default function ClinicUsersPage() {
                             </div>
                           ) : user.requiresProfessionalLink ? (
                             <div className="space-y-1">
-                              <StatusPill label="Vinculo pendente" tone="warning" />
+                              <StatusPill label="Vínculo pendente" tone="warning" />
                               <p className="text-xs text-muted">
-                                Usuario profissional sem cadastro vinculado.
+                                Usuário profissional sem cadastro vinculado.
                               </p>
                             </div>
                           ) : (
-                            <span className="text-xs text-muted">Nao se aplica</span>
+                            <span className="text-xs text-muted">Não se aplica</span>
                           )}
                         </td>
                         <td className="px-4 py-4 text-xs text-muted">
@@ -727,9 +727,9 @@ export default function ClinicUsersPage() {
 
         <Card className="space-y-4">
           <AdminSectionHeader
-            eyebrow="Pendencias de acesso"
+            eyebrow="Pendências de acesso"
             title="Profissionais sem login vinculado"
-            description="Estes registros ja existem na clinica, mas ainda nao receberam um usuario valido."
+            description="Estes registros já existem na clínica, mas ainda não receberam um usuário válido."
             actions={<AdminCountBadge value={orphanProfessionals.length} loading={isLoading} />}
           />
 
@@ -766,7 +766,7 @@ export default function ClinicUsersPage() {
       <Sheet
         open={selectedUserId !== null}
         onClose={() => setSelectedUserId(null)}
-        title="Detalhe do usuario"
+        title="Detalhe do usuário"
         description={selectedUser?.email}
       >
         {selectedUser && editForm ? (
@@ -778,11 +778,11 @@ export default function ClinicUsersPage() {
                   tone={getUserStatusTone(selectedUser.status)}
                 />
                 {selectedUser.requiresProfessionalLink ? (
-                  <StatusPill label="Vinculo profissional pendente" tone="warning" />
+                  <StatusPill label="Vínculo profissional pendente" tone="warning" />
                 ) : null}
               </div>
               <p className="mt-3 text-sm leading-6 text-muted">
-                Use este painel para ajustar dados basicos, papeis e estado do
+                Use este painel para ajustar dados básicos, papéis e estado do
                 acesso.
               </p>
             </div>
@@ -790,7 +790,7 @@ export default function ClinicUsersPage() {
             <form className="space-y-4" onSubmit={(event) => void handleSaveProfile(event)}>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                  Dados do usuario
+                  Dados do usuário
                 </p>
               </div>
 
@@ -818,7 +818,7 @@ export default function ClinicUsersPage() {
               {editRoles.includes("PROFESSIONAL") || selectedUser.linkedProfessional ? (
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                    Vinculo com profissional
+                    Vínculo com profissional
                   </label>
                   <select
                     value={editForm.linkedProfessionalId ?? ""}
@@ -834,7 +834,7 @@ export default function ClinicUsersPage() {
                     }
                     className={adminSelectClassName}
                   >
-                    <option value="">Sem vinculo</option>
+                    <option value="">Sem vínculo</option>
                     {professionalOptions.map((professional) => (
                       <option key={professional.id} value={professional.id}>
                         {professional.displayName} - {professional.professionalRegister}
@@ -842,8 +842,8 @@ export default function ClinicUsersPage() {
                     ))}
                   </select>
                   <p className="text-xs text-muted">
-                    Vincule o usuario ao cadastro do profissional para encerrar
-                    pendencias legadas de acesso.
+                    Vincule o usuário ao cadastro do profissional para encerrar
+                    pendências legadas de acesso.
                   </p>
                 </div>
               ) : null}
@@ -856,7 +856,7 @@ export default function ClinicUsersPage() {
             <form className="space-y-4 border-t border-border pt-5" onSubmit={(event) => void handleSaveRoles(event)}>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                  Papeis na clinica
+                  Papéis na clínica
                 </p>
               </div>
 
@@ -876,7 +876,7 @@ export default function ClinicUsersPage() {
               </div>
 
               <Button type="submit" className="w-full" disabled={isSavingRoles}>
-                {isSavingRoles ? "Atualizando..." : "Salvar papeis"}
+                {isSavingRoles ? "Atualizando..." : "Salvar papéis"}
               </Button>
             </form>
 
@@ -894,7 +894,7 @@ export default function ClinicUsersPage() {
                   disabled={isUpdatingStatus}
                   onClick={() => void handleStatusAction("deactivate")}
                 >
-                  {isUpdatingStatus ? "Atualizando..." : "Desativar usuario"}
+                  {isUpdatingStatus ? "Atualizando..." : "Desativar usuário"}
                 </Button>
               ) : (
                 <Button
@@ -903,13 +903,13 @@ export default function ClinicUsersPage() {
                   disabled={isUpdatingStatus}
                   onClick={() => void handleStatusAction("reactivate")}
                 >
-                  {isUpdatingStatus ? "Atualizando..." : "Reativar usuario"}
+                  {isUpdatingStatus ? "Atualizando..." : "Reativar usuário"}
                 </Button>
               )}
 
               <p className="text-xs leading-6 text-muted">
-                A redefinicao de senha do proprio usuario fica em Minha conta. O
-                fluxo publico de redefinicao por token fica na tela de login.
+                A redefinição de senha do próprio usuário fica em Minha conta. O
+                fluxo público de redefinição por token fica na tela de login.
               </p>
             </div>
           </div>

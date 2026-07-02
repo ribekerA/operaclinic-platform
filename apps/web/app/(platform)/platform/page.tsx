@@ -2,17 +2,38 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Activity,
+  AlertOctagon,
+  AlertTriangle,
+  BarChart2,
+  Bot,
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  CreditCard,
+  DollarSign,
+  Lock,
+  ShieldCheck,
+  Tag,
+  TrendingUp,
+  Users,
+  XCircle,
+} from "lucide-react";
 import type {
   PlatformDashboardResponsePayload,
   PlatformOperationalCheckStatus,
   PlatformDashboardTenantSnapshot,
 } from "@operaclinic/shared";
+import { buttonVariants } from "@/components/ui/button";
 import {
   type AdminMetricTone,
+  AdminActionCard,
   AdminMetricGrid,
   AdminPageHeader,
   AdminSectionHeader,
   AdminShortcutPanel,
+  AdminTimelineEntry,
 } from "@/components/platform/platform-admin";
 import { CommandCenterDomainGrid } from "@/components/platform/command-center";
 import { Card } from "@/components/ui/card";
@@ -35,7 +56,7 @@ function buildTenantSignals(tenant: PlatformDashboardTenantSnapshot): string[] {
   const signals: string[] = [];
 
   if (!tenant.readiness.hasClinicProfile) {
-    signals.push("sem perfil de clinica");
+    signals.push("sem perfil de clínica");
   }
 
   if (!tenant.readiness.hasOperators) {
@@ -246,7 +267,7 @@ export default function PlatformDashboardPage() {
       setError(
         toErrorMessage(
           requestError,
-          "Nao foi possivel carregar a leitura operacional da plataforma.",
+          "Não foi possível carregar a leitura operacional da plataforma.",
         ),
       );
     } finally {
@@ -353,7 +374,7 @@ export default function PlatformDashboardPage() {
       actions.push({
         title: "Completar operadores e acessos",
         description:
-          "Parte da base ainda nao tem usuarios suficientes para operar recepcao, gestao ou equipe clinica.",
+          "Parte da base ainda nao tem usuários suficientes para operar recepção, gestao ou equipe clínica.",
         href: "/platform/users",
         tone: "warning",
       });
@@ -363,7 +384,7 @@ export default function PlatformDashboardPage() {
       actions.push({
         title: "Tratar risco comercial imediato",
         description:
-          "Existem tenants em atraso impactando receita e potencial de sustentacao da operacao.",
+          "Existem tenants em atraso impactando receita e potencial de sustentação da operação.",
         href: "/platform/payments",
         tone: "danger",
       });
@@ -377,7 +398,7 @@ export default function PlatformDashboardPage() {
       actions.push({
         title: "Atacar no-show acima da meta operacional",
         description:
-          "A media agregada indica perda evitavel de agenda. Revisar follow-up, confirmacao e tenants fora da curva.",
+          "A media agregada indica perda evitável de agenda. Revisar follow-up, confirmação e tenants fora da curva.",
         href: "/platform/operations",
         tone:
           operationsCommandCenter.noShowRate.weightedAverageRate > 18
@@ -394,7 +415,7 @@ export default function PlatformDashboardPage() {
       actions.push({
         title: "Encurtar primeira resposta",
         description:
-          "A recepcao ainda responde acima do desejado. Priorize triagem, handoff e filas com maior atraso.",
+          "A recepção ainda responde acima do desejado. Priorize triagem, handoff e filas com maior atraso.",
         href: "/platform/operations",
         tone:
           operationsCommandCenter.firstResponseTime.averageMinutes > 20
@@ -411,7 +432,7 @@ export default function PlatformDashboardPage() {
       actions.push({
         title: "Conter falha de agentes antes de expandir rollout",
         description:
-          "A camada de agentes ja esta com taxa de erro acima do desejado para evolucao segura.",
+          "A camada de agentes ja esta com taxa de erro acima do desejado para evolução segura.",
         href: "/platform/agents",
         tone:
           agentsCommandCenter.failureRate > 20 ? "danger" : "warning",
@@ -422,7 +443,7 @@ export default function PlatformDashboardPage() {
       actions.push({
         title: "Base operacional consistente",
         description:
-          "Banco, billing e mensageria nao exibem bloqueios imediatos. O proximo passo ja pode ser evolucao de produto.",
+          "Banco, billing e mensageria nao exibem bloqueios imediatos. O proximo passo ja pode ser evolução de produto.",
         href: "/platform/tenants",
         tone: "default",
       });
@@ -442,6 +463,7 @@ export default function PlatformDashboardPage() {
         value: `${dashboard.tenants.active}/${dashboard.tenants.total}`,
         helper: "Base ativa no momento.",
         tone: "accent" as const,
+        icon: <Building2 className="h-4 w-4" />,
       },
       {
         label: "MRR contratado",
@@ -452,17 +474,20 @@ export default function PlatformDashboardPage() {
             )
           : "--",
         helper: "Leitura comercial atual da carteira.",
+        icon: <TrendingUp className="h-4 w-4" />,
       },
       {
         label: "Setup pendente",
         value: String(dashboard.tenants.missingSetup),
-        helper: "Tenants que ainda travam operacao.",
+        helper: "Tenants que ainda travam operação.",
         tone: dashboard.tenants.missingSetup > 0 ? ("danger" as const) : ("default" as const),
+        icon: <AlertTriangle className="h-4 w-4" />,
       },
       {
         label: "Atendimentos 24h",
         value: String(dashboard.operations.appointmentsNext24Hours),
         helper: "Carga operacional mais imediata.",
+        icon: <CalendarDays className="h-4 w-4" />,
       },
     ];
   }, [dashboard, primaryRevenue]);
@@ -478,7 +503,7 @@ export default function PlatformDashboardPage() {
         value: `${dashboard.tenants.readyForOperation}`,
       },
       {
-        label: "Confirmacao pendente",
+        label: "Confirmação pendente",
         value: `${dashboard.operations.pendingConfirmationNext24Hours}`,
       },
       {
@@ -534,7 +559,7 @@ export default function PlatformDashboardPage() {
         ),
       },
       {
-        label: "Confirmacao/remarcacao",
+        label: "Confirmação/remarcacao",
         value: formatMinutes(
           operationsCommandCenter.confirmationOrRescheduleTime.averageMinutes,
         ),
@@ -549,7 +574,7 @@ export default function PlatformDashboardPage() {
         ),
       },
       {
-        label: "Ocupacao media",
+        label: "Ocupação media",
         value: formatRate(
           operationsCommandCenter.agendaOccupancyRate.weightedAverageRate,
         ),
@@ -601,12 +626,12 @@ export default function PlatformDashboardPage() {
           agentsCommandCenter.totalExecutions > 0 ? ("accent" as const) : ("default" as const),
       },
       {
-        label: "Resolucao segura",
+        label: "Resolução segura",
         value:
           agentsCommandCenter.safeResolutionRate === null
             ? "--"
             : `${agentsCommandCenter.safeResolutionRate.toFixed(1)}%`,
-        helper: `${agentsCommandCenter.safeAutomaticResolutions} conversas encerradas por automacao com outcome explicito.`,
+        helper: `${agentsCommandCenter.safeAutomaticResolutions} conversas encerradas por automação com outcome explicito.`,
         tone: resolveHigherIsBetterTone(
           agentsCommandCenter.safeResolutionRate,
           25,
@@ -636,28 +661,33 @@ export default function PlatformDashboardPage() {
     () => [
       {
         label: "Operations",
-        description: "Abrir o modulo que prova no-show, resposta e agenda.",
+        description: "No-show, resposta e ocupação da agenda.",
         href: "/platform/operations",
+        icon: <BarChart2 className="h-5 w-5" />,
       },
       {
         label: "Finance",
-        description: "Cruzar risco comercial, MRR e receita exposta.",
+        description: "MRR, risco comercial e receita exposta.",
         href: "/platform/finance",
+        icon: <DollarSign className="h-5 w-5" />,
       },
       {
         label: "Reliability",
-        description: "Abrir o modulo duro de readiness e risco tecnico.",
+        description: "Readiness de banco, billing e WhatsApp.",
         href: "/platform/reliability",
+        icon: <Activity className="h-5 w-5" />,
       },
       {
         label: "Agents",
-        description: "Revisar automacao segura, fallback e falhas por tenant.",
+        description: "Automação segura, fallback e falhas.",
         href: "/platform/agents",
+        icon: <Bot className="h-5 w-5" />,
       },
       {
         label: "Tenants",
-        description: "Ir direto para a gestao da base ativa.",
+        description: "Gestão direta da base ativa.",
         href: "/platform/tenants",
+        icon: <Building2 className="h-5 w-5" />,
       },
     ],
     [],
@@ -668,7 +698,7 @@ export default function PlatformDashboardPage() {
       <AdminPageHeader
         eyebrow="Command Center"
         title="Overview do sistema nervoso central da plataforma"
-        description="Leitura unica para decidir em segundos se a operacao esta saudavel, se a receita esta sustentando o ritmo, onde os tenants vazam e qual modulo da torre precisa de atencao imediata."
+        description="Leitura unica para decidir em segundos se a operação esta saudavel, se a receita esta sustentando o ritmo, onde os tenants vazam e qual modulo da torre precisa de atenção imediata."
         actions={
           <>
             <button
@@ -683,7 +713,7 @@ export default function PlatformDashboardPage() {
             </button>
             <Link
               href="/platform/operations"
-              className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+              className={buttonVariants({ variant: "secondary" })}
             >
               Abrir operations
             </Link>
@@ -704,7 +734,7 @@ export default function PlatformDashboardPage() {
         <AdminSectionHeader
           eyebrow="Arquitetura da torre"
           title="Dominios definitivos do command center"
-          description="A navegacao do super admin agora reflete uma torre de controle unificada. Alguns dominios entram vivos; outros entram com contrato claro de ativacao para evitar score decorativo."
+          description="A navegacao do super admin agora reflete uma torre de controle unificada. Alguns dominios entram vivos; outros entram com contrato claro de ativação para evitar score decorativo."
         />
         <div className="mt-5">
           <CommandCenterDomainGrid domains={platformCommandCenterDomains} />
@@ -727,7 +757,7 @@ export default function PlatformDashboardPage() {
               <div>
                 <h2 className="text-2xl font-semibold leading-tight">
                   {dashboard?.overview.summary ??
-                    "Consolidando tenants, agenda, usuarios e carteira ativa."}
+                    "Consolidando tenants, agenda, usuários e carteira ativa."}
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-200">
                   {dashboard
@@ -753,7 +783,7 @@ export default function PlatformDashboardPage() {
                   href="/platform/users"
                   className="rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-2 text-sm font-semibold text-slate-50 transition hover:bg-slate-800"
                 >
-                  Revisar usuarios
+                  Revisar usuários
                 </Link>
               </div>
             </div>
@@ -860,7 +890,7 @@ export default function PlatformDashboardPage() {
         <DashboardMetricCard
           eyebrow="Tenants prontos"
           value={dashboard ? String(dashboard.tenants.readyForOperation) : "--"}
-          description="Com perfil da clinica, operadores e base minima de agenda."
+          description="Com perfil da clínica, operadores e base minima de agenda."
           tone="accent"
         />
         <DashboardMetricCard
@@ -870,9 +900,9 @@ export default function PlatformDashboardPage() {
           tone={dashboard && dashboard.tenants.missingSetup > 0 ? "danger" : "default"}
         />
         <DashboardMetricCard
-          eyebrow="Usuarios de operacao"
+          eyebrow="Usuários de operação"
           value={dashboard ? String(dashboard.users.clinicOperators) : "--"}
-          description="Usuarios com papel operacional na area da clinica estetica."
+          description="Usuários com papel operacional na area da clínica estética."
         />
         <DashboardMetricCard
           eyebrow="Atendimentos proximas 24h"
@@ -886,7 +916,7 @@ export default function PlatformDashboardPage() {
           <AdminSectionHeader
             eyebrow="Prova de valor"
             title="Os sinais que ja mostram ganho operacional"
-            description="A home do super admin agora puxa no-show, resposta, confirmacao, ocupacao e automacao segura direto dos snapshots reais da plataforma."
+            description="A home do super admin agora puxa no-show, resposta, confirmação, ocupação e automação segura direto dos snapshots reais da plataforma."
           />
 
           {dashboard ? (
@@ -918,9 +948,9 @@ export default function PlatformDashboardPage() {
 
         <Card className="space-y-4">
           <AdminSectionHeader
-            eyebrow="Automacao segura"
-            title="Onde os agentes ja aliviam a operacao"
-            description="Sem score decorativo: este modulo mostra so execucao persistida, fallback real e conversas encerradas por automacao com outcome explicito."
+            eyebrow="Automação segura"
+            title="Onde os agentes ja aliviam a operação"
+            description="Sem score decorativo: este modulo mostra so execução persistida, fallback real e conversas encerradas por automação com outcome explicito."
           />
 
           {dashboard ? (
@@ -946,7 +976,7 @@ export default function PlatformDashboardPage() {
 
           <Link
             href="/platform/agents"
-            className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+            className={buttonVariants({ variant: "secondary" })}
           >
             Abrir agents & skills
           </Link>
@@ -1004,7 +1034,7 @@ export default function PlatformDashboardPage() {
                   ? readiness.payment.webhookConfigured
                     ? "Webhook configurado."
                     : "Webhook ainda nao configurado."
-                  : "Carregando configuracao de checkout."}
+                  : "Carregando configuração de checkout."}
               </p>
             </div>
             <div className="rounded-[24px] border border-border bg-white p-4">
@@ -1080,31 +1110,22 @@ export default function PlatformDashboardPage() {
 
           <div className="space-y-3">
             {operationalActions.map((action) => (
-              <div
+              <AdminActionCard
                 key={action.title}
-                className={`rounded-[24px] border p-4 ${
-                  action.tone === "danger"
-                    ? "border-rose-200 bg-rose-50"
-                    : action.tone === "warning"
-                      ? "border-amber-200 bg-amber-50"
-                      : "border-slate-200 bg-white"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold text-ink">{action.title}</p>
-                    <p className="mt-2 text-sm leading-6 text-muted">
-                      {action.description}
-                    </p>
-                  </div>
-                  <Link
-                    href={action.href}
-                    className="inline-flex h-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
-                  >
-                    Abrir
-                  </Link>
-                </div>
-              </div>
+                title={action.title}
+                description={action.description}
+                href={action.href}
+                tone={action.tone}
+                icon={
+                  action.tone === "danger" ? (
+                    <AlertOctagon className="h-4 w-4 text-rose-500" />
+                  ) : action.tone === "warning" ? (
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 text-teal-500" />
+                  )
+                }
+              />
             ))}
           </div>
         </Card>
@@ -1120,27 +1141,31 @@ export default function PlatformDashboardPage() {
           </div>
 
           <AdminShortcutPanel
-            title="Mover a operacao"
+            title="Mover a operação"
             items={[
               {
                 label: "Pagamentos reais",
-                description: "Configurar Stripe, webhook e exposicao comercial.",
+                description: "Stripe, webhook e exposição comercial.",
                 href: "/platform/payments",
+                icon: <CreditCard className="h-5 w-5" />,
               },
               {
                 label: "Tenants travados",
-                description: "Corrigir setup, plano e base operacional incompleta.",
+                description: "Setup, plano e base operacional incompleta.",
                 href: "/platform/tenants",
+                icon: <Lock className="h-5 w-5" />,
               },
               {
-                label: "Usuarios e papeis",
-                description: "Completar operadores, recepcao e profissionais.",
+                label: "Usuários e papeis",
+                description: "Operadores, recepção e profissionais.",
                 href: "/platform/users",
+                icon: <Users className="h-5 w-5" />,
               },
               {
                 label: "Catalogo de planos",
-                description: "Revisar contrato ativo, trials e combinacao comercial.",
+                description: "Contrato ativo, trials e mix comercial.",
                 href: "/platform/plans",
+                icon: <Tag className="h-5 w-5" />,
               },
             ]}
           />
@@ -1214,29 +1239,49 @@ export default function PlatformDashboardPage() {
               Qualidade da base
             </p>
             <h2 className="mt-2 text-xl font-semibold text-ink">
-              Lacunas que travam a operacao
+              Lacunas que travam a operação
             </h2>
           </div>
 
-          <div className="space-y-3">
-            <div className="rounded-[24px] border border-border bg-white p-4">
-              <p className="text-sm font-semibold text-ink">Sem perfil de clinica</p>
-              <p className="mt-1 text-3xl font-semibold text-ink">
-                {dashboard ? dashboard.tenants.withoutClinicProfile : "--"}
-              </p>
-            </div>
-            <div className="rounded-[24px] border border-border bg-white p-4">
-              <p className="text-sm font-semibold text-ink">Sem operadores</p>
-              <p className="mt-1 text-3xl font-semibold text-ink">
-                {dashboard ? dashboard.tenants.withoutOperators : "--"}
-              </p>
-            </div>
-            <div className="rounded-[24px] border border-border bg-white p-4">
-              <p className="text-sm font-semibold text-ink">Sem base de agenda</p>
-              <p className="mt-1 text-3xl font-semibold text-ink">
-                {dashboard ? dashboard.tenants.withoutScheduleBase : "--"}
-              </p>
-            </div>
+          <div className="space-y-2">
+            {[
+              {
+                label: "Sem perfil de clínica",
+                value: dashboard?.tenants.withoutClinicProfile ?? null,
+              },
+              {
+                label: "Sem operadores",
+                value: dashboard?.tenants.withoutOperators ?? null,
+              },
+              {
+                label: "Sem base de agenda",
+                value: dashboard?.tenants.withoutScheduleBase ?? null,
+              },
+            ].map(({ label, value }) => {
+              const isDanger = value !== null && value > 0;
+              return (
+                <div
+                  key={label}
+                  className={`flex items-center justify-between rounded-[20px] border px-4 py-3 ${
+                    isDanger
+                      ? "border-rose-200 bg-rose-50/60"
+                      : "border-slate-200 bg-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    {isDanger ? (
+                      <XCircle className="h-4 w-4 shrink-0 text-rose-400" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-teal-500" />
+                    )}
+                    <p className="text-sm font-medium text-ink">{label}</p>
+                  </div>
+                  <p className={`text-2xl font-bold ${isDanger ? "text-rose-600" : "text-slate-400"}`}>
+                    {value ?? "--"}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </Card>
       </section>
@@ -1246,7 +1291,7 @@ export default function PlatformDashboardPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted">
-                Tenants em atencao
+                Tenants em atenção
               </p>
               <h2 className="mt-2 text-xl font-semibold text-ink">
                 Onde agir primeiro
@@ -1349,7 +1394,7 @@ export default function PlatformDashboardPage() {
                         ))
                       ) : (
                         <span className="text-sm text-muted">
-                          Sem sinais de atencao imediata.
+                          Sem sinais de atenção imediata.
                         </span>
                       )}
                     </div>
@@ -1359,7 +1404,7 @@ export default function PlatformDashboardPage() {
             ) : (
               <p className="text-sm text-muted">
                 {isLoading
-                  ? "Carregando tenants em atencao..."
+                  ? "Carregando tenants em atenção..."
                   : "Nenhum tenant exige acao imediata."}
               </p>
             )}
@@ -1421,28 +1466,22 @@ export default function PlatformDashboardPage() {
             </h2>
           </div>
 
-          <div className="space-y-3">
+          <div className="rounded-[24px] border border-slate-100 bg-slate-50/60 p-4">
             {recentActivity.length > 0 ? (
-              recentActivity.map((entry) => (
-                <div
+              recentActivity.map((entry, idx) => (
+                <AdminTimelineEntry
                   key={entry.id}
-                  className="grid gap-3 rounded-[24px] border border-border bg-white p-4 md:grid-cols-[1fr_auto]"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-ink">{entry.action}</p>
-                    <p className="mt-1 text-sm text-muted">
-                      {entry.actorName ?? entry.actorEmail ?? "Sistema"} |{" "}
-                      {entry.tenantName ?? "Escopo global"}
-                    </p>
-                    <p className="mt-1 text-xs text-muted">
-                      {entry.targetType}
-                      {entry.targetId ? ` | ${entry.targetId}` : ""}
-                    </p>
-                  </div>
-                  <p className="text-xs font-medium text-muted">
-                    {formatDateTime(entry.createdAt)}
-                  </p>
-                </div>
+                  action={entry.action}
+                  actor={entry.actorName ?? entry.actorEmail ?? "Sistema"}
+                  context={entry.tenantName ?? "Escopo global"}
+                  target={
+                    entry.targetType
+                      ? `${entry.targetType}${entry.targetId ? ` · ${entry.targetId}` : ""}`
+                      : undefined
+                  }
+                  timestamp={formatDateTime(entry.createdAt)}
+                  isLast={idx === recentActivity.length - 1}
+                />
               ))
             ) : (
               <p className="text-sm text-muted">
@@ -1460,7 +1499,7 @@ export default function PlatformDashboardPage() {
               Stress operacional
             </p>
             <h2 className="mt-2 text-xl font-semibold text-ink">
-              Sinais do scheduling e da recepcao
+              Sinais do scheduling e da recepção
             </h2>
           </div>
 
@@ -1468,7 +1507,7 @@ export default function PlatformDashboardPage() {
             <DashboardMetricCard
               eyebrow="Check-ins 24h"
               value={dashboard ? String(dashboard.operations.checkInsLast24Hours) : "--"}
-              description="Volume recente de check-ins concluido pela recepcao."
+              description="Volume recente de check-ins concluido pela recepção."
             />
             <DashboardMetricCard
               eyebrow="Cancelamentos 30d"

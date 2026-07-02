@@ -1,7 +1,10 @@
-﻿interface CardProps extends React.HTMLAttributes<HTMLElement> {
+type CardAs = "div" | "section" | "article" | "aside";
+
+interface CardProps extends React.HTMLAttributes<HTMLElement> {
   children: React.ReactNode;
   className?: string;
   tone?: "default" | "dark";
+  as?: CardAs;
 }
 
 const toneClassName: Record<NonNullable<CardProps["tone"]>, string> = {
@@ -13,14 +16,15 @@ export function Card({
   children,
   className = "",
   tone = "default",
+  as: Tag = "div",
   ...props
 }: CardProps) {
   return (
-    <section
+    <Tag
       {...props}
       className={`rounded-[28px] border p-5 shadow-panel ${toneClassName[tone]} ${className}`}
     >
       {children}
-    </section>
+    </Tag>
   );
 }

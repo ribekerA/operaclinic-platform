@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   ActivitySquare,
   BarChart3,
+  Bell,
   Bot,
   Blocks,
   BriefcaseMedical,
@@ -18,6 +19,7 @@ import {
   FolderKanban,
   LayoutDashboard,
   LineChart,
+  ListOrdered,
   Radar,
   MessageSquareMore,
   Search,
@@ -50,17 +52,17 @@ const sidebarCopy: Record<UserProfile, { title: string; label: string }> = {
     label: "Plataforma",
   },
   clinic: {
-    title: "Clinica",
-    label: "Clinica",
+    title: "Clínica",
+    label: "Clínica",
   },
 };
 
 const clinicActorTitle = {
   admin: "Admin",
-  manager: "Gestao",
-  reception: "Recepcao",
+  manager: "Gestão",
+  reception: "Recepção",
   professional: "Profissional",
-  unknown: "Clinica",
+  unknown: "Clínica",
 } as const;
 
 const navigationIcons: Record<string, ComponentType<{ className?: string }>> = {
@@ -83,12 +85,15 @@ const navigationIcons: Record<string, ComponentType<{ className?: string }>> = {
   "/clinic/inbox": MessageSquareMore,
   "/clinic/messaging": Waypoints,
   "/clinic/patients": Users,
+  "/clinic/follow-ups": Bell,
   "/clinic/users": UserCog,
   "/clinic/account": ShieldCheck,
   "/clinic/professionals": Stethoscope,
   "/clinic/units": Building2,
   "/clinic/specialties": BriefcaseMedical,
   "/clinic/consultation-types": Blocks,
+  "/clinic/protocols": ListOrdered,
+  "/clinic/finance": LineChart,
   "/clinic/professional": Stethoscope,
 };
 
@@ -139,8 +144,8 @@ export function AppSidebar({
               type="button"
               onClick={onToggleCollapse}
               className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100"
-              aria-label={collapsed ? "Expandir navegacao" : "Recolher navegacao"}
-              title={collapsed ? "Expandir navegacao" : "Recolher navegacao"}
+              aria-label={collapsed ? "Expandir navegação" : "Recolher navegação"}
+              title={collapsed ? "Expandir navegação" : "Recolher navegação"}
             >
               {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </button>

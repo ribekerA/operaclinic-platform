@@ -35,8 +35,9 @@ export function AuthenticatedShell({
     }
 
     const savedPreference = window.localStorage.getItem(sidebarPreferenceKey);
+    // Novos usuários (sem preferência salva) veem a sidebar expandida
     setIsDesktopSidebarCollapsed(
-      savedPreference === null ? true : savedPreference === "true",
+      savedPreference === null ? false : savedPreference === "true",
     );
   }, [sidebarPreferenceKey]);
 
@@ -69,8 +70,9 @@ export function AuthenticatedShell({
   if (loading || !user) {
     return (
       <div className="mx-auto flex min-h-screen w-full max-w-[1720px] items-center justify-center px-6">
-        <div className="rounded-[24px] border border-white/80 bg-white/90 px-6 py-4 text-sm text-muted shadow-panel backdrop-blur">
-          Carregando sessao...
+        <div className="flex items-center gap-3 rounded-[24px] border border-white/80 bg-white/90 px-6 py-4 text-sm text-muted shadow-panel backdrop-blur">
+          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />
+          Carregando sessão...
         </div>
       </div>
     );
@@ -79,8 +81,23 @@ export function AuthenticatedShell({
   if (error && error !== "PROFILE_MISMATCH") {
     return (
       <div className="mx-auto flex min-h-screen w-full max-w-[1720px] items-center justify-center px-6">
-        <div className="rounded-[24px] border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700 shadow-panel">
-          {error}
+        <div className="space-y-4 rounded-[24px] border border-red-200 bg-red-50 px-6 py-5 text-sm text-red-700 shadow-panel">
+          <p>{error}</p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="inline-flex h-9 items-center gap-2 rounded-xl border border-red-200 bg-white px-3 text-xs font-semibold text-red-700 transition hover:bg-red-50"
+            >
+              Tentar novamente
+            </button>
+            <a
+              href={profile === "platform" ? "/login/platform" : "/login/clinic"}
+              className="inline-flex h-9 items-center gap-2 rounded-xl border border-red-200 bg-white px-3 text-xs font-semibold text-red-700 transition hover:bg-red-50"
+            >
+              Ir para o login
+            </a>
+          </div>
         </div>
       </div>
     );
@@ -101,8 +118,8 @@ export function AuthenticatedShell({
         <Sheet
           open={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
-          title={profile === "platform" ? "Navegacao da plataforma" : "Navegacao da clinica"}
-          description="Acesse rapidamente os modulos sem perder o contexto atual."
+          title={profile === "platform" ? "Navegação da plataforma" : "Navegação da clínica"}
+          description="Acesse rapidamente os módulos sem perder o contexto atual."
         >
           <AppSidebar
             profile={profile}

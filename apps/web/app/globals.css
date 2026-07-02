@@ -23,7 +23,7 @@ body {
     radial-gradient(at 88% 10%, rgba(14, 116, 144, 0.18) 0px, transparent 48%),
     radial-gradient(at 52% 92%, rgba(15, 23, 42, 0.1) 0px, transparent 52%);
   color: #1e293b;
-  font-family: Manrope, "Segoe UI Variable Text", "Trebuchet MS", sans-serif;
+  font-family: var(--font-manrope), "Segoe UI Variable Text", "Trebuchet MS", sans-serif;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -43,4 +43,50 @@ textarea {
 
 ::selection {
   background: rgba(15, 118, 110, 0.16);
+}
+
+/* ──────────────────────────────────────────────────────────
+   Public-page animation primitives
+────────────────────────────────────────────────────────── */
+
+@keyframes oc-fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes oc-float {
+  0%, 100% { transform: perspective(1100px) rotateX(3deg) rotateY(-2deg) translateY(0px);   }
+  50%       { transform: perspective(1100px) rotateX(3deg) rotateY(-2deg) translateY(-10px); }
+}
+
+@keyframes oc-shimmer {
+  0%   { background-position: 0%   center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes oc-live-ring {
+  0%, 100% { box-shadow: 0 0 0 0px rgba(52, 211, 153, 0.6); }
+  60%       { box-shadow: 0 0 0 6px rgba(52, 211, 153, 0);   }
+}
+
+.animate-oc-fade-up {
+  animation: oc-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-oc-float {
+  animation: oc-float 5s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+.animate-oc-live-ring {
+  animation: oc-live-ring 2s ease-out infinite;
+}
+
+.text-gradient-teal {
+  background: linear-gradient(130deg, #0f766e 0%, #0891b2 40%, #14b8a6 70%, #0f766e 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: oc-shimmer 5s linear infinite;
 }

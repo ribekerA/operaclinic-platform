@@ -306,6 +306,18 @@ export class PatientsService {
       updateData.notes = notes || null;
     }
 
+    if (typeof input.allergies === "string") {
+      updateData.allergies = input.allergies.trim() || null;
+    }
+
+    if (typeof input.aestheticGoals === "string") {
+      updateData.aestheticGoals = input.aestheticGoals.trim() || null;
+    }
+
+    if (typeof input.contraindications === "string") {
+      updateData.contraindications = input.contraindications.trim() || null;
+    }
+
     if (typeof input.isActive === "boolean") {
       updateData.isActive = input.isActive;
     }
@@ -1144,6 +1156,9 @@ export class PatientsService {
       birthDate: patient.birthDate,
       documentNumber: patient.documentNumber,
       notes: patient.notes,
+      allergies: patient.allergies,
+      aestheticGoals: patient.aestheticGoals,
+      contraindications: patient.contraindications,
       isActive: patient.isActive,
       mergedIntoPatientId: patient.mergedIntoPatientId,
       mergedAt: patient.mergedAt,

@@ -20,7 +20,7 @@ import {
 } from "@/components/platform/platform-admin";
 import { AppointmentActionDialog } from "@/components/reception/appointment-action-dialog";
 import { AppointmentDrawer } from "@/components/reception/appointment-drawer";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import {
@@ -49,6 +49,7 @@ import {
   getAppointmentStatusTone,
 } from "@/lib/formatters";
 import { useSession } from "@/hooks/use-session";
+import { useReceptionRealtime } from "@/hooks/use-reception-realtime";
 
 interface ReferenceOption {
   id: string;
@@ -183,6 +184,12 @@ function playCriticalAlertTone(): void {
 
 export default function ReceptionPage() {
   const { user } = useSession({ expectedProfile: "clinic" });
+
+  // Token incremented by WebSocket on any appointment change — triggers loadReception below
+  const [realtimeRefreshToken, setRealtimeRefreshToken] = useState(0);
+  useReceptionRealtime(user?.activeTenantId, () => {
+    setRealtimeRefreshToken((t) => t + 1);
+  });
   const [requestedDate, setRequestedDate] = useState<string | undefined>(undefined);
   const [effectiveDate, setEffectiveDate] = useState("");
   const [timezone, setTimezone] = useState<string | null>(null);
@@ -500,6 +507,7 @@ export default function ReceptionPage() {
     setHasAutoOpenedAgenda(true);
   }, [dashboard, hasAutoOpenedAgenda, isLoading, user]);
 
+  // Fallback polling — WebSocket handles real-time; this catches any missed events
   useEffect(() => {
     if (!isAgendaModalOpen || !isBoardMode) {
       return;
@@ -508,10 +516,16 @@ export default function ReceptionPage() {
     const interval = window.setInterval(() => {
       setLastAutoRefreshAt(Date.now());
       void loadReception();
-    }, 45000);
+    }, 120000);
 
     return () => window.clearInterval(interval);
   }, [isAgendaModalOpen, isBoardMode, loadReception]);
+
+  // WebSocket-triggered refresh — fires immediately on any appointment change
+  useEffect(() => {
+    if (realtimeRefreshToken === 0) return;
+    void loadReception();
+  }, [realtimeRefreshToken, loadReception]);
 
   useEffect(() => {
     if (!isAgendaModalOpen || !isBoardMode || !isAlertSoundEnabled) {
@@ -845,6 +859,20 @@ export default function ReceptionPage() {
             </button>
             <Button
               type="button"
+              className="border border-slate-200 bg-white text-ink hover:bg-slate-50"
+              onClick={() => {
+                const params = new URLSearchParams();
+                if (currentDate) {
+                  params.set("from", currentDate);
+                  params.set("to", currentDate);
+                }
+                window.location.href = `/api/reports/appointments/csv${params.toString() ? `?${params.toString()}` : ""}`;
+              }}
+            >
+              Exportar CSV
+            </Button>
+            <Button
+              type="button"
               onClick={() => setIsAgendaModalOpen(true)}
             >
               Abrir fila
@@ -892,7 +920,7 @@ export default function ReceptionPage() {
 
       {error ? <Card className="border-red-200 bg-red-50" role="alert"><p className="text-sm text-red-700">{error}</p></Card> : null}
 
-      <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+      <section className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[0.95fr_1.05fr]">
         <Card id="pacientes" className="space-y-4 scroll-mt-24">
           <AdminSectionHeader
             eyebrow="Pacientes"
@@ -1018,7 +1046,7 @@ export default function ReceptionPage() {
           <AdminSectionHeader
             eyebrow="Agendamento"
             title="Novo agendamento manual"
-            description="Selecione um slot real e gere o atendimento estetico direto da recepção."
+            description="Selecione um slot real e gere o atendimento estético direto da recepção."
             actions={
               <Button
                 type="button"
@@ -1072,7 +1100,7 @@ export default function ReceptionPage() {
               <option value="">Protocolo (opcional)</option>
               {visibleProtocols.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.name} ({item.totalSessions} sessoes)
+                  {item.name} ({item.totalSessions} sessões)
                 </option>
               ))}
             </select>
@@ -1094,7 +1122,7 @@ export default function ReceptionPage() {
                   : "",
               };
             })}>
-              <option value="">Procedimento estetico</option>
+              <option value="">Procedimento estético</option>
               {consultationTypes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
             </select>
             <select className={adminSelectClassName} value={form.unitId} onChange={(event) => setForm((current) => ({ ...current, unitId: event.target.value }))}>
@@ -1105,7 +1133,7 @@ export default function ReceptionPage() {
           </div>
           {selectedProtocol ? (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-              Protocolo selecionado: <strong>{selectedProtocol.name}</strong> com {selectedProtocol.totalSessions} sessoes e intervalo sugerido de {selectedProtocol.intervalBetweenSessionsDays} dias.
+              Protocolo selecionado: <strong>{selectedProtocol.name}</strong> com {selectedProtocol.totalSessions} sessões e intervalo sugerido de {selectedProtocol.intervalBetweenSessionsDays} dias.
             </div>
           ) : null}
           <textarea value={form.notes} onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} placeholder="Observações do atendimento" className={adminTextareaClassName} />
@@ -1156,7 +1184,7 @@ export default function ReceptionPage() {
         </Card>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.22fr_0.78fr]">
+      <section className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.22fr_0.78fr]">
         <Card id="agenda-dia" className="space-y-4 scroll-mt-24">
           <AdminSectionHeader
             eyebrow="Fila"
@@ -1347,7 +1375,7 @@ export default function ReceptionPage() {
                 </button>
                 <button
                   type="button"
-                  className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+                  className={buttonVariants({ variant: "secondary" })}
                   onClick={() => setIsAgendaModalOpen(false)}
                 >
                   Fechar
@@ -1358,7 +1386,7 @@ export default function ReceptionPage() {
             <div className="h-[calc(100%-88px)] overflow-y-auto p-4">
               <div
                 className={`grid gap-4 ${
-                  isBoardMode ? "xl:grid-cols-[1.3fr_0.7fr]" : "xl:grid-cols-[1.2fr_0.8fr]"
+                  isBoardMode ? "lg:grid-cols-2 xl:grid-cols-[1.3fr_0.7fr]" : "lg:grid-cols-2 xl:grid-cols-[1.2fr_0.8fr]"
                 }`}
               >
               <div className={`space-y-4 ${isBoardMode ? "xl:pr-3" : ""}`}>
@@ -1401,7 +1429,7 @@ export default function ReceptionPage() {
                     </p>
                     <p className="mt-3 text-3xl font-semibold text-ink">{queue.length}</p>
                     <p className="mt-2 text-sm text-muted">
-                      Pacientes ja com check-in aguardando chamada.
+                      Pacientes já com check-in aguardando chamada.
                     </p>
                   </div>
                   {isBoardMode ? (
@@ -1432,10 +1460,10 @@ export default function ReceptionPage() {
                           Alerta de fila
                         </p>
                         <h3 className="mt-1 text-2xl font-semibold text-rose-900">
-                          {criticalQueueItems.length} paciente{criticalQueueItems.length > 1 ? "s" : ""} em espera critica
+                          {criticalQueueItems.length} paciente{criticalQueueItems.length > 1 ? "s" : ""} em espera crítica
                         </h3>
                         <p className="mt-2 text-sm text-rose-800">
-                          {criticalQueueItems[0]?.patientName ?? "Paciente"} esta aguardando ha{" "}
+                          {criticalQueueItems[0]?.patientName ?? "Paciente"} está aguardando há{" "}
                           {formatMinutesLabel(
                             getMinutesElapsed(
                               criticalQueueItems[0]!.checkedInAt ??
@@ -1452,7 +1480,7 @@ export default function ReceptionPage() {
                           className="bg-rose-600 text-white hover:bg-rose-500"
                           onClick={() => void handleOpenAppointment(criticalQueueItems[0]!.id)}
                         >
-                          Abrir paciente critico
+                          Abrir paciente crítico
                         </Button>
                         {isAlertSoundEnabled ? (
                           <Button
@@ -1539,7 +1567,7 @@ export default function ReceptionPage() {
                         </p>
                         <h3 className="text-3xl font-semibold text-ink">Nenhum paciente na vez</h3>
                         <p className="text-sm text-muted">
-                          A fila esta limpa neste momento. Use a agenda para acompanhar os proximos atendimentos.
+                          A fila está limpa neste momento. Use a agenda para acompanhar os próximos atendimentos.
                         </p>
                         <div className="mt-3 flex flex-wrap gap-2">
                           <Button
@@ -1571,7 +1599,7 @@ export default function ReceptionPage() {
                           Tempo de espera
                         </p>
                         <p className="mt-2 text-4xl font-semibold text-ink">--</p>
-                        <p className="mt-2 text-sm text-muted">Sem proximo atendimento.</p>
+                        <p className="mt-2 text-sm text-muted">Sem próximo atendimento.</p>
                       </div>
                     </div>
                   </div>
@@ -1687,7 +1715,7 @@ export default function ReceptionPage() {
                       ))
                     ) : (
                       <div className="space-y-3 rounded-xl border border-dashed border-border px-4 py-4 text-sm text-muted">
-                        <p>Ninguem em fila neste momento.</p>
+                        <p>Ninguém em fila neste momento.</p>
                         <div className="flex flex-wrap gap-2">
                           <button
                             type="button"
@@ -1717,7 +1745,7 @@ export default function ReceptionPage() {
                   <AdminSectionHeader
                     eyebrow="Próximos"
                     title="Chegadas e atrasos"
-                    description="Veja quem esta vindo e quem ja deveria ter chegado."
+                    description="Veja quem está vindo e quem já deveria ter chegado."
                   />
                   <div className="space-y-3">
                     {[...delayedAppointments.slice(0, 3), ...nextAgendaItems.slice(0, 5)].map((item) => {
@@ -1769,7 +1797,7 @@ export default function ReceptionPage() {
               <div className={`space-y-4 ${isBoardMode ? "xl:pl-1" : ""}`}>
                 <Card className="space-y-4">
                   <AdminSectionHeader
-                    eyebrow="Confirmacoes"
+                    eyebrow="Confirmações"
                     title={isBoardMode ? "Pendências antes da chegada" : "Antes de lotar a recepção"}
                     description={
                       isBoardMode
@@ -1778,7 +1806,7 @@ export default function ReceptionPage() {
                     }
                     actions={
                       <StatusPill
-                        label={`${pendingConfirmation.length} pendencias`}
+                        label={`${pendingConfirmation.length} pendências`}
                         tone="warning"
                       />
                     }
@@ -1827,7 +1855,7 @@ export default function ReceptionPage() {
                 <Card className="space-y-4">
                   <AdminSectionHeader
                     eyebrow="Feedback do fluxo"
-                    title="Como a recepcao esta agora"
+                    title="Como a recepção está agora"
                     description="Uma leitura visual da pressão operacional do momento."
                   />
                   <div className="space-y-3">

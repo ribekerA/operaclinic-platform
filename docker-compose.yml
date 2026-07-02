@@ -1,0 +1,73 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: operaclinic_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: operaclinic
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - operaclinic_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d operaclinic"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: operaclinic_api
+    restart: unless-stopped
+    env_file:
+      - apps/api/.env
+    environment:
+      # Override DATABASE_URL to use the docker-internal postgres host
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/operaclinic?schema=public
+      WEB_URL: http://web:3000
+    ports:
+      - "3001:3001"
+    networks:
+      - operaclinic_net
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/v1/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: operaclinic_web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE_URL: http://api:3001/api/v1
+      NEXT_PUBLIC_API_URL: http://api:3001
+      NEXT_PUBLIC_APP_NAME: OperaClinic Web
+    ports:
+      - "3000:3000"
+    networks:
+      - operaclinic_net
+    depends_on:
+      api:
+        condition: service_healthy
+
+networks:
+  operaclinic_net:
+    driver: bridge
+
+volumes:
+  postgres_data:

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import type { PlatformDashboardResponsePayload } from "@operaclinic/shared";
@@ -22,7 +22,7 @@ export function usePlatformDashboard(autoLoad = true) {
       setError(
         toErrorMessage(
           requestError,
-          "Nao foi possivel carregar a leitura unificada da torre de controle.",
+          "Não foi possível carregar a leitura unificada da torre de controle.",
         ),
       );
     } finally {

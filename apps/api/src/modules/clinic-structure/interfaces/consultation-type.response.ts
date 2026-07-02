@@ -16,6 +16,7 @@ export interface ConsultationTypeResponse {
   preparationNotes: string | null;
   contraindications: string | null;
   aftercareGuidance: string | null;
+  priceCents: number | null;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -15,6 +15,9 @@ export interface PatientSummaryResponse {
   birthDate: string | null;
   documentNumber: string | null;
   notes: string | null;
+  allergies: string | null;
+  aestheticGoals: string | null;
+  contraindications: string | null;
   isActive: boolean;
   mergedIntoPatientId: string | null;
   mergedAt: string | null;
@@ -64,6 +67,9 @@ export interface UpdatePatientPayload {
   birthDate?: string;
   documentNumber?: string;
   notes?: string;
+  allergies?: string;
+  aestheticGoals?: string;
+  contraindications?: string;
   isActive?: boolean;
   contacts?: PatientContactInputPayload[];
 }
@@ -126,5 +132,67 @@ export async function findOrMergePatient(
   return requestJson<PatientSummaryResponse>("/api/patients/find-or-merge", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+// ─── Patient Protocol Instances ─────────────────────────────────────────────
+
+export interface PatientProtocolSessionItem {
+  id: string;
+  sessionSequence: number;
+  status: "PLANNED" | "SCHEDULED" | "COMPLETED" | "CANCELED" | "SKIPPED";
+  plannedStartDate: string;
+  appointment: { id: string; startsAt: string; status: string } | null;
+}
+
+export interface PatientProtocolInstanceResponse {
+  id: string;
+  patientId: string;
+  procedureProtocolId: string;
+  status: "ACTIVE" | "COMPLETED" | "ABANDONED" | "CANCELED";
+  sessionsPlanned: number;
+  sessionsScheduled: number;
+  sessionsCompleted: number;
+  startedAt: string;
+  expectedCompletionAt: string | null;
+  completedAt: string | null;
+  notes: string | null;
+  procedureProtocol: {
+    id: string;
+    name: string;
+    totalSessions: number;
+    intervalBetweenSessionsDays: number;
+    consultationType?: { id: string; name: string };
+  };
+  sessionAppointments: PatientProtocolSessionItem[];
+}
+
+export async function listPatientProtocolInstances(
+  patientId: string,
+): Promise<PatientProtocolInstanceResponse[]> {
+  return requestJson<PatientProtocolInstanceResponse[]>(
+    `/api/procedure-protocols/instances/patient/${patientId}`,
+  );
+}
+
+export async function enrollPatientInProtocol(input: {
+  patientId: string;
+  procedureProtocolId: string;
+  notes?: string;
+}): Promise<PatientProtocolInstanceResponse> {
+  return requestJson<PatientProtocolInstanceResponse>(
+    "/api/procedure-protocols/instances/enroll",
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function updateProtocolSession(
+  instanceId: string,
+  seq: number,
+  input: { status: string; canceledReason?: string; skippedReason?: string },
+): Promise<{ id: string; status: string }> {
+  return requestJson(`/api/procedure-protocols/instances/${instanceId}/sessions/${seq}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
   });
 }

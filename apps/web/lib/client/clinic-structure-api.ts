@@ -76,6 +76,7 @@ export interface ConsultationTypeResponse {
   preparationNotes?: string | null;
   contraindications?: string | null;
   aftercareGuidance?: string | null;
+  priceCents?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -166,6 +167,7 @@ export interface CreateConsultationTypePayload {
   preparationNotes?: string | null;
   contraindications?: string | null;
   aftercareGuidance?: string | null;
+  priceCents?: number;
 }
 
 export interface UpdateConsultationTypePayload {
@@ -184,6 +186,7 @@ export interface UpdateConsultationTypePayload {
   preparationNotes?: string | null;
   contraindications?: string | null;
   aftercareGuidance?: string | null;
+  priceCents?: number;
 }
 
 export interface ListProcedureProtocolsQuery {
@@ -206,6 +209,83 @@ export interface UpdateProcedureProtocolPayload {
   description?: string;
   totalSessions?: number;
   intervalBetweenSessionsDays?: number;
+  isActive?: boolean;
+}
+
+export type ScheduleDayOfWeek =
+  | "MONDAY"
+  | "TUESDAY"
+  | "WEDNESDAY"
+  | "THURSDAY"
+  | "FRIDAY"
+  | "SATURDAY"
+  | "SUNDAY";
+
+export interface ScheduleResponse {
+  id: string;
+  tenantId: string;
+  professionalId: string;
+  unitId: string | null;
+  dayOfWeek: ScheduleDayOfWeek;
+  startTime: string;
+  endTime: string;
+  slotIntervalMinutes: number;
+  isActive: boolean;
+  validFrom: string | null;
+  validTo: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScheduleBlockResponse {
+  id: string;
+  tenantId: string;
+  professionalId: string;
+  unitId: string | null;
+  room: string | null;
+  reason: string | null;
+  startsAt: string;
+  endsAt: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSchedulePayload {
+  professionalId: string;
+  dayOfWeek: ScheduleDayOfWeek;
+  startTime: string;
+  endTime: string;
+  slotIntervalMinutes?: number;
+  unitId?: string;
+  isActive?: boolean;
+}
+
+export interface UpdateSchedulePayload {
+  dayOfWeek?: ScheduleDayOfWeek;
+  startTime?: string;
+  endTime?: string;
+  slotIntervalMinutes?: number;
+  unitId?: string;
+  isActive?: boolean;
+}
+
+export interface CreateScheduleBlockPayload {
+  professionalId: string;
+  startsAt: string;
+  endsAt: string;
+  reason?: string;
+  room?: string;
+  unitId?: string;
+  isActive?: boolean;
+}
+
+export interface UpdateScheduleBlockPayload {
+  startsAt?: string;
+  endsAt?: string;
+  reason?: string;
+  room?: string;
+  unitId?: string;
   isActive?: boolean;
 }
 
@@ -369,4 +449,56 @@ export async function updateProcedureProtocol(
       body: JSON.stringify(payload),
     },
   );
+}
+
+export async function listSchedules(professionalId: string): Promise<ScheduleResponse[]> {
+  return requestJson<ScheduleResponse[]>(
+    `/api/schedules${buildQueryString({ professionalId })}`,
+  );
+}
+
+export async function createSchedule(
+  payload: CreateSchedulePayload,
+): Promise<ScheduleResponse> {
+  return requestJson<ScheduleResponse>("/api/schedules", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateSchedule(
+  scheduleId: string,
+  payload: UpdateSchedulePayload,
+): Promise<ScheduleResponse> {
+  return requestJson<ScheduleResponse>(`/api/schedules/${scheduleId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function listScheduleBlocks(
+  professionalId: string,
+): Promise<ScheduleBlockResponse[]> {
+  return requestJson<ScheduleBlockResponse[]>(
+    `/api/schedule-blocks${buildQueryString({ professionalId })}`,
+  );
+}
+
+export async function createScheduleBlock(
+  payload: CreateScheduleBlockPayload,
+): Promise<ScheduleBlockResponse> {
+  return requestJson<ScheduleBlockResponse>("/api/schedule-blocks", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateScheduleBlock(
+  blockId: string,
+  payload: UpdateScheduleBlockPayload,
+): Promise<ScheduleBlockResponse> {
+  return requestJson<ScheduleBlockResponse>(`/api/schedule-blocks/${blockId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
 }

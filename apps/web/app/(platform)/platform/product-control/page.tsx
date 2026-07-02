@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import type { PlatformDashboardTenantSnapshot } from "@operaclinic/shared";
@@ -24,7 +24,7 @@ function buildTenantSignals(tenant: PlatformDashboardTenantSnapshot): string[] {
   const signals: string[] = [];
 
   if (!tenant.readiness.hasClinicProfile) {
-    signals.push("sem perfil de clinica");
+    signals.push("sem perfil de clínica");
   }
 
   if (!tenant.readiness.hasOperators) {
@@ -112,7 +112,7 @@ export default function PlatformProductControlPage() {
           items: dashboard.operations.commandCenter.knownGaps,
         },
         {
-          title: "Automacao ainda sem causalidade completa",
+          title: "Automação ainda sem causalidade completa",
           domain: "Agents",
           tone: "warning",
           items: dashboard.agents.commandCenter.knownGaps,
@@ -138,7 +138,7 @@ export default function PlatformProductControlPage() {
           items.push({
             title: "Destravar tenants com setup incompleto",
             description:
-              "Ha clinicas sem perfil, operador ou base minima de agenda. Isso trava prova de valor e onboarding previsivel.",
+              "Ha clínicas sem perfil, operador ou base minima de agenda. Isso trava prova de valor e onboarding previsível.",
             href: "/platform/tenants",
             tone: "warning",
           });
@@ -151,7 +151,7 @@ export default function PlatformProductControlPage() {
           items.push({
             title: "Corrigir no-show antes de ampliar piloto",
             description:
-              "A leitura agregada ainda indica perda operacional evitavel. A proxima iteracao precisa atacar follow-up, confirmacao e outliers por tenant.",
+              "A leitura agregada ainda indica perda operacional evitável. A próxima iteracao precisa atacar follow-up, confirmação e outliers por tenant.",
             href: "/platform/operations",
             tone:
               (dashboard.operations.commandCenter.noShowRate.weightedAverageRate ?? 0) > 18
@@ -167,7 +167,7 @@ export default function PlatformProductControlPage() {
           items.push({
             title: "Segurar expansao de agentes e reduzir falha",
             description:
-              "O agent layer ainda esta acima do limiar seguro para escalar automacao sem aumentar fallback e risco operacional.",
+              "O agent layer ainda esta acima do limiar seguro para escalar automação sem aumentar fallback e risco operacional.",
             href: "/platform/agents",
             tone:
               (dashboard.agents.commandCenter.failureRate ?? 0) > 20
@@ -180,7 +180,7 @@ export default function PlatformProductControlPage() {
           items.push({
             title: "Reduzir atraso comercial da base ativa",
             description:
-              "Receita em atraso reduz margem de operacao e distorce a leitura real de crescimento da plataforma.",
+              "Receita em atraso reduz margem de operação e distorce a leitura real de crescimento da plataforma.",
             href: "/platform/finance",
             tone: "warning",
           });
@@ -203,9 +203,9 @@ export default function PlatformProductControlPage() {
   const metrics = dashboard
     ? [
         {
-          label: "Tenants em atencao",
+          label: "Tenants em atenção",
           value: String(dashboard.tenants.attention.length),
-          helper: "Clinicas com sinais objetivos de risco operacional ou comercial.",
+          helper: "Clínicas com sinais objetivos de risco operacional ou comercial.",
           tone:
             dashboard.tenants.attention.length > 0
               ? ("warning" as const)
@@ -214,7 +214,7 @@ export default function PlatformProductControlPage() {
         {
           label: "Setup pendente",
           value: String(dashboard.tenants.missingSetup),
-          helper: "Base ainda bloqueando onboarding e operacao previsivel.",
+          helper: "Base ainda bloqueando onboarding e operação previsível.",
           tone:
             dashboard.tenants.missingSetup > 0
               ? ("danger" as const)
@@ -255,7 +255,7 @@ export default function PlatformProductControlPage() {
       <AdminPageHeader
         eyebrow="Command Center"
         title="Product Control"
-        description="Modulo parcial real para evitar inercia: prioridades abertas, risco de rollout, gaps conhecidos e sinais auditaveis que precisam virar proxima acao."
+        description="Modulo parcial real para evitar inercia: prioridades abertas, risco de rollout, gaps conhecidos e sinais auditaveis que precisam virar próxima acao."
         actions={
           <button
             type="button"
@@ -291,7 +291,7 @@ export default function PlatformProductControlPage() {
           },
           {
             label: "Abrir agents",
-            description: "Entender se automacao esta ajudando ou atrapalhando.",
+            description: "Entender se automação esta ajudando ou atrapalhando.",
             href: "/platform/agents",
           },
         ]}
@@ -307,7 +307,7 @@ export default function PlatformProductControlPage() {
         <Card className="space-y-4">
           <AdminSectionHeader
             eyebrow="Prioridade imediata"
-            title="O que precisa virar proxima acao"
+            title="O que precisa virar próxima acao"
             description="Acoes derivadas de sinais rastreaveis da torre. Nada aqui depende de memoria do founder."
           />
 
@@ -394,9 +394,9 @@ export default function PlatformProductControlPage() {
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <AdminSectionHeader
-            eyebrow="Tenants que travam evolucao"
+            eyebrow="Tenants que travam evolução"
             title="Onde a plataforma ainda perde previsibilidade"
-            description="Clinicas em atencao ou com setup incompleto que precisam de acao antes de escalar piloto."
+            description="Clínicas em atenção ou com setup incompleto que precisam de acao antes de escalar piloto."
           />
 
           {dashboard ? (
@@ -463,13 +463,13 @@ export default function PlatformProductControlPage() {
             ) : (
               <div className="mt-4">
                 <AdminEmptyState
-                  title="Nenhum tenant em atencao agora"
+                  title="Nenhum tenant em atenção agora"
                   description="A base ativa nao exibiu sinais prioritarios de risco comercial ou operacional neste snapshot."
                 />
               </div>
             )
           ) : (
-            <p className="mt-4 text-sm text-muted">Carregando tenants em atencao.</p>
+            <p className="mt-4 text-sm text-muted">Carregando tenants em atenção.</p>
           )}
         </Card>
 
@@ -510,7 +510,7 @@ export default function PlatformProductControlPage() {
               <div className="mt-4">
                 <AdminEmptyState
                   title="Sem atividade recente carregada"
-                  description="Quando o control plane nao traz eventos recentes, a priorizacao semanal perde contexto historico."
+                  description="Quando o control plane nao traz eventos recentes, a priorização semanal perde contexto histórico."
                 />
               </div>
             )
@@ -524,7 +524,7 @@ export default function PlatformProductControlPage() {
         <AdminSectionHeader
           eyebrow="O que ainda falta"
           title="Para Product Control virar modulo definitivo"
-          description="Esta pagina ja organiza risco e proxima acao, mas ainda nao substitui backlog vivo nem metricas de entrega."
+          description="Esta pagina ja organiza risco e próxima acao, mas ainda nao substitui backlog vivo nem metricas de entrega."
         />
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {[
@@ -532,7 +532,7 @@ export default function PlatformProductControlPage() {
             "Bugs por modulo e status de rollout persistidos fora da memoria do time.",
             "Metas 30/60/90 dias vinculadas a tenants, piloto e receita.",
             "Adoção por feature e por tenant para separar modulo lançado de modulo realmente usado.",
-            "Comparacao com periodo anterior para medir evolucao, nao apenas foto atual.",
+            "Comparação com período anterior para medir evolução, nao apenas foto atual.",
             "Ligacao direta entre acao priorizada e resultado operacional depois do rollout.",
           ].map((item) => (
             <div key={item} className="rounded-[20px] border border-slate-200 bg-slate-50 p-4">

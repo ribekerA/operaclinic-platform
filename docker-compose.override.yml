@@ -1,0 +1,35 @@
+# Development overrides — applied automatically when running `docker compose up`
+# Mounts source code into containers so changes reflect without rebuilding images.
+# Hot reload works via the dev scripts inside each service.
+
+services:
+  api:
+    build:
+      target: builder
+    command: ["pnpm", "--filter", "@operaclinic/api", "dev"]
+    environment:
+      NODE_ENV: development
+    volumes:
+      # Mount monorepo root so workspace packages are live
+      - .:/app
+      # Preserve container-built node_modules (don't overwrite with host)
+      - /app/node_modules
+      - /app/apps/api/node_modules
+      - /app/apps/api/dist
+      - /app/packages/shared/node_modules
+
+  web:
+    build:
+      target: builder
+    command: ["pnpm", "--filter", "@operaclinic/web", "dev"]
+    environment:
+      NODE_ENV: development
+      # During dev, browser calls go to localhost; server-side calls go to api container
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:3001/api/v1
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/web/node_modules
+      - /app/apps/web/.next
+      - /app/packages/shared/node_modules

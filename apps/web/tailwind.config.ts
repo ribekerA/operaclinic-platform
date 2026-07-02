@@ -22,8 +22,8 @@ const config: Config = {
         panel: "0 20px 50px -30px rgba(15, 23, 42, 0.55)",
       },
       fontFamily: {
-        sans: ["Manrope", "Segoe UI Variable Text", "Trebuchet MS", "sans-serif"],
-        mono: ["IBM Plex Mono", "Consolas", "monospace"],
+        sans: ["var(--font-manrope)", "Segoe UI Variable Text", "Trebuchet MS", "sans-serif"],
+        mono: ["var(--font-mono)", "Consolas", "monospace"],
       },
       backgroundImage: {
         "mesh-warm":

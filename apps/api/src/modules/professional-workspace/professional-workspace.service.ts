@@ -12,6 +12,7 @@ import type {
   ProfessionalLinkedUserSummary,
   ProfessionalWorkspaceAgendaItem,
   ProfessionalWorkspaceDashboardResponse,
+  ProfessionalWorkspacePatientSearchResult,
   ProfessionalWorkspacePatientSummaryResponse,
 } from "@operaclinic/shared";
 import { AuthenticatedUser } from "../../auth/interfaces/authenticated-user.interface";
@@ -513,6 +514,9 @@ export class ProfessionalWorkspaceService {
           birthDate: true,
           documentNumber: true,
           notes: true,
+          allergies: true,
+          aestheticGoals: true,
+          contraindications: true,
           isActive: true,
           contacts: {
             orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
@@ -596,6 +600,9 @@ export class ProfessionalWorkspaceService {
         birthDate: patient.birthDate?.toISOString() ?? null,
         documentNumber: patient.documentNumber,
         notes: patient.notes,
+        allergies: patient.allergies,
+        aestheticGoals: patient.aestheticGoals,
+        contraindications: patient.contraindications,
         isActive: patient.isActive,
         contacts: patient.contacts.map((contact) => ({
           type: contact.type,
@@ -843,5 +850,53 @@ export class ProfessionalWorkspaceService {
     const trimmed = summary.trim();
 
     return trimmed || null;
+  }
+
+  async searchPatients(
+    actor: AuthenticatedUser,
+    search: string,
+  ): Promise<ProfessionalWorkspacePatientSearchResult[]> {
+    const { tenantId, professionalId } = this.resolveProfessionalContext(actor);
+    const trimmed = search.trim();
+
+    if (!trimmed) {
+      return [];
+    }
+
+    const patients = await this.prisma.patient.findMany({
+      where: {
+        tenantId,
+        isActive: true,
+        OR: [
+          { fullName: { contains: trimmed, mode: "insensitive" } },
+          { documentNumber: { contains: trimmed, mode: "insensitive" } },
+        ],
+        appointments: {
+          some: {
+            tenantId,
+            professionalId,
+          },
+        },
+      },
+      select: {
+        id: true,
+        fullName: true,
+        birthDate: true,
+        contacts: {
+          where: { isPrimary: true },
+          select: { value: true },
+          take: 1,
+        },
+      },
+      orderBy: { fullName: "asc" },
+      take: 10,
+    });
+
+    return patients.map((patient) => ({
+      id: patient.id,
+      fullName: patient.fullName,
+      birthDate: patient.birthDate?.toISOString() ?? null,
+      primaryContact: patient.contacts[0]?.value ?? null,
+    }));
   }
 }

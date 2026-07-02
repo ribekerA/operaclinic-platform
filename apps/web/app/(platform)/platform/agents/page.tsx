@@ -1,6 +1,7 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 import {
   AdminEmptyState,
   AdminMetricGrid,
@@ -36,13 +37,13 @@ export default function PlatformAgentsPage() {
   const metrics = commandCenter
     ? [
         {
-          label: "Execucoes 30d",
+          label: "Execuções 30d",
           value: String(commandCenter.totalExecutions),
           helper: `${commandCenter.uniqueThreads} threads unicas com trilha persistida.`,
           tone: "accent" as const,
         },
         {
-          label: "Resolucao segura",
+          label: "Resolução segura",
           value: formatPercent(commandCenter.safeResolutionRate),
           helper: `${commandCenter.safeAutomaticResolutions} outcomes automaticos terminais persistidos sem handoff humano.`,
           tone:
@@ -160,7 +161,7 @@ export default function PlatformAgentsPage() {
               <p className="mt-2 text-sm leading-6 text-muted">
                 {readiness?.enabled
                   ? "Agent layer habilitado no ambiente."
-                  : "Agent layer desligado por configuracao."}
+                  : "Agent layer desligado por configuração."}
               </p>
             </div>
             <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-4">
@@ -280,7 +281,7 @@ export default function PlatformAgentsPage() {
           <AdminSectionHeader
             eyebrow="Skills"
             title="Skills mais acionadas"
-            description="Ranking derivado dos steps persistidos em cada execucao."
+            description="Ranking derivado dos steps persistidos em cada execução."
           />
           <div className="mt-4 space-y-3">
             {commandCenter?.topSkills.length ? (
@@ -314,7 +315,7 @@ export default function PlatformAgentsPage() {
           <AdminSectionHeader
             eyebrow="Tenants"
             title="Maior volume de agentes"
-            description="Clinicas onde o agent layer mais tocou threads no periodo."
+            description="Clínicas onde o agent layer mais tocou threads no período."
           />
           <div className="mt-4 space-y-3">
             {commandCenter?.highestVolumeTenants.length ? (
@@ -340,7 +341,7 @@ export default function PlatformAgentsPage() {
               ))
             ) : (
               <p className="text-sm text-muted">
-                Nenhum tenant com execucao persistida na janela.
+                Nenhum tenant com execução persistida na janela.
               </p>
             )}
           </div>
@@ -352,7 +353,7 @@ export default function PlatformAgentsPage() {
           <AdminSectionHeader
             eyebrow="Fallback"
             title="Tenants com mais handoff"
-            description="Onde a automacao mais devolve a conversa para a recepcao."
+            description="Onde a automação mais devolve a conversa para a recepção."
           />
           <div className="mt-4 space-y-3">
             {commandCenter?.highestFallbackTenants.length ? (
@@ -419,7 +420,7 @@ export default function PlatformAgentsPage() {
           <div className="mt-5">
             <Link
               href="/platform/operations"
-              className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+              className={buttonVariants({ variant: "secondary" })}
             >
               Cruzar com operations
             </Link>

@@ -31,6 +31,21 @@ export class UpdatePatientDto {
   notes?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  allergies?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  aestheticGoals?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  contraindications?: string;
+
+  @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 

@@ -250,3 +250,39 @@ export async function requestBackendPublic(
 export function toJsonResponse(result: BackendRequestResult): NextResponse {
   return NextResponse.json(result.data ?? {}, { status: result.status });
 }
+
+interface BackendRawResult {
+  status: number;
+  text: string;
+}
+
+export async function requestBackendRawText(
+  options: BackendRequestOptions,
+): Promise<BackendRawResult> {
+  const profile = resolveSessionProfile(options);
+  const cookieStore = await getSessionCookieStore();
+  let accessToken =
+    cookieStore.get(getAccessTokenCookieName(profile))?.value ?? null;
+
+  let response = await backendFetch(accessToken, options);
+
+  if (response.status === 401) {
+    const refreshed = await refreshSession(cookieStore, profile);
+
+    if (refreshed) {
+      accessToken = refreshed.accessToken;
+      response = await backendFetch(accessToken, options);
+    }
+  }
+
+  if (response.status === 401) {
+    clearSessionCookies(cookieStore, profile);
+  }
+
+  const text = await response.text();
+
+  return {
+    status: response.status,
+    text,
+  };
+}

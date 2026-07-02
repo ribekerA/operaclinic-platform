@@ -21,12 +21,17 @@ import { useSession } from "@/hooks/use-session";
 import { toErrorMessage } from "@/lib/client/http";
 import {
   createPatient,
+  enrollPatientInProtocol,
   listPatients,
   PatientContactInputPayload,
   PatientContactType,
   PatientSummaryResponse,
   updatePatient,
 } from "@/lib/client/patients-api";
+import {
+  listProcedureProtocols,
+  ProcedureProtocolResponse,
+} from "@/lib/client/clinic-structure-api";
 import { formatDateTime } from "@/lib/formatters";
 
 interface PatientFormState {
@@ -34,6 +39,9 @@ interface PatientFormState {
   birthDate: string;
   documentNumber: string;
   notes: string;
+  allergies: string;
+  aestheticGoals: string;
+  contraindications: string;
   isActive: boolean;
   contactType: PatientContactType;
   contactValue: string;
@@ -44,6 +52,9 @@ const defaultCreateForm: PatientFormState = {
   birthDate: "",
   documentNumber: "",
   notes: "",
+  allergies: "",
+  aestheticGoals: "",
+  contraindications: "",
   isActive: true,
   contactType: "WHATSAPP",
   contactValue: "",
@@ -134,6 +145,10 @@ export default function ClinicPatientsPage() {
   const [editForm, setEditForm] = useState<PatientFormState | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
+  const [allProtocols, setAllProtocols] = useState<ProcedureProtocolResponse[]>([]);
+  const [enrollingProtocolId, setEnrollingProtocolId] = useState("");
+  const [enrolling, setEnrolling] = useState(false);
+
   const selectedPatient = useMemo(
     () => patients.find((patient) => patient.id === selectedPatientId) ?? null,
     [patients, selectedPatientId],
@@ -158,7 +173,7 @@ export default function ClinicPatientsPage() {
         return items[0]?.id ?? null;
       });
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Nao foi possivel carregar pacientes."));
+      setError(toErrorMessage(requestError, "Não foi possível carregar pacientes."));
     }
   }, []);
 
@@ -180,11 +195,19 @@ export default function ClinicPatientsPage() {
         : "",
       documentNumber: selectedPatient.documentNumber ?? "",
       notes: selectedPatient.notes ?? "",
+      allergies: selectedPatient.allergies ?? "",
+      aestheticGoals: selectedPatient.aestheticGoals ?? "",
+      contraindications: selectedPatient.contraindications ?? "",
       isActive: selectedPatient.isActive,
       contactType: selectedPatient.contacts[0]?.type ?? "WHATSAPP",
       contactValue: selectedPatient.contacts[0]?.value ?? "",
     });
   }, [selectedPatient]);
+
+  useEffect(() => {
+    if (allProtocols.length > 0) return;
+    void listProcedureProtocols({ isActive: true }).then(setAllProtocols).catch(() => {});
+  }, [allProtocols.length]);
 
   const handleClearSearch = useCallback(async () => {
     setSearch("");
@@ -204,16 +227,16 @@ export default function ClinicPatientsPage() {
       {
         label: "Pacientes",
         value: String(patients.length),
-        helper: "Base ativa carregada na clinica estetica.",
+        helper: "Base ativa carregada na clínica estética.",
       },
       {
         label: "Com contato",
         value: String(withContactCount),
-        helper: "Prontos para recepcao e retorno.",
+        helper: "Prontos para recepção e retorno.",
         tone: "accent" as const,
       },
       {
-        label: "Com observacoes",
+        label: "Com observações",
         value: String(withNotesCount),
         helper: "Registros com contexto adicional.",
       },
@@ -239,11 +262,11 @@ export default function ClinicPatientsPage() {
     }> = [
       {
         label: "Novo paciente",
-        description: "Ir direto ao cadastro rapido.",
+        description: "Ir direto ao cadastro rápido.",
         href: "#novo-paciente",
       },
       {
-        label: "Recepcao",
+        label: "Recepção",
         description: "Voltar para agenda, fila e check-in.",
         href: "/clinic/reception",
       },
@@ -317,6 +340,9 @@ export default function ClinicPatientsPage() {
         birthDate: editForm.birthDate || undefined,
         documentNumber: editForm.documentNumber.trim() || undefined,
         notes: editForm.notes.trim() || undefined,
+        allergies: editForm.allergies.trim() || undefined,
+        aestheticGoals: editForm.aestheticGoals.trim() || undefined,
+        contraindications: editForm.contraindications.trim() || undefined,
         isActive: editForm.isActive,
         contacts: buildContacts(editForm),
       });
@@ -332,27 +358,60 @@ export default function ClinicPatientsPage() {
     }
   }
 
+  async function handleEnrollPatient(): Promise<void> {
+    if (!canManage || !selectedPatientId || !enrollingProtocolId) return;
+    setError(null);
+    setSuccess(null);
+    setEnrolling(true);
+    try {
+      await enrollPatientInProtocol({
+        patientId: selectedPatientId,
+        procedureProtocolId: enrollingProtocolId,
+      });
+      setEnrollingProtocolId("");
+      setSuccess("Paciente inscrito no protocolo com sucesso.");
+      await loadPatients(search);
+    } catch (requestError) {
+      setError(toErrorMessage(requestError, "Falha ao inscrever paciente no protocolo."));
+    } finally {
+      setEnrolling(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Clinica | Pacientes"
+        eyebrow="Clínica | Pacientes"
         title="Pacientes"
-        description="Base mais fluida para recepcao e equipe encontrarem rapido quem precisa ser atendido ou atualizado."
+        description="Base mais fluida para recepção e equipe encontrarem rápido quem precisa ser atendido ou atualizado."
         actions={
-          <Button
-            type="button"
-            className="border border-slate-200 bg-white text-ink hover:bg-slate-50"
-            onClick={() => {
-              void loadPatients(search);
-            }}
-            disabled={isLoading || isSearching}
-          >
-            {isLoading || isSearching ? "Atualizando..." : "Atualizar base"}
-          </Button>
+          <>
+            <Button
+              type="button"
+              className="border border-slate-200 bg-white text-ink hover:bg-slate-50"
+              onClick={() => {
+                const params = new URLSearchParams();
+                if (search.trim()) params.set("search", search.trim());
+                window.location.href = `/api/reports/patients/csv${params.toString() ? `?${params.toString()}` : ""}`;
+              }}
+            >
+              Exportar CSV
+            </Button>
+            <Button
+              type="button"
+              className="border border-slate-200 bg-white text-ink hover:bg-slate-50"
+              onClick={() => {
+                void loadPatients(search);
+              }}
+              disabled={isLoading || isSearching}
+            >
+              {isLoading || isSearching ? "Atualizando..." : "Atualizar base"}
+            </Button>
+          </>
         }
       >
         <AdminMetricGrid items={patientMetrics} isLoading={isLoading && patients.length === 0} />
-        <AdminShortcutPanel title="Acoes rapidas" items={shortcutItems} />
+        <AdminShortcutPanel title="Ações rápidas" items={shortcutItems} />
       </AdminPageHeader>
 
       {error ? (
@@ -467,9 +526,9 @@ export default function ClinicPatientsPage() {
                         <p className="text-sm text-muted">{resolvePrimaryContact(patient)}</p>
                         <div className="flex flex-wrap gap-2 text-xs text-muted">
                           <span>{patient.documentNumber ?? "Sem documento"}</span>
-                          <span>{patient.notes?.trim() ? "Com observacoes" : "Sem observacoes"}</span>
+                          <span>{patient.notes?.trim() ? "Com observações" : "Sem observações"}</span>
                           {nextProtocolDate ? (
-                            <span>Proxima sessao: {formatDateTime(nextProtocolDate)}</span>
+                            <span>Próxima sessão: {formatDateTime(nextProtocolDate)}</span>
                           ) : null}
                         </div>
                       </div>
@@ -486,7 +545,7 @@ export default function ClinicPatientsPage() {
             ) : (
               <AdminEmptyState
                 title="Nenhum paciente encontrado"
-                description="Ajuste a busca ou cadastre um novo paciente para continuar a operacao."
+                description="Ajuste a busca ou cadastre um novo paciente para continuar a operação."
                 action={
                   canManage ? (
                     <Button
@@ -511,10 +570,10 @@ export default function ClinicPatientsPage() {
           <AdminSectionHeader
             eyebrow="Cadastro"
             title="Novo paciente"
-            description="Cadastro curto, orientado para recepcao e agendamento."
+            description="Cadastro curto, orientado para recepção e agendamento."
             actions={
               <StatusPill
-                label={canManage ? "Edicao liberada" : "Somente leitura"}
+                label={canManage ? "Edição liberada" : "Somente leitura"}
                 tone={canManage ? "success" : "warning"}
               />
             }
@@ -609,7 +668,7 @@ export default function ClinicPatientsPage() {
 
             <div className="space-y-1">
               <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                Observacoes
+                Observações
               </label>
               <textarea
                 rows={4}
@@ -672,10 +731,10 @@ export default function ClinicPatientsPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                    Tratamento estetico
+                    Tratamento estético
                   </p>
                   <p className="mt-1 text-sm text-muted">
-                    Veja protocolos ativos, progresso de sessoes e a proxima etapa prevista.
+                    Veja protocolos ativos, progresso de sessões e a próxima etapa prevista.
                   </p>
                 </div>
                 <AdminCountBadge
@@ -710,16 +769,16 @@ export default function ClinicPatientsPage() {
                               {protocol.sessionsCompleted}/{protocol.sessionsPlanned} concluida(s)
                             </span>
                             <span>
-                              {protocol.sessionsScheduled} sessao(oes) ja programada(s)
+                              {protocol.sessionsScheduled} sessão(ões) já programada(s)
                             </span>
                             {protocol.nextSessionDate ? (
                               <span>
-                                Proxima sessao: {formatDateTime(protocol.nextSessionDate)}
+                                Próxima sessão: {formatDateTime(protocol.nextSessionDate)}
                               </span>
                             ) : null}
                             {protocol.expectedCompletionAt ? (
                               <span>
-                                Previsao final: {formatDateTime(protocol.expectedCompletionAt)}
+                                Previsão final: {formatDateTime(protocol.expectedCompletionAt)}
                               </span>
                             ) : null}
                           </div>
@@ -767,9 +826,39 @@ export default function ClinicPatientsPage() {
               ) : (
                 <AdminEmptyState
                   title="Sem protocolo vinculado"
-                  description="Esse paciente ainda nao possui plano de sessoes associado a um procedimento."
+                  description="Esse paciente ainda não possui plano de sessões associado a um procedimento."
                 />
               )}
+
+              {canManage && allProtocols.length > 0 ? (
+                <div className="border-t border-slate-200 pt-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+                    Inscrever em protocolo
+                  </p>
+                  <div className="flex gap-2">
+                    <select
+                      value={enrollingProtocolId}
+                      onChange={(event) => setEnrollingProtocolId(event.target.value)}
+                      className={`flex-1 ${adminSelectClassName}`}
+                    >
+                      <option value="">Selecionar protocolo...</option>
+                      {allProtocols.map((protocol) => (
+                        <option key={protocol.id} value={protocol.id}>
+                          {protocol.name} ({protocol.totalSessions} sessões)
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      type="button"
+                      disabled={!enrollingProtocolId || enrolling}
+                      onClick={() => void handleEnrollPatient()}
+                      className="shrink-0"
+                    >
+                      {enrolling ? "Inscrevendo..." : "Inscrever"}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             <form className="space-y-4 pb-28" onSubmit={(event) => void handleUpdate(event)}>
@@ -875,7 +964,7 @@ export default function ClinicPatientsPage() {
 
               <div className="space-y-1">
                 <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                  Observacoes
+                  Observações
                 </label>
                 <textarea
                   rows={4}
@@ -888,6 +977,67 @@ export default function ClinicPatientsPage() {
                   className={adminTextareaClassName}
                   disabled={!canManage}
                 />
+              </div>
+
+              <div className="border-t border-slate-200 pt-4">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                  Ficha estética
+                </p>
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+                      Alergias
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={editForm.allergies}
+                      onChange={(event) =>
+                        setEditForm((current) =>
+                          current ? { ...current, allergies: event.target.value } : current,
+                        )
+                      }
+                      placeholder="Ex: látex, lidocaína, parabenos..."
+                      className={adminTextareaClassName}
+                      disabled={!canManage}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+                      Objetivos estéticos
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={editForm.aestheticGoals}
+                      onChange={(event) =>
+                        setEditForm((current) =>
+                          current ? { ...current, aestheticGoals: event.target.value } : current,
+                        )
+                      }
+                      placeholder="Ex: redução de manchas, firmeza, volume labial..."
+                      className={adminTextareaClassName}
+                      disabled={!canManage}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+                      Contraindicações
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={editForm.contraindications}
+                      onChange={(event) =>
+                        setEditForm((current) =>
+                          current
+                            ? { ...current, contraindications: event.target.value }
+                            : current,
+                        )
+                      }
+                      placeholder="Ex: gestante, marca-passo, uso de anticoagulantes..."
+                      className={adminTextareaClassName}
+                      disabled={!canManage}
+                    />
+                  </div>
+                </div>
               </div>
 
               <label className="flex items-center gap-2 text-sm text-ink">
@@ -914,7 +1064,7 @@ export default function ClinicPatientsPage() {
                     Fechar
                   </Button>
                   <Button type="submit" disabled={!canManage || isUpdating}>
-                    {isUpdating ? "Salvando..." : "Salvar alteracoes"}
+                    {isUpdating ? "Salvando..." : "Salvar alterações"}
                   </Button>
                 </div>
               </div>

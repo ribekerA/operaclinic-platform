@@ -1,6 +1,7 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 import {
   AdminEmptyState,
   AdminMetricGrid,
@@ -150,7 +151,7 @@ export default function PlatformOperationsPage() {
                 "Sem resposta outbound persistida.",
         },
         {
-          label: "Ocupacao media",
+          label: "Ocupação media",
           value: formatRate(commandCenter.agendaOccupancyRate.weightedAverageRate),
           helper:
             commandCenter.agendaOccupancyRate.available
@@ -179,7 +180,7 @@ export default function PlatformOperationsPage() {
       <AdminPageHeader
         eyebrow="Command Center"
         title="Operations"
-        description="Leitura transversal da tese central do produto: menos no-show, resposta mais rapida, agenda mais previsivel e menor carga manual de recepcao."
+        description="Leitura transversal da tese central do produto: menos no-show, resposta mais rápida, agenda mais previsível e menor carga manual de recepção."
         actions={
           <button
             type="button"
@@ -205,7 +206,7 @@ export default function PlatformOperationsPage() {
           },
           {
             label: "Abrir tenants",
-            description: "Investigar clinicas com base incompleta ou fora da curva.",
+            description: "Investigar clínicas com base incompleta ou fora da curva.",
             href: "/platform/tenants",
           },
           {
@@ -227,7 +228,7 @@ export default function PlatformOperationsPage() {
           <AdminSectionHeader
             eyebrow="Snapshot real"
             title="Benchmark operacional agregado"
-            description="As medias abaixo saem dos snapshots tenant-scoped ja calculados pelo backend da clinica. Nao ha score composto nem inferencia externa."
+            description="As medias abaixo saem dos snapshots tenant-scoped ja calculados pelo backend da clínica. Não ha score composto nem inferencia externa."
             actions={
               <StatusPill
                 label={availability.label}
@@ -270,7 +271,7 @@ export default function PlatformOperationsPage() {
 
               <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">
-                  Confirmacao/remarcacao
+                  Confirmação/remarcacao
                 </p>
                 <p className="mt-3 text-2xl font-semibold text-ink">
                   {formatMinutes(
@@ -301,7 +302,7 @@ export default function PlatformOperationsPage() {
 
               <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-4 md:col-span-2">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">
-                  Resolucao segura sem humano
+                  Resolução segura sem humano
                 </p>
                 <p className="mt-3 text-2xl font-semibold text-ink">
                   {commandCenter.resolvedWithoutHumanIntervention.total}
@@ -342,7 +343,7 @@ export default function PlatformOperationsPage() {
                 tone: "default" as const,
               },
               {
-                label: "Confirmacao pendente",
+                label: "Confirmação pendente",
                 value: String(
                   dashboard?.operations.pendingConfirmationNext24Hours ?? "--",
                 ),
@@ -407,7 +408,7 @@ export default function PlatformOperationsPage() {
             valueFormatter={(value) => formatMinutes(value)}
           />
           <TenantInsightList
-            title="Menor ocupacao"
+            title="Menor ocupação"
             description="Tenants com menor uso da capacidade liquida de agenda."
             items={commandCenter.agendaOccupancyRate.lowestOccupancyTenants}
             valueFormatter={(value) => formatRate(value)}
@@ -418,9 +419,9 @@ export default function PlatformOperationsPage() {
       {commandCenter ? (
         <Card>
           <AdminSectionHeader
-            eyebrow="Automacao segura"
-            title="Onde a automacao ja fecha a conversa"
-            description="Volume de outcomes automaticos terminais persistidos por tenant, sem inferir impacto causal em agenda, ocupacao ou receita."
+            eyebrow="Automação segura"
+            title="Onde a automação ja fecha a conversa"
+            description="Volume de outcomes automaticos terminais persistidos por tenant, sem inferir impacto causal em agenda, ocupação ou receita."
           />
           <div className="mt-4 space-y-3">
             {commandCenter.resolvedWithoutHumanIntervention.highestVolumeTenants.length ? (
@@ -447,7 +448,7 @@ export default function PlatformOperationsPage() {
               )
             ) : (
               <p className="text-sm text-muted">
-                Nenhum tenant com resolucao automatica terminal persistida na janela.
+                Nenhum tenant com resolução automatica terminal persistida na janela.
               </p>
             )}
           </div>
@@ -477,7 +478,7 @@ export default function PlatformOperationsPage() {
               </p>
             </div>
             <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-4">
-              <p className="font-semibold text-ink">Ocupacao</p>
+              <p className="font-semibold text-ink">Ocupação</p>
               <p>
                 {commandCenter?.agendaOccupancyRate.methodology ??
                   "No snapshot loaded."}
@@ -491,7 +492,7 @@ export default function PlatformOperationsPage() {
               </p>
             </div>
             <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-4">
-              <p className="font-semibold text-ink">Resolucao sem humano</p>
+              <p className="font-semibold text-ink">Resolução sem humano</p>
               <p>
                 {commandCenter?.resolvedWithoutHumanIntervention.methodology ??
                   "No snapshot loaded."}
@@ -531,7 +532,7 @@ export default function PlatformOperationsPage() {
           <div className="mt-5">
             <Link
               href="/platform/agents"
-              className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+              className={buttonVariants({ variant: "secondary" })}
             >
               Abrir agents e skills
             </Link>
@@ -543,18 +544,18 @@ export default function PlatformOperationsPage() {
         <Card>
           <AdminSectionHeader
             eyebrow="Perguntas respondidas"
-            title="O que este modulo ja responde sem abrir a clinica"
+            title="O que este modulo ja responde sem abrir a clínica"
             description="Leituras cruzadas que o super admin consegue tomar em segundos com a agregacao atual."
           />
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {[
-              "Qual o no-show medio atual da base ativa e quem piora esse numero?",
+              "Qual o no-show medio atual da base ativa e quem piora esse número?",
               "Onde a primeira resposta esta lenta mesmo com inbox e handoff ja implementados?",
               "Quais tenants estao usando pouco da agenda liquida disponivel?",
-              "Qual a pressao de confirmacao pendente nas proximas 24h?",
-              "Qual o volume atual de handoff carregado pela operacao humana?",
-              "Onde a automacao ja resolve a conversa com outcome terminal explicitamente persistido?",
-              "Quais lacunas de automacao ainda impedem um score operacional definitivo?",
+              "Qual a pressao de confirmação pendente nas proximas 24h?",
+              "Qual o volume atual de handoff carregado pela operação humana?",
+              "Onde a automação ja resolve a conversa com outcome terminal explicitamente persistido?",
+              "Quais lacunas de automação ainda impedem um score operacional definitivo?",
             ].map((question) => (
               <div
                 key={question}

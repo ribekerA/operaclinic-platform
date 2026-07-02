@@ -1,4 +1,7 @@
 ﻿import { ReactNode } from "react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 
 export type AdminMetricTone = "default" | "accent" | "warning" | "danger";
 
@@ -16,6 +19,7 @@ interface AdminMetricCardProps {
   value: string;
   helper?: string;
   tone?: AdminMetricTone;
+  icon?: ReactNode;
 }
 
 const toneClasses: Record<AdminMetricTone, string> = {
@@ -25,17 +29,30 @@ const toneClasses: Record<AdminMetricTone, string> = {
   danger: "border-rose-200 bg-rose-50 text-slate-950",
 };
 
+const toneIconClasses: Record<AdminMetricTone, string> = {
+  default: "text-slate-400",
+  accent: "text-teal-500",
+  warning: "text-amber-500",
+  danger: "text-rose-400",
+};
+
 export function AdminMetricCard({
   label,
   value,
   helper,
   tone = "default",
+  icon,
 }: AdminMetricCardProps) {
   return (
     <div className={`rounded-[24px] border p-4 shadow-sm ${toneClasses[tone]}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">
-        {label}
-      </p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">
+          {label}
+        </p>
+        {icon ? (
+          <span className={`shrink-0 ${toneIconClasses[tone]}`}>{icon}</span>
+        ) : null}
+      </div>
       <p className="mt-3 text-3xl font-semibold text-current">{value}</p>
       {helper ? <p className="mt-2 text-sm leading-6 text-muted">{helper}</p> : null}
     </div>
@@ -101,8 +118,8 @@ export function AdminPageHeader({
   children,
 }: AdminPageHeaderProps) {
   return (
-    <section className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-7">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.18),_transparent_38%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.16),_transparent_36%)]" />
+    <section className="relative overflow-hidden rounded-[32px] border border-teal-100/60 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-7">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.28),_transparent_42%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.22),_transparent_38%),linear-gradient(180deg,rgba(255,255,255,0),rgba(240,253,250,0.5))]" />
       <div className="relative space-y-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl space-y-3">
@@ -219,7 +236,7 @@ export function AdminFilterSummary({
         <button
           type="button"
           onClick={onClear}
-          className="inline-flex h-10 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+          className={buttonVariants({ variant: "secondary" })}
         >
           Limpar filtros
         </button>
@@ -231,6 +248,7 @@ export function AdminFilterSummary({
 interface AdminShortcutItem {
   label: string;
   description: string;
+  icon?: ReactNode;
   href?: string;
   onClick?: () => void;
 }
@@ -256,15 +274,27 @@ export function AdminShortcutPanel({
       <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => {
           const className =
-            "block rounded-[20px] border border-slate-200 bg-slate-50 px-4 py-3 text-left text-ink transition hover:border-slate-300 hover:bg-white";
+            "group block rounded-[20px] border border-slate-200 bg-slate-50 px-4 py-3 text-left text-ink transition hover:border-teal-200 hover:bg-white hover:shadow-sm";
+
+          const inner = (
+            <>
+              {item.icon ? (
+                <div className="mb-2 text-teal-600 opacity-70 group-hover:opacity-100">
+                  {item.icon}
+                </div>
+              ) : null}
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-ink">{item.label}</p>
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-300 transition group-hover:text-teal-500" />
+              </div>
+              <p className="mt-1 text-xs leading-5 text-muted">{item.description}</p>
+            </>
+          );
 
           if (item.href) {
             return (
               <a key={item.label} href={item.href} className={className}>
-                <p className="text-sm font-semibold text-ink">{item.label}</p>
-                <p className="mt-1 text-xs leading-5 text-muted">
-                  {item.description}
-                </p>
+                {inner}
               </a>
             );
           }
@@ -276,10 +306,7 @@ export function AdminShortcutPanel({
               onClick={item.onClick}
               className={className}
             >
-              <p className="text-sm font-semibold text-ink">{item.label}</p>
-              <p className="mt-1 text-xs leading-5 text-muted">
-                {item.description}
-              </p>
+              {inner}
             </button>
           );
         })}
@@ -351,6 +378,117 @@ export function AdminFormSkeleton({ fields = 4 }: AdminFormSkeletonProps) {
         </div>
       ))}
       <div className="h-11 rounded-2xl bg-slate-200" />
+    </div>
+  );
+}
+
+// ── AdminActionCard ─────────────────────────────────────────────────────────
+
+const actionCardConfig = {
+  default: {
+    bar: "bg-slate-300",
+    wrap: "border-slate-200 bg-white",
+    badge: "bg-slate-100 text-slate-500",
+    badgeLabel: "Ok",
+  },
+  warning: {
+    bar: "bg-amber-400",
+    wrap: "border-amber-200 bg-amber-50/60",
+    badge: "bg-amber-100 text-amber-700",
+    badgeLabel: "Atenção",
+  },
+  danger: {
+    bar: "bg-rose-500",
+    wrap: "border-rose-200 bg-rose-50/60",
+    badge: "bg-rose-100 text-rose-700",
+    badgeLabel: "Crítico",
+  },
+} as const;
+
+interface AdminActionCardProps {
+  title: string;
+  description: string;
+  href: string;
+  tone?: keyof typeof actionCardConfig;
+  icon?: ReactNode;
+}
+
+export function AdminActionCard({
+  title,
+  description,
+  href,
+  tone = "default",
+  icon,
+}: AdminActionCardProps) {
+  const cfg = actionCardConfig[tone];
+  return (
+    <div className={`relative overflow-hidden rounded-[24px] border pl-5 pr-4 py-4 ${cfg.wrap}`}>
+      <div className={`absolute left-0 top-0 h-full w-1 rounded-l-[24px] ${cfg.bar}`} />
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3">
+          {icon ? (
+            <span className="mt-0.5 shrink-0 opacity-60">{icon}</span>
+          ) : null}
+          <div className="flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-semibold text-ink">{title}</p>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] ${cfg.badge}`}>
+                {cfg.badgeLabel}
+              </span>
+            </div>
+            <p className="mt-1.5 text-sm leading-6 text-muted">{description}</p>
+          </div>
+        </div>
+        <Link
+          href={href}
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-ink shadow-sm transition hover:bg-slate-50"
+        >
+          Abrir
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// ── AdminTimelineEntry ──────────────────────────────────────────────────────
+
+interface AdminTimelineEntryProps {
+  action: string;
+  actor: string;
+  context?: string;
+  target?: string;
+  timestamp: string;
+  isLast?: boolean;
+}
+
+export function AdminTimelineEntry({
+  action,
+  actor,
+  context,
+  target,
+  timestamp,
+  isLast = false,
+}: AdminTimelineEntryProps) {
+  return (
+    <div className={`relative flex gap-3.5 ${isLast ? "" : "pb-4"}`}>
+      {!isLast && (
+        <div className="absolute left-3 top-7 bottom-0 w-px bg-slate-100" />
+      )}
+      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm">
+        <div className="h-2 w-2 rounded-full bg-teal-500" />
+      </div>
+      <div className="flex-1 min-w-0 pt-0.5">
+        <p className="text-sm font-semibold text-ink">{action}</p>
+        <p className="mt-0.5 truncate text-xs text-muted">
+          {actor}
+          {context ? ` · ${context}` : ""}
+        </p>
+        {target ? (
+          <p className="mt-0.5 truncate text-[11px] text-slate-400">{target}</p>
+        ) : null}
+        <p className="mt-1 text-[11px] font-medium text-slate-400">{timestamp}</p>
+      </div>
     </div>
   );
 }

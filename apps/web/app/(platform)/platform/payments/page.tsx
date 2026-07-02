@@ -14,7 +14,7 @@ import {
   adminMutedPanelClassName,
   adminSelectClassName,
 } from "@/components/platform/platform-admin";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";;
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { toErrorMessage } from "@/lib/client/http";
@@ -73,12 +73,12 @@ export default function PlatformPaymentsPage() {
       {
         label: "Aguardando pagamento",
         value: String(awaitingPaymentCount),
-        helper: "Entradas comerciais sem confirmacao financeira.",
+        helper: "Entradas comerciais sem confirmação financeira.",
       },
       {
-        label: "Em execucao",
+        label: "Em execução",
         value: String(inProgressCount),
-        helper: "Pagos ou em configuracao assistida.",
+        helper: "Pagos ou em configuração assistida.",
         tone: "accent" as const,
       },
       {
@@ -113,7 +113,7 @@ export default function PlatformPaymentsPage() {
       setOnboardings(data);
     } catch (requestError) {
       setError(
-        toErrorMessage(requestError, "Nao foi possivel carregar os onboardings."),
+        toErrorMessage(requestError, "Não foi possível carregar os onboardings."),
       );
     } finally {
       setIsLoading(false);
@@ -166,8 +166,8 @@ export default function PlatformPaymentsPage() {
     <div className="space-y-6">
       <AdminPageHeader
         eyebrow="Super Admin | Pagamentos"
-        title="Fila comercial e onboarding das clinicas esteticas"
-        description="Acompanhe entrada de clinicas esteticas, confirmacao de pagamento e progresso de configuracao em uma lista mais leve e legivel para operacao real."
+        title="Fila comercial e onboarding das clínicas estéticas"
+        description="Acompanhe entrada de clínicas estéticas, confirmação de pagamento e progresso de configuração em uma lista mais leve e legível para operação real."
         actions={
           <Button
             type="button"
@@ -198,7 +198,7 @@ export default function PlatformPaymentsPage() {
         <AdminSectionHeader
           eyebrow="Pipeline comercial"
           title="Onboardings e pagamentos"
-          description="Filtre por clinica estetica, contato ou status para priorizar follow-up comercial e implantacao."
+          description="Filtre por clínica estética, contato ou status para priorizar follow-up comercial e implantacao."
           actions={<AdminCountBadge value={onboardings.length} loading={isLoading} />}
         />
 
@@ -207,7 +207,7 @@ export default function PlatformPaymentsPage() {
             type="text"
             value={searchDraft}
             onChange={(event) => setSearchDraft(event.target.value)}
-            placeholder="Buscar clinica estetica ou email"
+            placeholder="Buscar clínica estética ou email"
             className={adminInputClassName}
           />
           <select
@@ -230,7 +230,7 @@ export default function PlatformPaymentsPage() {
           <button
             type="button"
             onClick={clearFilters}
-            className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+            className={buttonVariants({ variant: "secondary" })}
           >
             Limpar
           </button>
@@ -250,7 +250,7 @@ export default function PlatformPaymentsPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-base font-semibold text-ink">
-                      {onboarding.clinicDisplayName || "Clinica em identificacao"}
+                      {onboarding.clinicDisplayName || "Clínica em identificacao"}
                     </p>
                     <p className="mt-1 text-sm text-muted">
                       {onboarding.adminEmail || onboarding.clinicContactEmail || "Sem contato"}
@@ -295,14 +295,14 @@ export default function PlatformPaymentsPage() {
               description={
                 hasActiveFilters
                   ? "Ajuste os filtros para recuperar entradas da fila comercial."
-                  : "Quando novas clinicas iniciarem checkout, a fila aparecera aqui."
+                  : "Quando novas clínicas iniciarem checkout, a fila aparecera aqui."
               }
               action={
                 hasActiveFilters ? (
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+                    className={buttonVariants({ variant: "secondary" })}
                   >
                     Limpar filtros
                   </button>
@@ -312,7 +312,7 @@ export default function PlatformPaymentsPage() {
                     onClick={() => {
                       void loadData();
                     }}
-                    className="inline-flex h-11 items-center justify-center rounded-2xl bg-accent px-4 text-sm font-semibold text-white transition hover:opacity-90"
+                    className={buttonVariants({ variant: "accent" })}
                   >
                     Atualizar fila
                   </button>

@@ -1,6 +1,7 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
 import {
   AdminMetricGrid,
   AdminPageHeader,
@@ -101,7 +102,7 @@ export default function PlatformReliabilityPage() {
         items={[
           {
             label: "Abrir tenants",
-            description: "Localizar clinicas sem setup ou sem base operacional.",
+            description: "Localizar clínicas sem setup ou sem base operacional.",
             href: "/platform/tenants",
           },
           {
@@ -176,7 +177,7 @@ export default function PlatformReliabilityPage() {
           {[
             "Queue lag por worker e por tenant.",
             "Saude do cron de follow-up assincrono.",
-            "Historico persistente de conflitos e latencia operacional.",
+            "Histórico persistente de conflitos e latencia operacional.",
             "Risco de scheduling sob carga real por ambiente.",
             "Indicadores de drift entre docs, rollout e estado real.",
             "Alertas de seguranca e exposicao tecnica por ambiente.",
@@ -189,7 +190,7 @@ export default function PlatformReliabilityPage() {
         <div className="mt-5">
           <Link
             href="/platform"
-            className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+            className={buttonVariants({ variant: "secondary" })}
           >
             Voltar ao overview
           </Link>

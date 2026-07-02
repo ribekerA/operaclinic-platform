@@ -45,6 +45,7 @@ interface ConsultationTypeFormState {
   preparationNotes: string;
   contraindications: string;
   aftercareGuidance: string;
+  priceCents: string;
 }
 
 interface ProcedureProtocolFormState {
@@ -75,11 +76,11 @@ const AESTHETIC_AREA_LABELS: Record<string, string> = {
 };
 
 const INVASIVENESS_LEVEL_LABELS: Record<Exclude<InvasivenessLevel, null>, string> = {
-  NON_INVASIVE: "Nao invasivo",
+  NON_INVASIVE: "Não invasivo",
   MINIMALLY_INVASIVE: "Minimamente invasivo",
   MODERATELY_INVASIVE: "Moderadamente invasivo",
   HIGHLY_INVASIVE: "Altamente invasivo",
-  SURGICAL: "Cirurgico",
+  SURGICAL: "Cirúrgico",
 };
 
 const defaultForm: ConsultationTypeFormState = {
@@ -98,6 +99,7 @@ const defaultForm: ConsultationTypeFormState = {
   preparationNotes: "",
   contraindications: "",
   aftercareGuidance: "",
+  priceCents: "0",
 };
 
 const MAX_BUFFER_MINUTES = 240;
@@ -108,12 +110,12 @@ const AESTHETIC_PROCEDURE_PRESETS: Array<{
   isFirstVisit?: boolean;
   isReturnVisit?: boolean;
 }> = [
-  { name: "Avaliacao estetica", durationMinutes: "30", isFirstVisit: true },
-  { name: "Retorno estetico", durationMinutes: "20", isReturnVisit: true },
-  { name: "Toxina botulinica", durationMinutes: "30" },
-  { name: "Bioestimulador de colageno", durationMinutes: "45" },
+  { name: "Avaliação estética", durationMinutes: "30", isFirstVisit: true },
+  { name: "Retorno estético", durationMinutes: "20", isReturnVisit: true },
+  { name: "Toxina botulínica", durationMinutes: "30" },
+  { name: "Bioestimulador de colágeno", durationMinutes: "45" },
   { name: "Preenchimento facial", durationMinutes: "45" },
-  { name: "Peeling quimico", durationMinutes: "40" },
+  { name: "Peeling químico", durationMinutes: "40" },
 ];
 
 const DEFAULT_PROTOCOL_INTERVAL_DAYS = 30;
@@ -145,6 +147,7 @@ function buildEditForm(
     preparationNotes: consultationType.preparationNotes ?? "",
     contraindications: consultationType.contraindications ?? "",
     aftercareGuidance: consultationType.aftercareGuidance ?? "",
+    priceCents: String(consultationType.priceCents ?? 0),
   };
 }
 
@@ -195,11 +198,11 @@ function getProcedureOperationalHighlights(
   }
 
   if (consultationType.contraindications) {
-    highlights.push("Contraindicacoes registradas");
+    highlights.push("Contraindicações registradas");
   }
 
   if (consultationType.aftercareGuidance) {
-    highlights.push("Pos-procedimento definido");
+    highlights.push("Pós-procedimento definido");
   }
 
   return highlights;
@@ -234,10 +237,10 @@ function buildSuggestedProtocolForm(
       ? `Preparo base: ${consultationType.preparationNotes}`
       : null,
     consultationType.contraindications
-      ? `Contraindicacoes resumidas: ${consultationType.contraindications}`
+      ? `Contraindicações resumidas: ${consultationType.contraindications}`
       : null,
     consultationType.aftercareGuidance
-      ? `Pos-procedimento padrao: ${consultationType.aftercareGuidance}`
+      ? `Pós-procedimento padrão: ${consultationType.aftercareGuidance}`
       : null,
   ].filter((value): value is string => Boolean(value));
 
@@ -367,7 +370,7 @@ export default function ClinicConsultationTypesPage() {
       });
     } catch (requestError) {
       setError(
-        toErrorMessage(requestError, "Nao foi possivel carregar procedimentos esteticos."),
+        toErrorMessage(requestError, "Não foi possível carregar procedimentos estéticos."),
       );
     } finally {
       setIsLoading(false);
@@ -433,23 +436,23 @@ export default function ClinicConsultationTypesPage() {
       {
         label: "Tipos",
         value: String(filteredConsultationTypes.length),
-        helper: `Procedimentos ${aestheticAreaFilter ? `de ${AESTHETIC_AREA_LABELS[aestheticAreaFilter]?.toLowerCase()}` : "esteticos"} cadastrados.`,
+        helper: `Procedimentos ${aestheticAreaFilter ? `de ${AESTHETIC_AREA_LABELS[aestheticAreaFilter]?.toLowerCase()}` : "estéticos"} cadastrados.`,
       },
       {
         label: "Ativos",
         value: String(activeCount),
-        helper: "Disponiveis para uso agora.",
+        helper: "Disponíveis para uso agora.",
         tone: "accent" as const,
       },
       {
         label: "Protocolos",
         value: String(protocolCount),
-        helper: "Fluxos de sessoes ligados aos procedimentos do recorte.",
+        helper: "Fluxos de sessões ligados aos procedimentos do recorte.",
       },
       {
-        label: "Com recuperacao",
+        label: "Com recuperação",
         value: String(withRecoveryCount),
-        helper: "Procedimentos que requerem tempo de recuperacao.",
+        helper: "Procedimentos que requerem tempo de recuperação.",
       },
       {
         label: "Online",
@@ -467,8 +470,8 @@ export default function ClinicConsultationTypesPage() {
         href: "#novo-tipo",
       },
       {
-        label: "Recepcao",
-        description: "Voltar para agenda e execucao da recepcao.",
+        label: "Recepção",
+        description: "Voltar para agenda e execução da recepção.",
         href: "/clinic/reception",
       },
       {
@@ -494,7 +497,7 @@ export default function ClinicConsultationTypesPage() {
     setSuccess(null);
 
     try {
-      const durationMinutes = parseNonNegativeInt(createForm.durationMinutes, "Duracao");
+      const durationMinutes = parseNonNegativeInt(createForm.durationMinutes, "Duração");
       const bufferBeforeMinutes = parseNonNegativeInt(
         createForm.bufferBeforeMinutes,
         "Buffer antes",
@@ -507,7 +510,7 @@ export default function ClinicConsultationTypesPage() {
       );
 
       if (durationMinutes <= 0) {
-        throw new Error("Duracao precisa ser maior que zero.");
+        throw new Error("Duração precisa ser maior que zero.");
       }
 
       await createConsultationType({
@@ -521,21 +524,22 @@ export default function ClinicConsultationTypesPage() {
         isActive: createForm.isActive,
         aestheticArea: createForm.aestheticArea,
         invasivenessLevel: createForm.invasivenessLevel,
-        recoveryDays: parseOptionalPositiveInt(createForm.recoveryDays, "Recuperacao"),
+        recoveryDays: parseOptionalPositiveInt(createForm.recoveryDays, "Recuperação"),
         recommendedFrequencyDays: parseOptionalPositiveInt(
           createForm.recommendedFrequencyDays,
-          "Frequencia recomendada",
+          "Frequência recomendada",
         ),
         preparationNotes: createForm.preparationNotes.trim() || null,
         contraindications: createForm.contraindications.trim() || null,
         aftercareGuidance: createForm.aftercareGuidance.trim() || null,
+        priceCents: parseNonNegativeInt(createForm.priceCents || "0", "Preço"),
       });
 
       setCreateForm(defaultForm);
-      setSuccess("Procedimento estetico criado com sucesso.");
+      setSuccess("Procedimento estético criado com sucesso.");
       await loadConsultationTypes();
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Falha ao criar procedimento estetico."));
+      setError(toErrorMessage(requestError, "Falha ao criar procedimento estético."));
     } finally {
       setIsCreating(false);
     }
@@ -555,7 +559,7 @@ export default function ClinicConsultationTypesPage() {
     setSuccess(null);
 
     try {
-      const durationMinutes = parseNonNegativeInt(editForm.durationMinutes, "Duracao");
+      const durationMinutes = parseNonNegativeInt(editForm.durationMinutes, "Duração");
       const bufferBeforeMinutes = parseNonNegativeInt(
         editForm.bufferBeforeMinutes,
         "Buffer antes",
@@ -568,7 +572,7 @@ export default function ClinicConsultationTypesPage() {
       );
 
       if (durationMinutes <= 0) {
-        throw new Error("Duracao precisa ser maior que zero.");
+        throw new Error("Duração precisa ser maior que zero.");
       }
 
       const updatedItem = await updateConsultationType(selectedConsultationType.id, {
@@ -582,22 +586,23 @@ export default function ClinicConsultationTypesPage() {
         isActive: editForm.isActive,
         aestheticArea: editForm.aestheticArea,
         invasivenessLevel: editForm.invasivenessLevel,
-        recoveryDays: parseOptionalPositiveInt(editForm.recoveryDays, "Recuperacao"),
+        recoveryDays: parseOptionalPositiveInt(editForm.recoveryDays, "Recuperação"),
         recommendedFrequencyDays: parseOptionalPositiveInt(
           editForm.recommendedFrequencyDays,
-          "Frequencia recomendada",
+          "Frequência recomendada",
         ),
         preparationNotes: editForm.preparationNotes.trim() || null,
         contraindications: editForm.contraindications.trim() || null,
         aftercareGuidance: editForm.aftercareGuidance.trim() || null,
+        priceCents: parseNonNegativeInt(editForm.priceCents || "0", "Preço"),
       });
 
       setConsultationTypes((currentItems) =>
         currentItems.map((item) => (item.id === updatedItem.id ? updatedItem : item)),
       );
-      setSuccess("Procedimento estetico atualizado.");
+      setSuccess("Procedimento estético atualizado.");
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Falha ao atualizar procedimento estetico."));
+      setError(toErrorMessage(requestError, "Falha ao atualizar procedimento estético."));
     } finally {
       setIsUpdating(false);
     }
@@ -619,15 +624,15 @@ export default function ClinicConsultationTypesPage() {
     try {
       const totalSessions = parseNonNegativeInt(
         createProtocolForm.totalSessions,
-        "Total de sessoes",
+        "Total de sessões",
       );
       const intervalBetweenSessionsDays = parseNonNegativeInt(
         createProtocolForm.intervalBetweenSessionsDays,
-        "Intervalo entre sessoes",
+        "Intervalo entre sessões",
       );
 
       if (totalSessions <= 0 || intervalBetweenSessionsDays <= 0) {
-        throw new Error("Sessoes e intervalo precisam ser maiores que zero.");
+        throw new Error("Sessões e intervalo precisam ser maiores que zero.");
       }
 
       const createdProtocol = await createProcedureProtocol({
@@ -650,9 +655,9 @@ export default function ClinicConsultationTypesPage() {
       );
       setSelectedProtocolId(createdProtocol.id);
       setCreateProtocolForm(buildSuggestedProtocolForm(selectedConsultationType));
-      setSuccess("Protocolo estetico criado.");
+      setSuccess("Protocolo estético criado.");
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Falha ao criar protocolo estetico."));
+      setError(toErrorMessage(requestError, "Falha ao criar protocolo estético."));
     } finally {
       setIsCreatingProtocol(false);
     }
@@ -674,15 +679,15 @@ export default function ClinicConsultationTypesPage() {
     try {
       const totalSessions = parseNonNegativeInt(
         editProtocolForm.totalSessions,
-        "Total de sessoes",
+        "Total de sessões",
       );
       const intervalBetweenSessionsDays = parseNonNegativeInt(
         editProtocolForm.intervalBetweenSessionsDays,
-        "Intervalo entre sessoes",
+        "Intervalo entre sessões",
       );
 
       if (totalSessions <= 0 || intervalBetweenSessionsDays <= 0) {
-        throw new Error("Sessoes e intervalo precisam ser maiores que zero.");
+        throw new Error("Sessões e intervalo precisam ser maiores que zero.");
       }
 
       const updatedProtocol = await updateProcedureProtocol(selectedProtocol.id, {
@@ -697,9 +702,9 @@ export default function ClinicConsultationTypesPage() {
       setProcedureProtocols((current) =>
         current.map((item) => (item.id === updatedProtocol.id ? updatedProtocol : item)),
       );
-      setSuccess("Protocolo estetico atualizado.");
+      setSuccess("Protocolo estético atualizado.");
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Falha ao atualizar protocolo estetico."));
+      setError(toErrorMessage(requestError, "Falha ao atualizar protocolo estético."));
     } finally {
       setIsUpdatingProtocol(false);
     }
@@ -708,9 +713,9 @@ export default function ClinicConsultationTypesPage() {
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Clinica | Procedimentos e avaliacoes"
-        title="Procedimentos e avaliacoes"
-        description="Avaliacoes, sessoes e procedimentos esteticos organizados com duracao, buffers e leitura operacional."
+        eyebrow="Clínica | Procedimentos e avaliações"
+        title="Procedimentos e avaliações"
+        description="Avaliações, sessões e procedimentos estéticos organizados com duração, buffers e leitura operacional."
         actions={
           <Button
             type="button"
@@ -725,13 +730,13 @@ export default function ClinicConsultationTypesPage() {
         }
       >
         <AdminMetricGrid items={consultationTypeMetrics} isLoading={isLoading && consultationTypes.length === 0} />
-        <AdminShortcutPanel title="Acoes rapidas" items={shortcutItems} />
+        <AdminShortcutPanel title="Ações rápidas" items={shortcutItems} />
       </AdminPageHeader>
 
       {!canManage ? (
         <Card className="border-amber-200 bg-amber-50" role="alert">
           <p className="text-sm text-amber-700">
-            Seu perfil possui leitura parcial. Apenas admin e gestor da clinica podem editar.
+            Seu perfil possui leitura parcial. Apenas admin e gestor da clínica podem editar.
           </p>
         </Card>
       ) : null}
@@ -752,15 +757,15 @@ export default function ClinicConsultationTypesPage() {
         <Card className="space-y-4">
           <AdminSectionHeader
             eyebrow="Agenda"
-            title="Catalogo de procedimentos"
-            description="Veja rapidamente duracao, buffers e o papel de cada avaliacao ou procedimento estetico."
+            title="Catálogo de procedimentos"
+            description="Veja rapidamente duração, buffers e o papel de cada avaliação ou procedimento estético."
             actions={<AdminCountBadge value={filteredConsultationTypes.length} loading={isLoading} />}
           />
 
           {availableAestheticAreas.length > 0 && (
             <div className="space-y-2 border-b border-slate-200 pb-4">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                Filtrar por Area Estetica
+                Filtrar por Área Estética
               </p>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -854,16 +859,16 @@ export default function ClinicConsultationTypesPage() {
                         <div className="flex flex-wrap gap-3 text-xs text-muted">
                           <span>
                             {item.isFirstVisit
-                              ? "Primeira avaliacao"
+                              ? "Primeira avaliação"
                               : item.isReturnVisit
-                                ? "Sessao de retorno"
+                                ? "Sessão de retorno"
                                 : "Procedimento regular"}
                           </span>
                           {item.recoveryDays && item.recoveryDays > 0 && (
-                            <span className="font-medium text-orange-600">Recuperacao: {item.recoveryDays}d</span>
+                            <span className="font-medium text-orange-600">Recuperação: {item.recoveryDays}d</span>
                           )}
                           {item.recommendedFrequencyDays && (
-                            <span className="text-slate-500">Frequencia: {item.recommendedFrequencyDays}d</span>
+                            <span className="text-slate-500">Frequência: {item.recommendedFrequencyDays}d</span>
                           )}
                         </div>
                         {operationalHighlights.length > 0 ? (
@@ -892,7 +897,7 @@ export default function ClinicConsultationTypesPage() {
             ) : (
               <AdminEmptyState
                 title={aestheticAreaFilter ? `Nenhum procedimento em ${AESTHETIC_AREA_LABELS[aestheticAreaFilter]}` : "Nenhum procedimento cadastrado"}
-                description={aestheticAreaFilter ? "Tente outro filtro ou crie um novo procedimento." : "Crie os procedimentos esteticos para organizar duracao, buffers e regras da agenda."}
+                description={aestheticAreaFilter ? "Tente outro filtro ou crie um novo procedimento." : "Crie os procedimentos estéticos para organizar duração, buffers e regras da agenda."}
                 action={
                   canManage ? (
                     <Button
@@ -914,11 +919,11 @@ export default function ClinicConsultationTypesPage() {
         <Card id="novo-tipo" className="space-y-4 scroll-mt-24">
           <AdminSectionHeader
             eyebrow="Cadastro"
-            title="Novo procedimento ou avaliacao"
-            description="Cadastre avaliacao, sessao de retorno ou procedimento estetico com duracao e buffers coerentes."
+            title="Novo procedimento ou avaliação"
+            description="Cadastre avaliação, sessão de retorno ou procedimento estético com duração e buffers coerentes."
             actions={
               <StatusPill
-                label={canManage ? "Edicao liberada" : "Somente leitura"}
+                label={canManage ? "Edição liberada" : "Somente leitura"}
                 tone={canManage ? "success" : "warning"}
               />
             }
@@ -926,7 +931,7 @@ export default function ClinicConsultationTypesPage() {
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-              Sugestoes rapidas
+              Sugestões rápidas
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {AESTHETIC_PROCEDURE_PRESETS.map((preset) => (
@@ -971,7 +976,7 @@ export default function ClinicConsultationTypesPage() {
             <div className="grid gap-3 md:grid-cols-3">
               <div className="space-y-1">
                 <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                  Duracao
+                  Duração
                 </label>
                 <input
                   type="number"
@@ -1028,13 +1033,13 @@ export default function ClinicConsultationTypesPage() {
             </div>
 
             <p className="text-xs text-muted">
-              Buffers de agenda aceitam ate {MAX_BUFFER_MINUTES} minutos por lado.
+              Buffers de agenda aceitam até {MAX_BUFFER_MINUTES} minutos por lado.
             </p>
 
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1">
                 <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                  Area estetica
+                  Área estética
                 </label>
                 <select
                   value={createForm.aestheticArea ?? ""}
@@ -1047,7 +1052,7 @@ export default function ClinicConsultationTypesPage() {
                   className={adminSelectClassName}
                   disabled={!canManage}
                 >
-                  <option value="">Nao definir</option>
+                  <option value="">Não definir</option>
                   {Object.entries(AESTHETIC_AREA_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>
                       {label}
@@ -1070,7 +1075,7 @@ export default function ClinicConsultationTypesPage() {
                   className={adminSelectClassName}
                   disabled={!canManage}
                 >
-                  <option value="">Nao definir</option>
+                  <option value="">Não definir</option>
                   {Object.entries(INVASIVENESS_LEVEL_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>
                       {label}
@@ -1080,7 +1085,7 @@ export default function ClinicConsultationTypesPage() {
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                  Recuperacao em dias
+                  Recuperação em dias
                 </label>
                 <input
                   type="number"
@@ -1098,7 +1103,7 @@ export default function ClinicConsultationTypesPage() {
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                  Frequencia recomendada
+                  Frequência recomendada
                 </label>
                 <input
                   type="number"
@@ -1119,7 +1124,7 @@ export default function ClinicConsultationTypesPage() {
             <div className="grid gap-3">
               <div className="space-y-1">
                 <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                  Preparo obrigatorio
+                  Preparo obrigatório
                 </label>
                 <textarea
                   value={createForm.preparationNotes}
@@ -1130,13 +1135,13 @@ export default function ClinicConsultationTypesPage() {
                     }))
                   }
                   className={`${adminInputClassName} min-h-[104px] resize-y`}
-                  placeholder="Ex.: suspender acidos 5 dias antes, evitar exposicao solar intensa e vir sem maquiagem."
+                  placeholder="Ex.: suspender ácidos 5 dias antes, evitar exposição solar intensa e vir sem maquiagem."
                   disabled={!canManage}
                 />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                  Contraindicacoes resumidas
+                  Contraindicações resumidas
                 </label>
                 <textarea
                   value={createForm.contraindications}
@@ -1147,13 +1152,13 @@ export default function ClinicConsultationTypesPage() {
                     }))
                   }
                   className={`${adminInputClassName} min-h-[104px] resize-y`}
-                  placeholder="Ex.: gestacao, infeccao ativa na area, uso recente de isotretinoina."
+                  placeholder="Ex.: gestação, infecção ativa na área, uso recente de isotretinoína."
                   disabled={!canManage}
                 />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                  Orientacao pos-procedimento
+                  Orientação pós-procedimento
                 </label>
                 <textarea
                   value={createForm.aftercareGuidance}
@@ -1164,10 +1169,32 @@ export default function ClinicConsultationTypesPage() {
                     }))
                   }
                   className={`${adminInputClassName} min-h-[104px] resize-y`}
-                  placeholder="Ex.: reforcar fotoprotecao, evitar academia por 24h e retornar em 30 dias."
+                  placeholder="Ex.: reforçar fotoproteção, evitar academia por 24h e retornar em 30 dias."
                   disabled={!canManage}
                 />
               </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+                Valor (R$)
+              </label>
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={Math.round(Number(createForm.priceCents || "0") / 100) || 0}
+                onChange={(event) =>
+                  setCreateForm((current) => ({
+                    ...current,
+                    priceCents: String(Math.round(Number(event.target.value) * 100)),
+                  }))
+                }
+                className={adminInputClassName}
+                placeholder="0"
+                disabled={!canManage}
+              />
+              <p className="text-[11px] text-muted">Informe o valor em reais. Usado no módulo Financeiro.</p>
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2">
@@ -1183,7 +1210,7 @@ export default function ClinicConsultationTypesPage() {
                   }
                   disabled={!canManage}
                 />
-                Primeira avaliacao
+                Primeira avaliação
               </label>
               <label className="flex items-center gap-2 text-sm text-ink">
                 <input
@@ -1197,7 +1224,7 @@ export default function ClinicConsultationTypesPage() {
                   }
                   disabled={!canManage}
                 />
-                Sessao de retorno
+                Sessão de retorno
               </label>
               <label className="flex items-center gap-2 text-sm text-ink">
                 <input
@@ -1266,12 +1293,12 @@ export default function ClinicConsultationTypesPage() {
                   ) : null}
                   {selectedConsultationType.contraindications ? (
                     <span className="rounded-full bg-amber-100 px-2 py-1 font-medium text-amber-700">
-                      Contraindicacoes registradas
+                      Contraindicações registradas
                     </span>
                   ) : null}
                   {selectedConsultationType.aftercareGuidance ? (
                     <span className="rounded-full bg-emerald-100 px-2 py-1 font-medium text-emerald-700">
-                      Pos-procedimento definido
+                      Pós-procedimento definido
                     </span>
                   ) : null}
                 </div>
@@ -1309,7 +1336,7 @@ export default function ClinicConsultationTypesPage() {
               <div className="grid gap-3 md:grid-cols-3">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                    Duracao
+                    Duração
                   </label>
                   <input
                     type="number"
@@ -1366,12 +1393,12 @@ export default function ClinicConsultationTypesPage() {
                 </div>
               </div>
 
-              <p className="text-xs text-muted">Limite: ate {MAX_BUFFER_MINUTES} min por buffer.</p>
+              <p className="text-xs text-muted">Limite: até {MAX_BUFFER_MINUTES} min por buffer.</p>
 
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                    Area estetica
+                    Área estética
                   </label>
                   <select
                     value={editForm.aestheticArea ?? ""}
@@ -1388,7 +1415,7 @@ export default function ClinicConsultationTypesPage() {
                     className={adminSelectClassName}
                     disabled={!canManage}
                   >
-                    <option value="">Nao definir</option>
+                    <option value="">Não definir</option>
                     {Object.entries(AESTHETIC_AREA_LABELS).map(([value, label]) => (
                       <option key={value} value={value}>
                         {label}
@@ -1415,7 +1442,7 @@ export default function ClinicConsultationTypesPage() {
                     className={adminSelectClassName}
                     disabled={!canManage}
                   >
-                    <option value="">Nao definir</option>
+                    <option value="">Não definir</option>
                     {Object.entries(INVASIVENESS_LEVEL_LABELS).map(([value, label]) => (
                       <option key={value} value={value}>
                         {label}
@@ -1425,7 +1452,7 @@ export default function ClinicConsultationTypesPage() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                    Recuperacao em dias
+                    Recuperação em dias
                   </label>
                   <input
                     type="number"
@@ -1442,7 +1469,7 @@ export default function ClinicConsultationTypesPage() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                    Frequencia recomendada
+                    Frequência recomendada
                   </label>
                   <input
                     type="number"
@@ -1464,7 +1491,7 @@ export default function ClinicConsultationTypesPage() {
               <div className="grid gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                    Preparo obrigatorio
+                    Preparo obrigatório
                   </label>
                   <textarea
                     value={editForm.preparationNotes}
@@ -1476,13 +1503,13 @@ export default function ClinicConsultationTypesPage() {
                       )
                     }
                     className={`${adminInputClassName} min-h-[104px] resize-y`}
-                    placeholder="Ex.: suspender acidos 5 dias antes, evitar exposicao solar intensa e vir sem maquiagem."
+                    placeholder="Ex.: suspender ácidos 5 dias antes, evitar exposição solar intensa e vir sem maquiagem."
                     disabled={!canManage}
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                    Contraindicacoes resumidas
+                    Contraindicações resumidas
                   </label>
                   <textarea
                     value={editForm.contraindications}
@@ -1494,13 +1521,13 @@ export default function ClinicConsultationTypesPage() {
                       )
                     }
                     className={`${adminInputClassName} min-h-[104px] resize-y`}
-                    placeholder="Ex.: gestacao, infeccao ativa na area, uso recente de isotretinoina."
+                    placeholder="Ex.: gestação, infecção ativa na área, uso recente de isotretinoína."
                     disabled={!canManage}
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                    Orientacao pos-procedimento
+                    Orientação pós-procedimento
                   </label>
                   <textarea
                     value={editForm.aftercareGuidance}
@@ -1512,10 +1539,33 @@ export default function ClinicConsultationTypesPage() {
                       )
                     }
                     className={`${adminInputClassName} min-h-[104px] resize-y`}
-                    placeholder="Ex.: reforcar fotoprotecao, evitar academia por 24h e retornar em 30 dias."
+                    placeholder="Ex.: reforçar fotoproteção, evitar academia por 24h e retornar em 30 dias."
                     disabled={!canManage}
                   />
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
+                  Valor (R$)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={Math.round(Number(editForm.priceCents || "0") / 100) || 0}
+                  onChange={(event) =>
+                    setEditForm((current) =>
+                      current
+                        ? { ...current, priceCents: String(Math.round(Number(event.target.value) * 100)) }
+                        : current,
+                    )
+                  }
+                  className={adminInputClassName}
+                  placeholder="0"
+                  disabled={!canManage}
+                />
+                <p className="text-[11px] text-muted">Valor em reais. Usado no módulo Financeiro.</p>
               </div>
 
               <div className="grid gap-2 sm:grid-cols-2">
@@ -1530,7 +1580,7 @@ export default function ClinicConsultationTypesPage() {
                     }
                     disabled={!canManage}
                   />
-                  Primeira avaliacao
+                  Primeira avaliação
                 </label>
                 <label className="flex items-center gap-2 text-sm text-ink">
                   <input
@@ -1543,7 +1593,7 @@ export default function ClinicConsultationTypesPage() {
                     }
                     disabled={!canManage}
                   />
-                  Sessao de retorno
+                  Sessão de retorno
                 </label>
                 <label className="flex items-center gap-2 text-sm text-ink">
                   <input
@@ -1574,15 +1624,15 @@ export default function ClinicConsultationTypesPage() {
               </div>
 
               <Button type="submit" className="w-full" disabled={!canManage || isUpdating}>
-                {isUpdating ? "Salvando..." : "Salvar alteracoes"}
+                {isUpdating ? "Salvando..." : "Salvar alterações"}
               </Button>
             </form>
 
             <div className="space-y-4 border-t border-slate-200 pt-6">
               <AdminSectionHeader
                 eyebrow="Protocolos"
-                title="Fluxos de sessoes deste procedimento"
-                description="Defina quantas sessoes compoem o protocolo, qual intervalo seguir e quais orientacoes do procedimento ja servem de base."
+                title="Fluxos de sessões deste procedimento"
+                description="Defina quantas sessões compõem o protocolo, qual intervalo seguir e quais orientações do procedimento já servem de base."
                 actions={
                   <AdminCountBadge
                     value={selectedProcedureProtocols.length}
@@ -1593,17 +1643,17 @@ export default function ClinicConsultationTypesPage() {
 
               <div className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                  Base clinica do procedimento
+                  Base clínica do procedimento
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2 text-xs">
                   {selectedConsultationType.recommendedFrequencyDays ? (
                     <span className="rounded-full bg-blue-100 px-2 py-1 font-medium text-blue-700">
-                      Frequencia sugerida: {selectedConsultationType.recommendedFrequencyDays} dia(s)
+                      Frequência sugerida: {selectedConsultationType.recommendedFrequencyDays} dia(s)
                     </span>
                   ) : null}
                   {selectedConsultationType.recoveryDays ? (
                     <span className="rounded-full bg-orange-100 px-2 py-1 font-medium text-orange-700">
-                      Recuperacao: {selectedConsultationType.recoveryDays} dia(s)
+                      Recuperação: {selectedConsultationType.recoveryDays} dia(s)
                     </span>
                   ) : null}
                   {selectedConsultationType.invasivenessLevel ? (
@@ -1634,7 +1684,7 @@ export default function ClinicConsultationTypesPage() {
                     {selectedConsultationType.contraindications ? (
                       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3">
                         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">
-                          Contraindicacoes
+                          Contraindicações
                         </p>
                         <p className="mt-2 text-sm text-amber-800">
                           {selectedConsultationType.contraindications}
@@ -1644,7 +1694,7 @@ export default function ClinicConsultationTypesPage() {
                     {selectedConsultationType.aftercareGuidance ? (
                       <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
                         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
-                          Pos-procedimento
+                          Pós-procedimento
                         </p>
                         <p className="mt-2 text-sm text-emerald-800">
                           {selectedConsultationType.aftercareGuidance}
@@ -1681,14 +1731,14 @@ export default function ClinicConsultationTypesPage() {
                               />
                             </div>
                             <div className="flex flex-wrap gap-3 text-xs text-muted">
-                              <span>{protocol.totalSessions} sessoes</span>
+                              <span>{protocol.totalSessions} sessões</span>
                               <span>Intervalo de {protocol.intervalBetweenSessionsDays} dia(s)</span>
                             </div>
                             {protocol.description ? (
                               <p className="text-sm text-slate-600">{protocol.description}</p>
                             ) : (
                               <p className="text-sm text-muted">
-                                Sem descricao operacional ainda.
+                                Sem descrição operacional ainda.
                               </p>
                             )}
                           </div>
@@ -1702,7 +1752,7 @@ export default function ClinicConsultationTypesPage() {
                 ) : (
                   <AdminEmptyState
                     title="Nenhum protocolo ligado"
-                    description="Use a sugestao abaixo para criar um fluxo de sessoes coerente com a recuperacao e o pos-procedimento."
+                    description="Use a sugestão abaixo para criar um fluxo de sessões coerente com a recuperação e o pós-procedimento."
                   />
                 )}
               </div>
@@ -1718,7 +1768,7 @@ export default function ClinicConsultationTypesPage() {
                         Novo protocolo
                       </p>
                       <p className="mt-1 text-sm text-muted">
-                        Monte o fluxo base de sessoes sem sair da ficha do procedimento.
+                        Monte o fluxo base de sessões sem sair da ficha do procedimento.
                       </p>
                     </div>
                     <Button
@@ -1731,7 +1781,7 @@ export default function ClinicConsultationTypesPage() {
                       }
                       disabled={!canManage}
                     >
-                      Reaplicar sugestao
+                      Reaplicar sugestão
                     </Button>
                   </div>
 
@@ -1755,7 +1805,7 @@ export default function ClinicConsultationTypesPage() {
                   <div className="grid gap-3 md:grid-cols-2">
                     <div className="space-y-1">
                       <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                        Total de sessoes
+                        Total de sessões
                       </label>
                       <input
                         type="number"
@@ -1774,7 +1824,7 @@ export default function ClinicConsultationTypesPage() {
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                        Intervalo entre sessoes
+                        Intervalo entre sessões
                       </label>
                       <input
                         type="number"
@@ -1798,7 +1848,7 @@ export default function ClinicConsultationTypesPage() {
 
                   <div className="space-y-1">
                     <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                      Descricao operacional
+                      Descrição operacional
                     </label>
                     <textarea
                       value={createProtocolForm.description}
@@ -1810,7 +1860,7 @@ export default function ClinicConsultationTypesPage() {
                         )
                       }
                       className={`${adminInputClassName} min-h-[132px] resize-y`}
-                      placeholder="Descreva sequencia, checkpoints e orientacoes recorrentes."
+                      placeholder="Descreva sequência, checkpoints e orientações recorrentes."
                       disabled={!canManage}
                     />
                   </div>
@@ -1875,7 +1925,7 @@ export default function ClinicConsultationTypesPage() {
                   <div className="grid gap-3 md:grid-cols-2">
                     <div className="space-y-1">
                       <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                        Total de sessoes
+                        Total de sessões
                       </label>
                       <input
                         type="number"
@@ -1894,7 +1944,7 @@ export default function ClinicConsultationTypesPage() {
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                        Intervalo entre sessoes
+                        Intervalo entre sessões
                       </label>
                       <input
                         type="number"
@@ -1918,7 +1968,7 @@ export default function ClinicConsultationTypesPage() {
 
                   <div className="space-y-1">
                     <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                      Descricao operacional
+                      Descrição operacional
                     </label>
                     <textarea
                       value={editProtocolForm.description}
@@ -1964,7 +2014,7 @@ export default function ClinicConsultationTypesPage() {
         ) : (
           <AdminEmptyState
             title="Selecione um procedimento"
-            description="Abra uma ficha da lista para editar duracao, buffers e flags operacionais."
+            description="Abra uma ficha da lista para editar duração, buffers e flags operacionais."
           />
         )}
       </Sheet>

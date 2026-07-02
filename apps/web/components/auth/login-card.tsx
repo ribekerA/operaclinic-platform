@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Analytics } from "@/lib/analytics";
 import {
   AestheticClinicLoginTenantOption,
   LoginRequestPayload,
@@ -47,17 +48,17 @@ function resolveLoginErrorMessage(
 
   switch (resolvedMessage) {
     case "Invalid credentials.":
-      return "Email ou senha invalidos. Revise os dados e tente novamente.";
+      return "E-mail ou senha inválidos. Revise os dados e tente novamente.";
     case "User is not active.":
       return profile === "clinic"
-        ? "Este acesso da clinica esta inativo no momento."
-        : "Este acesso interno esta inativo no momento.";
+        ? "Este acesso da clínica está inativo no momento."
+        : "Este acesso interno está inativo no momento.";
     case "Clinic users must have at least one active tenant assignment.":
-      return "Este usuario ainda nao tem uma clinica ativa disponivel para abrir.";
+      return "Este usuário ainda não tem uma clínica ativa disponível para abrir.";
     case "Requested tenant is not assigned to this user.":
-      return "Esta clinica nao esta vinculada a este usuario.";
+      return "Esta clínica não está vinculada a este usuário.";
     default:
-      return resolvedMessage ?? "Nao foi possivel entrar agora.";
+      return resolvedMessage ?? "Não foi possível entrar agora.";
   }
 }
 
@@ -98,31 +99,31 @@ export function LoginCard({
             label: "Control plane",
             title: compact ? "Entrar no control plane" : "Entrar no control plane",
             description: compact
-              ? "Acesso reservado para operacao interna da plataforma."
-              : "Use este acesso para acompanhar clinicas esteticas, planos, saude da base e administracao interna da OperaClinic.",
+              ? "Acesso reservado para operação interna da plataforma."
+              : "Use este acesso para acompanhar clínicas estéticas, planos, saúde da base e administração interna da OperaClinic.",
             placeholder: "superadmin@operaclinic.local",
             highlights: [
-              "Acompanhe clinicas esteticas, planos e operacao interna em uma area separada.",
-              "Mantenha o control plane fora da jornada principal da clinica estetica.",
-              "Sessao isolada da area da clinica estetica no mesmo navegador.",
+              "Acompanhe clínicas estéticas, planos e operação interna em uma área separada.",
+              "Mantenha o control plane fora da jornada principal da clínica estética.",
+              "Sessão isolada da área da clínica estética no mesmo navegador.",
             ],
             helper:
-              "Este acesso nao e da clinica estetica. Ele continua reservado para uso interno da OperaClinic.",
+              "Este acesso não é da clínica estética. Ele continua reservado para uso interno da OperaClinic.",
             icon: ShieldCheck,
           }
         : {
-            label: "Acesso da clinica",
-            title: "Entrar na rotina da clinica estetica",
+            label: "Acesso da clínica",
+            title: "Entrar na rotina da clínica estética",
             description:
-              "Recepcao, administracao e gestao entram aqui para operar agenda, pacientes e o ritmo do dia da clinica estetica.",
+              "Recepção, administração e gestão entram aqui para operar agenda, pacientes e o ritmo do dia da clínica estética.",
             placeholder: "recepcao@sua-clinica.com",
             highlights: [
-              "A recepcao entra para confirmar, fazer check-in e acompanhar a agenda do dia.",
-              "Quem opera mais de uma clinica escolhe a unidade certa depois das credenciais.",
-              "A operacao continua separada por clinica, sem misturar pacientes e horarios.",
+              "A recepção entra para confirmar, fazer check-in e acompanhar a agenda do dia.",
+              "Quem opera mais de uma clínica escolhe a unidade certa depois das credenciais.",
+              "A operação continua separada por clínica, sem misturar pacientes e horários.",
             ],
             helper:
-              "Se este usuario estiver vinculado a mais de uma clinica, a escolha acontece depois das credenciais. Nenhum campo tecnico fica exposto aqui.",
+              "Se este usuário estiver vinculado a mais de uma clínica, a escolha acontece depois das credenciais. Nenhum campo técnico fica exposto aqui.",
             icon: Building2,
           },
     [profile],
@@ -184,7 +185,7 @@ export function LoginCard({
         ) {
           setTenantOptions(tenantResponsePayload.tenants);
           setSuccess(
-            "Credenciais conferidas. Agora escolha a clinica estetica que deseja abrir.",
+            "Credenciais conferidas. Agora escolha a clínica estética que deseja abrir.",
           );
           setError(null);
           return;
@@ -206,16 +207,18 @@ export function LoginCard({
         return;
       }
 
+      Analytics.loginSuccess(profile);
       setSuccess(
         profile === "clinic"
-          ? "Credenciais validadas. Abrindo a operacao da clinica estetica..."
+          ? "Credenciais validadas. Abrindo a operação da clínica estética..."
           : "Credenciais validadas. Abrindo o control plane...",
       );
       const targetPath = resolveTargetPath(responsePayload.user);
       router.replace(targetPath);
       router.refresh();
     } catch {
-      setError("Nao foi possivel conectar ao sistema.");
+      Analytics.loginError(profile);
+      setError("Não foi possível conectar ao sistema.");
     } finally {
       setIsResolvingTenants(false);
       setIsLoading(false);
@@ -256,13 +259,13 @@ export function LoginCard({
       setSuccess(
         selectedClinic
           ? `Abrindo ${selectedClinic.name}...`
-          : "Abrindo a clinica estetica selecionada...",
+          : "Abrindo a clínica estética selecionada...",
       );
       const targetPath = resolveTargetPath(responsePayload.user);
       router.replace(targetPath);
       router.refresh();
     } catch {
-      setError("Nao foi possivel conectar ao sistema.");
+      setError("Não foi possível conectar ao sistema.");
     } finally {
       setIsLoading(false);
     }
@@ -332,13 +335,14 @@ export function LoginCard({
               className="text-xs font-semibold uppercase tracking-[0.12em] text-muted"
               htmlFor={`${profile}-email`}
             >
-              Email
+              E-mail
             </label>
             <input
               id={`${profile}-email`}
               type="email"
               placeholder={content.placeholder}
-              className="w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent"
+              autoComplete="email"
+              className="w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/20"
               value={email}
               onChange={(event) => {
                 setEmail(event.target.value);
@@ -362,6 +366,7 @@ export function LoginCard({
                 type="button"
                 className="text-xs font-semibold uppercase tracking-[0.08em] text-accent transition hover:opacity-80"
                 onClick={() => setShowPassword((current) => !current)}
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
               >
                 {showPassword ? "Ocultar" : "Mostrar"}
               </button>
@@ -369,8 +374,9 @@ export function LoginCard({
             <input
               id={`${profile}-password`}
               type={showPassword ? "text" : "password"}
-              placeholder="********"
-              className="w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent"
+              placeholder="••••••••"
+              autoComplete="current-password"
+              className="w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/20"
               value={password}
               onChange={(event) => {
                 setPassword(event.target.value);
@@ -395,10 +401,10 @@ export function LoginCard({
             <div className="space-y-3 rounded-2xl border border-teal-200 bg-teal-50 p-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-teal-700">
-                  Escolha a clinica
+                  Escolha a clínica
                 </p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Encontramos mais de uma clinica estetica vinculada a este acesso.
+                  Encontramos mais de uma clínica estética vinculada a este acesso.
                   Selecione a unidade que deseja abrir agora.
                 </p>
               </div>
@@ -409,7 +415,7 @@ export function LoginCard({
                     type="button"
                     onClick={() => void handleTenantSelection(tenant.id)}
                     className="w-full rounded-2xl border border-teal-200 bg-white px-4 py-4 text-left transition hover:bg-teal-50"
-                      disabled={isLoading}
+                    disabled={isLoading}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
@@ -463,11 +469,11 @@ export function LoginCard({
                   <LoaderCircle className="h-4 w-4 animate-spin" />
                 ) : null}
                 {isResolvingTenants
-                  ? "Buscando clinicas..."
+                  ? "Buscando clínicas..."
                   : isLoading
                     ? "Validando acesso..."
                     : profile === "clinic"
-                      ? "Entrar na clinica estetica"
+                      ? "Entrar na clínica estética"
                       : "Entrar na plataforma"}
               </Button>
               <div className="flex flex-wrap items-center justify-between gap-3 text-sm">

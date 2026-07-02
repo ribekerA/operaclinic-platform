@@ -30,6 +30,9 @@ export interface PatientSummaryResponse {
   birthDate: Date | null;
   documentNumber: string | null;
   notes: string | null;
+  allergies: string | null;
+  aestheticGoals: string | null;
+  contraindications: string | null;
   isActive: boolean;
   mergedIntoPatientId: string | null;
   mergedAt: Date | null;

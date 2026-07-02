@@ -15,7 +15,7 @@ import {
   adminMutedPanelClassName,
   adminSelectClassName,
 } from "@/components/platform/platform-admin";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";;
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { toErrorMessage } from "@/lib/client/http";
@@ -127,14 +127,14 @@ export default function PlatformUsersPage() {
 
     return [
       {
-        label: "Usuarios carregados",
+        label: "Usuários carregados",
         value: String(users.length),
         helper: "Base filtrada para administracao da plataforma.",
       },
       {
         label: "Ativos",
         value: String(activeCount),
-        helper: "Usuarios aptos para operar.",
+        helper: "Usuários aptos para operar.",
         tone: "accent" as const,
       },
       {
@@ -145,7 +145,7 @@ export default function PlatformUsersPage() {
       {
         label: "Vinculo profissional",
         value: String(pendingProfessionalLinkCount),
-        helper: "Usuarios que ainda exigem vinculo operacional.",
+        helper: "Usuários que ainda exigem vinculo operacional.",
         tone:
           pendingProfessionalLinkCount > 0 ? ("danger" as const) : ("default" as const),
       },
@@ -181,9 +181,9 @@ export default function PlatformUsersPage() {
   const shortcutItems = useMemo(
     () => [
       {
-        label: "Novo usuario",
+        label: "Novo usuário",
         description: "Abrir cadastro inicial do acesso operacional.",
-        href: "#novo-usuario",
+        href: "#novo-usuário",
       },
       {
         label: "Tenants",
@@ -220,7 +220,7 @@ export default function PlatformUsersPage() {
         return nextUsers[0]?.id ?? null;
       });
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Nao foi possivel carregar os usuarios."));
+      setError(toErrorMessage(requestError, "Não foi possível carregar os usuários."));
     } finally {
       setIsLoading(false);
     }
@@ -288,10 +288,10 @@ export default function PlatformUsersPage() {
         ...defaultCreateUserForm,
         tenantId: current.tenantId,
       }));
-      setSuccessMessage("Usuario criado com sucesso.");
+      setSuccessMessage("Usuário criado com sucesso.");
       await loadData();
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Falha ao criar usuario."));
+      setError(toErrorMessage(requestError, "Falha ao criar usuário."));
     } finally {
       setIsCreatingUser(false);
     }
@@ -327,7 +327,7 @@ export default function PlatformUsersPage() {
       setUsers((currentUsers) =>
         currentUsers.map((user) => (user.id === updatedUser.id ? updatedUser : user)),
       );
-      setSuccessMessage("Dados basicos do usuario atualizados.");
+      setSuccessMessage("Dados basicos do usuário atualizados.");
       setUpdateForm((current) =>
         current
           ? {
@@ -337,7 +337,7 @@ export default function PlatformUsersPage() {
           : current,
       );
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Falha ao atualizar usuario."));
+      setError(toErrorMessage(requestError, "Falha ao atualizar usuário."));
     } finally {
       setIsUpdatingUser(false);
     }
@@ -364,7 +364,7 @@ export default function PlatformUsersPage() {
       setUsers((currentUsers) =>
         currentUsers.map((user) => (user.id === updatedUser.id ? updatedUser : user)),
       );
-      setSuccessMessage("Roles do usuario atualizadas.");
+      setSuccessMessage("Roles do usuário atualizadas.");
     } catch (requestError) {
       setError(toErrorMessage(requestError, "Falha ao atualizar roles."));
     } finally {
@@ -406,9 +406,9 @@ export default function PlatformUsersPage() {
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Super Admin | Usuarios"
-        title="Acessos e papeis da operacao das clinicas esteticas"
-        description="Gerencie identidade, ativacao e papeis por tenant em uma superficie que funciona melhor no desktop e no mobile, com foco em selecao rapida e contexto lateral."
+        eyebrow="Super Admin | Usuários"
+        title="Acessos e papeis da operação das clínicas estéticas"
+        description="Gerencie identidade, ativação e papeis por tenant em uma superficie que funciona melhor no desktop e no mobile, com foco em seleção rápida e contexto lateral."
         actions={
           <Button
             type="button"
@@ -442,8 +442,8 @@ export default function PlatformUsersPage() {
         <Card className="space-y-5">
           <AdminSectionHeader
             eyebrow="Identidade operacional"
-            title="Usuarios carregados"
-            description="Filtre por tenant, papel e status. Selecione um usuario para editar dados basicos e substituir roles por contexto."
+            title="Usuários carregados"
+            description="Filtre por tenant, papel e status. Selecione um usuário para editar dados basicos e substituir roles por contexto."
             actions={<AdminCountBadge value={users.length} loading={isLoading} />}
           />
 
@@ -497,7 +497,7 @@ export default function PlatformUsersPage() {
             <button
               type="button"
               onClick={clearFilters}
-              className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+              className={buttonVariants({ variant: "secondary" })}
             >
               Limpar
             </button>
@@ -577,7 +577,7 @@ export default function PlatformUsersPage() {
                           Profissional
                         </p>
                         <p className="mt-1 font-medium text-ink">
-                          {user.linkedProfessional?.displayName ?? "Nao vinculado"}
+                          {user.linkedProfessional?.displayName ?? "Não vinculado"}
                         </p>
                       </div>
                     </div>
@@ -586,27 +586,27 @@ export default function PlatformUsersPage() {
               })
             ) : (
               <AdminEmptyState
-                title={isLoading ? "Carregando usuarios..." : "Nenhum usuario encontrado"}
+                title={isLoading ? "Carregando usuários..." : "Nenhum usuário encontrado"}
                 description={
                   hasActiveFilters
-                    ? "Ajuste os filtros para recuperar usuarios da base ou limpe a busca atual."
-                    : "Crie o primeiro usuario operacional para um tenant ativo."
+                    ? "Ajuste os filtros para recuperar usuários da base ou limpe a busca atual."
+                    : "Crie o primeiro usuário operacional para um tenant ativo."
                 }
                 action={
                   hasActiveFilters ? (
                     <button
                       type="button"
                       onClick={clearFilters}
-                      className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+                      className={buttonVariants({ variant: "secondary" })}
                     >
                       Limpar filtros
                     </button>
                   ) : (
                     <a
-                      href="#novo-usuario"
-                      className="inline-flex h-11 items-center justify-center rounded-2xl bg-accent px-4 text-sm font-semibold text-white transition hover:opacity-90"
+                      href="#novo-usuário"
+                      className={buttonVariants({ variant: "accent" })}
                     >
-                      Criar usuario
+                      Criar usuário
                     </a>
                   )
                 }
@@ -616,11 +616,11 @@ export default function PlatformUsersPage() {
         </Card>
 
         <div className="space-y-6 xl:sticky xl:top-28 xl:self-start">
-          <Card id="novo-usuario" className="space-y-4">
+          <Card id="novo-usuário" className="space-y-4">
             <AdminSectionHeader
               eyebrow="Provisionamento"
-              title="Novo usuario"
-              description="Cadastre o acesso inicial com tenant, status e roles da clinica estetica logo na mesma tela."
+              title="Novo usuário"
+              description="Cadastre o acesso inicial com tenant, status e roles da clínica estética logo na mesma tela."
             />
 
             <form className="space-y-3" onSubmit={(event) => void handleCreateUser(event)}>
@@ -747,19 +747,19 @@ export default function PlatformUsersPage() {
               </div>
 
               <Button type="submit" className="w-full" disabled={isCreatingUser}>
-                {isCreatingUser ? "Criando..." : "Criar usuario"}
+                {isCreatingUser ? "Criando..." : "Criar usuário"}
               </Button>
             </form>
           </Card>
 
           <Card className="space-y-4">
             <AdminSectionHeader
-              eyebrow="Usuario selecionado"
+              eyebrow="Usuário selecionado"
               title={selectedUser ? selectedUser.fullName : "Dados basicos"}
               description={
                 selectedUser
-                  ? "Edite nome, status e senha sem sair da pagina."
-                  : "Selecione um usuario para editar dados basicos."
+                  ? "Edite nome, status e senha sem sair da página."
+                  : "Selecione um usuário para editar dados basicos."
               }
             />
 
@@ -860,14 +860,14 @@ export default function PlatformUsersPage() {
               </form>
             ) : (
               <AdminEmptyState
-                title="Nenhum usuario selecionado"
-                description="Escolha um usuario na lista principal para habilitar a edicao contextual."
+                title="Nenhum usuário selecionado"
+                description="Escolha um usuário na lista principal para habilitar a edição contextual."
                 action={
                   <a
-                    href="#novo-usuario"
-                    className="inline-flex h-11 items-center justify-center rounded-2xl bg-accent px-4 text-sm font-semibold text-white transition hover:opacity-90"
+                    href="#novo-usuário"
+                    className={buttonVariants({ variant: "accent" })}
                   >
-                    Criar usuario
+                    Criar usuário
                   </a>
                 }
               />
@@ -878,7 +878,7 @@ export default function PlatformUsersPage() {
             <AdminSectionHeader
               eyebrow="Roles por tenant"
               title="Substituir roles"
-              description="Ajuste o conjunto de papeis do usuario dentro do tenant escolhido."
+              description="Ajuste o conjunto de papeis do usuário dentro do tenant escolhido."
             />
 
             {isLoading && !selectedUser ? (
@@ -906,7 +906,7 @@ export default function PlatformUsersPage() {
 
                 <div className={adminMutedPanelClassName}>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                    Roles de clinica
+                    Roles de clínica
                   </p>
                   <div className="mt-3 space-y-2">
                     {CLINIC_ROLE_OPTIONS.map((roleCode) => (
@@ -936,12 +936,12 @@ export default function PlatformUsersPage() {
               </form>
             ) : (
               <AdminEmptyState
-                title="Roles indisponiveis"
-                description="Selecione um usuario para gerenciar roles por tenant."
+                title="Roles indisponíveis"
+                description="Selecione um usuário para gerenciar roles por tenant."
                 action={
                   <a
-                    href="#novo-usuario"
-                    className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
+                    href="#novo-usuário"
+                    className={buttonVariants({ variant: "secondary" })}
                   >
                     Cadastrar acesso
                   </a>

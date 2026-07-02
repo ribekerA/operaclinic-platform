@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
@@ -33,7 +33,7 @@ export function ClinicResetPasswordCard({
     }
 
     if (newPassword !== confirmPassword) {
-      setError("A nova senha e a confirmacao precisam ser iguais.");
+      setError("A nova senha e a confirmação precisam ser iguais.");
       return;
     }
 
@@ -44,12 +44,12 @@ export function ClinicResetPasswordCard({
         token,
         newPassword,
       });
-      setSuccess("Senha redefinida. Voce ja pode entrar novamente na clinica estetica.");
+      setSuccess("Senha redefinida. Voce já pode entrar novamente na clínica estética.");
       window.setTimeout(() => {
         router.replace("/login/clinic");
       }, 900);
     } catch (err) {
-      setError(toErrorMessage(err, "Nao foi possivel redefinir a senha."));
+      setError(toErrorMessage(err, "Não foi possível redefinir a senha."));
     } finally {
       setIsSubmitting(false);
     }
@@ -65,7 +65,7 @@ export function ClinicResetPasswordCard({
           Concluir redefinicao
         </h1>
         <p className="mt-3 text-sm leading-6 text-muted">
-          Escolha uma nova senha para voltar ao painel da clinica estetica.
+          Escolha uma nova senha para voltar ao painel da clínica estética.
         </p>
       </div>
 
@@ -83,7 +83,7 @@ export function ClinicResetPasswordCard({
           />
           <p className="text-xs text-muted">
             Use pelo menos 8 caracteres com letras maiusculas, minusculas e
-            numeros.
+            números.
           </p>
         </div>
 
@@ -121,7 +121,7 @@ export function ClinicResetPasswordCard({
         href="/login/clinic"
         className="inline-flex text-sm font-semibold text-accent transition hover:opacity-80"
       >
-        Voltar para o login da clinica estetica
+        Voltar para o login da clínica estética
       </Link>
     </Card>
   );

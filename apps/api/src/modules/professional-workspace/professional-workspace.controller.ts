@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, Patch, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Query, UseGuards } from "@nestjs/common";
 import type {
   ProfessionalWorkspaceDashboardResponse,
+  ProfessionalWorkspacePatientSearchResult,
   ProfessionalWorkspacePatientSummaryResponse,
 } from "@operaclinic/shared";
 import { RoleCode } from "@prisma/client";
@@ -52,6 +53,14 @@ export class ProfessionalWorkspaceController {
       appointmentId,
       input,
     );
+  }
+
+  @Get("patients")
+  async searchPatients(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Query("search") search?: string,
+  ): Promise<ProfessionalWorkspacePatientSearchResult[]> {
+    return this.professionalWorkspaceService.searchPatients(actor, search ?? "");
   }
 
   @Get("patients/:patientId/summary")

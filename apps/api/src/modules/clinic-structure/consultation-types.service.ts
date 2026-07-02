@@ -93,6 +93,7 @@ export class ConsultationTypesService {
             preparationNotes,
             contraindications,
             aftercareGuidance,
+            priceCents: input.priceCents ?? 0,
           },
         });
 
@@ -241,6 +242,10 @@ export class ConsultationTypesService {
       updateData.aftercareGuidance = this.parseOptionalText(
         input.aftercareGuidance,
       );
+    }
+
+    if (input.priceCents !== undefined) {
+      updateData.priceCents = input.priceCents;
     }
 
     if (Object.keys(updateData).length === 0) {
@@ -397,6 +402,7 @@ export class ConsultationTypesService {
       preparationNotes: consultationType.preparationNotes,
       contraindications: consultationType.contraindications,
       aftercareGuidance: consultationType.aftercareGuidance,
+      priceCents: consultationType.priceCents,
       createdAt: consultationType.createdAt,
       updatedAt: consultationType.updatedAt,
     };

@@ -8,6 +8,7 @@ import {
   AdminSectionHeader,
   adminSelectClassName,
 } from "@/components/platform/platform-admin";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
 import { useSession } from "@/hooks/use-session";
@@ -18,6 +19,15 @@ import {
   resolveAestheticClinicActor,
 } from "@/lib/clinic-actor";
 import { getSubscriptionStatusLabel } from "@/lib/formatters";
+import {
+  CheckCircle2,
+  CircleDashed,
+  MessageCircleMore,
+  Smartphone,
+  Users,
+  Stethoscope,
+  CalendarRange,
+} from "lucide-react";
 
 const PERIOD_OPTIONS = [
   { label: "7 dias", value: "7" },
@@ -70,23 +80,23 @@ function getQuickLinks(actor: AestheticClinicActor): QuickLink[] {
     return [
       {
         href: "/clinic/reception",
-        label: "Recepcao",
-        description: "Fila, confirmacoes e check-in.",
+        label: "Recepção",
+        description: "Fila, confirmações e check-in.",
       },
       {
         href: "/clinic/users",
-        label: "Usuarios",
-        description: "Acessos e papeis da equipe.",
+        label: "Usuários",
+        description: "Acessos e papéis da equipe.",
       },
       {
         href: "/clinic/professionals",
         label: "Profissionais",
-        description: "Equipe assistencial e vinculos.",
+        description: "Equipe assistencial e vínculos.",
       },
       {
         href: "/clinic/units",
         label: "Unidades",
-        description: "Estrutura fisica da operacao.",
+        description: "Estrutura física da operação.",
       },
     ];
   }
@@ -94,13 +104,13 @@ function getQuickLinks(actor: AestheticClinicActor): QuickLink[] {
   return [
     {
       href: "/clinic/reception",
-      label: "Recepcao",
+      label: "Recepção",
       description: "Entrada principal do dia.",
     },
     {
       href: "/clinic/patients",
       label: "Pacientes",
-      description: "Busca e cadastro rapido.",
+      description: "Busca e cadastro rápido.",
     },
     {
       href: "/clinic/professionals",
@@ -110,7 +120,7 @@ function getQuickLinks(actor: AestheticClinicActor): QuickLink[] {
     {
       href: "/clinic/consultation-types",
       label: "Procedimentos",
-      description: "Avaliacoes, sessoes e duracoes.",
+      description: "Avaliações, sessões e durações.",
     },
   ];
 }
@@ -133,9 +143,9 @@ function buildFocusItems(
 
   if (dashboard.appointments.pendingConfirmation > 0) {
     items.push({
-      title: "Confirmacoes pendentes",
+      title: "Confirmações pendentes",
       value: String(dashboard.appointments.pendingConfirmation),
-      description: "A recepcao deve limpar isso primeiro.",
+      description: "A recepção deve limpar isso primeiro.",
       tone:
         dashboard.appointments.pendingConfirmation >= 10 ? "warning" : "neutral",
     });
@@ -148,16 +158,16 @@ function buildFocusItems(
     items.push({
       title: "Check-in atrasando",
       value: `${dashboard.appointments.averageCheckInDelayMinutes} min`,
-      description: "A fila esta perdendo ritmo.",
+      description: "A fila está perdendo ritmo.",
       tone: "warning",
     });
   }
 
   if (dashboard.appointments.noShowRate > 10) {
     items.push({
-      title: "Ausencias acima do ideal",
+      title: "Ausências acima do ideal",
       value: formatPercent(dashboard.appointments.noShowRate),
-      description: "Revise confirmacoes e horarios mais sensiveis.",
+      description: "Revise confirmações e horários mais sensíveis.",
       tone: "danger",
     });
   }
@@ -166,16 +176,16 @@ function buildFocusItems(
     items.push({
       title: "Agenda com folga",
       value: formatPercent(dashboard.quality.utilizationRate),
-      description: "Existe espaco para ocupar melhor a agenda.",
+      description: "Existe espaço para ocupar melhor a agenda.",
       tone: "neutral",
     });
   }
 
   if (!items.length) {
     items.push({
-      title: "Operacao estavel",
+      title: "Operação estável",
       value: formatPercent(dashboard.quality.utilizationRate),
-      description: "Nada pede escalacao imediata agora.",
+      description: "Nada pede escalação imediata agora.",
       tone: "neutral",
     });
   }
@@ -221,7 +231,7 @@ export default function ClinicDashboardPage() {
       setError(
         toErrorMessage(
           requestError,
-          "Nao foi possivel carregar o painel principal da clinica.",
+          "Não foi possível carregar o painel principal da clínica.",
         ),
       );
     } finally {
@@ -238,31 +248,31 @@ export default function ClinicDashboardPage() {
       {
         label: "Atendimentos",
         value: dashboard ? String(dashboard.appointments.total) : "--",
-        helper: dashboard ? `Ultimos ${dashboard.periodDays} dias.` : "Carregando.",
+        helper: dashboard ? `Últimos ${dashboard.periodDays} dias.` : "Carregando.",
         className: "border-slate-200 bg-white",
       },
       {
-        label: "Conclusao",
+        label: "Conclusão",
         value: dashboard ? formatPercent(dashboard.appointments.completionRate) : "--",
         helper: dashboard
-          ? `${dashboard.appointments.completed} atendimentos concluidos.`
+          ? `${dashboard.appointments.completed} atendimentos concluídos.`
           : "Carregando.",
         className: "border-teal-200 bg-teal-50",
       },
       {
-        label: "Sem confirmacao",
+        label: "Sem confirmação",
         value: dashboard ? String(dashboard.appointments.pendingConfirmation) : "--",
-        helper: "Pendencias para a recepcao.",
+        helper: "Pendências para a recepção.",
         className:
           dashboard && dashboard.appointments.pendingConfirmation > 0
             ? "border-amber-200 bg-amber-50"
             : "border-slate-200 bg-white",
       },
       {
-        label: "Ocupacao",
+        label: "Ocupação",
         value: dashboard ? formatPercent(dashboard.quality.utilizationRate) : "--",
         helper: dashboard
-          ? `Ausencias em ${formatPercent(dashboard.appointments.noShowRate)}.`
+          ? `Ausências em ${formatPercent(dashboard.appointments.noShowRate)}.`
           : "Carregando.",
         className: "border-slate-200 bg-white",
       },
@@ -278,73 +288,13 @@ export default function ClinicDashboardPage() {
         </Card>
       ) : null}
 
-      <section className="grid gap-4 xl:grid-cols-[1.28fr_0.72fr]">
-        <Card className="space-y-4">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-            <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-                Hoje na clinica
-              </p>
-              <div>
-                <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-[2rem]">
-                  Entrada da operacao
-                </h1>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
-                  Veja o que pede acao agora e entre rapido no fluxo principal.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <select
-                value={periodDays}
-                onChange={(event) => setPeriodDays(event.target.value)}
-                className={`${adminSelectClassName} min-w-[140px]`}
-                disabled={isLoading}
-              >
-                {PERIOD_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => {
-                  void loadDashboard();
-                }}
-                className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
-                disabled={isLoading}
-              >
-                {isLoading ? "Atualizando..." : "Atualizar"}
-              </button>
-              <Link
-                href="/clinic/reception"
-                className="inline-flex h-11 items-center justify-center rounded-2xl bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
-              >
-                Abrir recepcao
-              </Link>
-            </div>
-          </div>
-
-          <div className="grid gap-3 lg:grid-cols-4">
-            {topMetrics.map((item) => (
-              <div key={item.label} className={`rounded-[24px] border p-4 ${item.className}`}>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-                  {item.label}
-                </p>
-                <p className="mt-2 text-3xl font-semibold text-ink">{item.value}</p>
-                <p className="mt-2 text-sm text-muted">{item.helper}</p>
-              </div>
-            ))}
-          </div>
-        </Card>
-
+      <section className="grid gap-4 xl:grid-cols-[1fr_1.4fr]">
+        {/* Fazer agora — primary, left */}
         <Card className="space-y-4">
           <AdminSectionHeader
             eyebrow="Fazer agora"
             title="Prioridades imediatas"
-            description="Use esta leitura para decidir o proximo passo sem abrir varias telas."
+            description="O que pede ação antes de abrir qualquer outra tela."
           />
 
           <div className="space-y-3">
@@ -358,10 +308,73 @@ export default function ClinicDashboardPage() {
                     <p className="text-sm font-semibold text-ink">{item.title}</p>
                     <p className="mt-1 text-sm leading-6 text-muted">{item.description}</p>
                   </div>
-                  <span className="text-2xl font-semibold text-ink">{item.value}</span>
+                  <span className={`text-2xl font-semibold text-ink ${isLoading ? "opacity-40" : ""}`}>
+                    {item.value}
+                  </span>
                 </div>
               </div>
             ))}
+          </div>
+        </Card>
+
+        {/* KPIs — secondary, right */}
+        <Card className="space-y-4">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+                Hoje na clínica
+              </p>
+              <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-[2rem]">
+                Entrada da operação
+              </h1>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <label htmlFor="period-select" className="sr-only">
+                Período de análise
+              </label>
+              <select
+                id="period-select"
+                value={periodDays}
+                onChange={(event) => setPeriodDays(event.target.value)}
+                className={`${adminSelectClassName} min-w-[140px]`}
+                disabled={isLoading}
+                aria-label="Período de análise"
+              >
+                {PERIOD_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <Button
+                variant="secondary"
+                onClick={() => void loadDashboard()}
+                disabled={isLoading}
+              >
+                {isLoading ? "Atualizando..." : "Atualizar"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {isLoading && !dashboard
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="animate-pulse rounded-[24px] border border-slate-200 bg-white p-4">
+                    <div className="h-3 w-20 rounded-full bg-slate-200" />
+                    <div className="mt-3 h-8 w-16 rounded-full bg-slate-200" />
+                    <div className="mt-3 h-3 w-28 rounded-full bg-slate-200" />
+                  </div>
+                ))
+              : topMetrics.map((item) => (
+                  <div key={item.label} className={`rounded-[24px] border p-4 ${item.className}`}>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+                      {item.label}
+                    </p>
+                    <p className="mt-2 text-3xl font-semibold text-ink">{item.value}</p>
+                    <p className="mt-2 text-sm text-muted">{item.helper}</p>
+                  </div>
+                ))}
           </div>
         </Card>
       </section>
@@ -369,9 +382,9 @@ export default function ClinicDashboardPage() {
       <section className="grid gap-4 xl:grid-cols-[0.98fr_1.02fr]">
         <Card className="space-y-4">
           <AdminSectionHeader
-            eyebrow="Recepcao"
+            eyebrow="Recepção"
             title="Entrada principal do dia"
-            description="Confirmacoes, check-in e fila precisam estar a um clique."
+            description="Confirmações, check-in e fila a um clique."
             actions={
               isAdmin && dashboard ? (
                 <StatusPill
@@ -389,7 +402,7 @@ export default function ClinicDashboardPage() {
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-[24px] border border-amber-200 bg-amber-50 p-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700">
-                Confirmacoes
+                Confirmações
               </p>
               <p className="mt-2 text-3xl font-semibold text-ink">
                 {dashboard?.appointments.pendingConfirmation ?? "--"}
@@ -403,11 +416,11 @@ export default function ClinicDashboardPage() {
               <p className="mt-2 text-3xl font-semibold text-ink">
                 {dashboard?.appointments.checkedIn ?? "--"}
               </p>
-              <p className="mt-2 text-sm text-muted">Pacientes ja recebidos.</p>
+              <p className="mt-2 text-sm text-muted">Pacientes já recebidos.</p>
             </div>
             <div className="rounded-[24px] border border-rose-200 bg-rose-50 p-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700">
-                Atraso medio
+                Atraso médio
               </p>
               <p className="mt-2 text-3xl font-semibold text-ink">
                 {dashboard?.appointments.averageCheckInDelayMinutes ?? 0} min
@@ -417,16 +430,10 @@ export default function ClinicDashboardPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Link
-              href="/clinic/reception"
-              className="inline-flex h-11 items-center justify-center rounded-2xl bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              Abrir recepcao
+            <Link href="/clinic/reception" className={buttonVariants({ variant: "primary" })}>
+              Abrir recepção
             </Link>
-            <Link
-              href="/clinic/patients"
-              className="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-ink transition hover:bg-slate-50"
-            >
+            <Link href="/clinic/patients" className={buttonVariants({ variant: "secondary" })}>
               Ver pacientes
             </Link>
           </div>
@@ -434,20 +441,28 @@ export default function ClinicDashboardPage() {
 
         <Card className="space-y-4">
           <AdminSectionHeader
-            eyebrow="Acessos rapidos"
+            eyebrow="Acessos rápidos"
             title="Onde a equipe entra"
-            description="Atalhos de treinamento curto, com nomes diretos e sem desvio."
+            description="Atalhos para os módulos mais usados."
           />
 
           <div className="grid gap-3 md:grid-cols-2">
-            {quickLinks.map((item) => (
+            {quickLinks.map((item, index) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-[24px] border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:bg-slate-50"
+                className={
+                  index === 0
+                    ? "col-span-full rounded-[24px] border border-teal-200 bg-teal-50 p-4 transition hover:border-teal-300 hover:bg-teal-100"
+                    : "rounded-[24px] border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:bg-slate-50"
+                }
               >
-                <p className="text-base font-semibold text-ink">{item.label}</p>
-                <p className="mt-2 text-sm leading-6 text-muted">{item.description}</p>
+                <p className={`text-base font-semibold ${index === 0 ? "text-teal-900" : "text-ink"}`}>
+                  {item.label}
+                </p>
+                <p className={`mt-1 text-sm leading-6 ${index === 0 ? "text-teal-700" : "text-muted"}`}>
+                  {item.description}
+                </p>
               </Link>
             ))}
           </div>
@@ -459,7 +474,7 @@ export default function ClinicDashboardPage() {
           <AdminSectionHeader
             eyebrow="Equipe"
             title="Profissionais em destaque"
-            description="Quem mais atendeu no periodo atual."
+            description="Quem mais atendeu no período atual."
           />
 
           <div className="space-y-3">
@@ -469,14 +484,14 @@ export default function ClinicDashboardPage() {
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
                       <p className="text-sm font-semibold text-ink">{item.professionalName}</p>
-                      <p className="text-xs text-muted">{item.total} atendimentos no periodo</p>
+                      <p className="text-xs text-muted">{item.total} atendimentos no período</p>
                     </div>
                     <div className="flex flex-wrap gap-2 text-xs">
                       <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-700">
-                        conclusao {formatPercent(item.completionRate)}
+                        conclusão {formatPercent(item.completionRate)}
                       </span>
                       <span className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 font-semibold text-rose-700">
-                        ausencia {formatPercent(item.noShowRate)}
+                        ausência {formatPercent(item.noShowRate)}
                       </span>
                     </div>
                   </div>
@@ -485,7 +500,7 @@ export default function ClinicDashboardPage() {
             ) : (
               <AdminEmptyState
                 title="Sem leitura por profissional"
-                description="Ainda nao ha volume suficiente para destacar a equipe neste recorte."
+                description="Ainda não há volume suficiente para destacar a equipe neste recorte."
               />
             )}
           </div>
@@ -493,9 +508,9 @@ export default function ClinicDashboardPage() {
 
         <Card className="space-y-4">
           <AdminSectionHeader
-            eyebrow="Ausencias"
+            eyebrow="Ausências"
             title="Resumo recente"
-            description="Ultimos dias para entender se a falta esta subindo ou caindo."
+            description="Últimos dias para entender se a falta está subindo ou caindo."
           />
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -518,8 +533,8 @@ export default function ClinicDashboardPage() {
               ))
             ) : (
               <AdminEmptyState
-                title="Sem historico recente"
-                description="Ainda nao ha pontos suficientes para resumir as faltas."
+                title="Sem histórico recente"
+                description="Ainda não há pontos suficientes para resumir as faltas."
               />
             )}
           </div>

@@ -5,6 +5,7 @@ export * from "./reception";
 export * from "./professional";
 export * from "./smoke-e2e";
 export * from "./commercial";
+export * from "./plan-features";
 export * from "./messaging";
 export * from "./agent-skills";
 export * from "./agent";

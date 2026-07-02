@@ -81,7 +81,7 @@ export default function ClinicUnitsPage() {
         return nextUnits[0]?.id ?? null;
       });
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Nao foi possivel carregar unidades."));
+      setError(toErrorMessage(requestError, "Não foi possível carregar unidades."));
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +117,7 @@ export default function ClinicUnitsPage() {
       {
         label: "Ativas",
         value: String(activeCount),
-        helper: "Disponiveis para agenda e operacao.",
+        helper: "Disponíveis para agenda e operação.",
         tone: "accent" as const,
       },
       {
@@ -146,7 +146,7 @@ export default function ClinicUnitsPage() {
         href: "/clinic/professionals",
       },
       {
-        label: "Recepcao",
+        label: "Recepção",
         description: "Voltar para agenda e fila do dia.",
         href: "/clinic/reception",
       },
@@ -214,9 +214,9 @@ export default function ClinicUnitsPage() {
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Clinica | Unidades"
+        eyebrow="Clínica | Unidades"
         title="Unidades"
-        description="Estrutura fisica da clinica organizada de forma mais clara, com menos ruído e edicao mais direta."
+        description="Estrutura física da clínica organizada de forma mais clara, com menos ruído e edição mais direta."
         actions={
           <Button
             type="button"
@@ -231,13 +231,13 @@ export default function ClinicUnitsPage() {
         }
       >
         <AdminMetricGrid items={unitMetrics} isLoading={isLoading && units.length === 0} />
-        <AdminShortcutPanel title="Acoes rapidas" items={shortcutItems} />
+        <AdminShortcutPanel title="Ações rápidas" items={shortcutItems} />
       </AdminPageHeader>
 
       {!canManage ? (
         <Card className="border-amber-200 bg-amber-50" role="alert">
           <p className="text-sm text-amber-700">
-            Seu perfil possui leitura parcial. Apenas admin e gestor da clinica podem editar.
+            Seu perfil possui leitura parcial. Apenas admin e gestor da clínica podem editar.
           </p>
         </Card>
       ) : null}
@@ -297,7 +297,7 @@ export default function ClinicUnitsPage() {
                           />
                         </div>
                         <p className="text-sm text-muted">
-                          {unit.description?.trim() || "Sem descricao operacional."}
+                          {unit.description?.trim() || "Sem descrição operacional."}
                         </p>
                       </div>
                       <div className="space-y-2 text-sm text-muted lg:text-right">
@@ -313,7 +313,7 @@ export default function ClinicUnitsPage() {
             ) : (
               <AdminEmptyState
                 title="Nenhuma unidade cadastrada"
-                description="Crie as unidades para organizar agenda, estrutura e equipe da clinica."
+                description="Crie as unidades para organizar agenda, estrutura e equipe da clínica."
                 action={
                   canManage ? (
                     <Button
@@ -339,7 +339,7 @@ export default function ClinicUnitsPage() {
             description="Cadastre a unidade com nome claro e contexto suficiente para a equipe."
             actions={
               <StatusPill
-                label={canManage ? "Edicao liberada" : "Somente leitura"}
+                label={canManage ? "Edição liberada" : "Somente leitura"}
                 tone={canManage ? "success" : "warning"}
               />
             }
@@ -363,7 +363,7 @@ export default function ClinicUnitsPage() {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                Descricao
+                Descrição
               </label>
               <textarea
                 value={createForm.description}
@@ -445,7 +445,7 @@ export default function ClinicUnitsPage() {
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                  Descricao
+                  Descrição
                 </label>
                 <textarea
                   value={editForm.description}
@@ -473,14 +473,14 @@ export default function ClinicUnitsPage() {
                 Unidade ativa
               </label>
               <Button type="submit" className="w-full" disabled={!canManage || isUpdating}>
-                {isUpdating ? "Salvando..." : "Salvar alteracoes"}
+                {isUpdating ? "Salvando..." : "Salvar alterações"}
               </Button>
             </form>
           </div>
         ) : (
           <AdminEmptyState
             title="Selecione uma unidade"
-            description="Abra um item da lista para editar nome, descricao e status."
+            description="Abra um item da lista para editar nome, descrição e status."
           />
         )}
       </Sheet>

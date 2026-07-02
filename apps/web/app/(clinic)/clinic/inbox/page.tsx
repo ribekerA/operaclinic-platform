@@ -1,4 +1,4 @@
-import {
+﻿import {
   AdminPageHeader,
   AdminShortcutPanel,
 } from "@/components/platform/platform-admin";
@@ -9,14 +9,14 @@ export default function ClinicInboxPage() {
     <div className="space-y-6">
       <AdminPageHeader
         eyebrow="Clinica | Inbox"
-        title="Conversas que pedem atencao humana"
-        description="Acompanhe os transbordos da IA e trate rapidamente os casos que sairam do fluxo automatico."
+        title="Conversas que pedem atenção humana"
+        description="Acompanhe os transbordos da IA e trate rápidamente os casos que sairam do fluxo automatico."
       >
         <AdminShortcutPanel
-          title="Acoes rapidas"
+          title="Ações rápidas"
           items={[
             {
-              label: "Recepcao",
+              label: "Recepção",
               description: "Voltar para fila e agenda do dia.",
               href: "/clinic/reception",
             },

@@ -11,17 +11,17 @@ export default function ClinicNoAccessPage() {
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Clinica | Acesso"
+        eyebrow="Clínica | Acesso"
         title="Sem painel habilitado"
-        description="Seu login esta ativo, mas este perfil ainda nao tem acesso a uma area operacional da clinica."
+        description="Seu login está ativo, mas este perfil ainda não tem acesso a uma área operacional da clínica."
       />
 
       <Card className="space-y-3 bg-white">
         <p className="text-sm text-ink">
-          Perfis encontrados: {user?.roles.length ? user.roles.join(", ") : "nenhum perfil valido"}.
+          Perfis encontrados: {user?.roles.length ? user.roles.join(", ") : "nenhum perfil válido"}.
         </p>
         <p className="text-sm text-muted">
-          Solicite ao administrador da clinica um acesso compativel com sua rotina, como recepcao, gestao ou administracao.
+          Solicite ao administrador da clínica um acesso compatível com sua rotina, como recepção, gestão ou administração.
         </p>
         <div className="flex gap-2">
           <Link

@@ -19,6 +19,7 @@ import {
 } from "@/components/platform/platform-admin";
 import { Card } from "@/components/ui/card";
 import { Sheet } from "@/components/ui/sheet";
+import { buttonVariants } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
 import { toErrorMessage } from "@/lib/client/http";
 import {
@@ -56,7 +57,7 @@ function resolveFocusLabel(
     Math.round((reference.getTime() - checkedInAt.getTime()) / 60000),
   );
 
-  return `Na recepcao ha ${waitMinutes} min`;
+  return `Na recepção há ${waitMinutes} min`;
 }
 
 function hasAppointmentStarted(
@@ -114,7 +115,7 @@ function resolveProfessionalActions(
       return [
         {
           status: "AWAITING_PAYMENT",
-          label: "Enviar para recepcao",
+          label: "Enviar para recepção",
           tone: "primary",
         },
       ];
@@ -188,12 +189,12 @@ interface EvolutionDraft {
 }
 
 const EVOLUTION_FIELDS: Array<{ key: EvolutionFieldKey; label: string }> = [
-  { key: "objective", label: "Objetivo estetico" },
-  { key: "preparation", label: "Preparacao/pele" },
-  { key: "intercurrence", label: "Intercorrencia" },
-  { key: "guidance", label: "Orientacao final" },
-  { key: "nextStep", label: "Proximo passo" },
-  { key: "freeText", label: "Observacao livre" },
+  { key: "objective", label: "Objetivo estético" },
+  { key: "preparation", label: "Preparação/pele" },
+  { key: "intercurrence", label: "Intercorrência" },
+  { key: "guidance", label: "Orientação final" },
+  { key: "nextStep", label: "Próximo passo" },
+  { key: "freeText", label: "Observação livre" },
 ];
 
 const EVOLUTION_LABEL_TO_KEY = Object.fromEntries(
@@ -329,7 +330,7 @@ export default function ProfessionalWorkspacePage() {
     if (!user?.linkedProfessionalId) {
       setDashboard(null);
       setError(
-        "Este acesso ainda nao esta vinculado a um perfil profissional ativo nesta clinica.",
+        "Este acesso ainda não está vinculado a um perfil profissional ativo nesta clínica.",
       );
       setIsLoading(false);
       return;
@@ -346,7 +347,7 @@ export default function ProfessionalWorkspacePage() {
       setError(
         toErrorMessage(
           requestError,
-          "Nao foi possivel carregar a agenda pessoal do profissional.",
+          "Não foi possível carregar a agenda pessoal do profissional.",
         ),
       );
     } finally {
@@ -399,14 +400,14 @@ export default function ProfessionalWorkspacePage() {
           status === "NO_SHOW"
             ? `${appointment.patientName ?? "Paciente"} marcado como no-show.`
             : status === "AWAITING_PAYMENT"
-              ? `${appointment.patientName ?? "Paciente"} devolvido para recepcao.`
+              ? `${appointment.patientName ?? "Paciente"} devolvido para recepção.`
               : `${appointment.patientName ?? "Paciente"} avancou no fluxo do atendimento.`,
         );
       } catch (requestError) {
         setError(
           toErrorMessage(
             requestError,
-            "Nao foi possivel atualizar o status do atendimento.",
+            "Não foi possível atualizar o status do atendimento.",
           ),
         );
       } finally {
@@ -429,7 +430,7 @@ export default function ProfessionalWorkspacePage() {
       setPatientError(
         toErrorMessage(
           requestError,
-          "Nao foi possivel carregar o resumo rapido da paciente.",
+          "Não foi possível carregar o resumo rápido da paciente.",
         ),
       );
     } finally {
@@ -459,13 +460,13 @@ export default function ProfessionalWorkspacePage() {
         });
         setDashboard(payload);
         setFeedback(
-          `Anotacoes de ${appointment.patientName ?? "paciente"} atualizadas.`,
+          `Anotações de ${appointment.patientName ?? "paciente"} atualizadas.`,
         );
       } catch (requestError) {
         setError(
           toErrorMessage(
             requestError,
-            "Nao foi possivel salvar as anotacoes do atendimento.",
+            "Não foi possível salvar as anotações do atendimento.",
           ),
         );
       } finally {
@@ -492,7 +493,7 @@ export default function ProfessionalWorkspacePage() {
           `Resumo de ${appointment.patientName ?? "paciente"} copiado.`,
         );
       } catch {
-        setError("Nao foi possivel copiar o resumo do atendimento.");
+        setError("Não foi possível copiar o resumo do atendimento.");
       } finally {
         setTimeout(() => {
           setActiveCopyAppointmentId((current) =>
@@ -531,14 +532,14 @@ export default function ProfessionalWorkspacePage() {
             : ("default" as const),
       },
       {
-        label: "Confirmacao pendente",
+        label: "Confirmação pendente",
         value: String(dashboard.summary.pendingConfirmation),
-        helper: "Itens futuros ainda sem confirmacao final.",
+        helper: "Itens futuros ainda sem confirmação final.",
       },
       {
-        label: "Na recepcao",
+        label: "Na recepção",
         value: String(dashboard.summary.sentToReception),
-        helper: "Atendimentos ja devolvidos para pagamento e baixa.",
+        helper: "Atendimentos já devolvidos para pagamento e baixa.",
       },
     ];
   }, [dashboard]);
@@ -560,14 +561,14 @@ export default function ProfessionalWorkspacePage() {
           : dashboard?.focus.waitingPatient
             ? "Paciente aguardando"
             : dashboard?.focus.nextAppointment
-              ? "Proximo atendimento"
+              ? "Próximo atendimento"
               : "Agenda livre";
   const focusSupportText = dashboard?.focus.currentAppointment
     ? `${formatTime(dashboard.focus.currentAppointment.startsAt, {
         timeZone: dashboard.timezone,
       })} | ${dashboard.focus.currentAppointment.consultationTypeName}`
     : dashboard?.focus.closingAppointment
-      ? "Finalize as orientacoes e devolva para recepcao."
+      ? "Finalize as orientações e devolva para recepção."
       : dashboard?.focus.calledPatient
         ? "Paciente ja chamado para sala."
         : dashboard?.focus.waitingPatient
@@ -715,7 +716,7 @@ export default function ProfessionalWorkspacePage() {
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Clinica | Area do profissional"
+        eyebrow="Clínica | Área do profissional"
         title={
           dashboard?.professional.displayName ??
           user?.fullName ??
@@ -723,8 +724,8 @@ export default function ProfessionalWorkspacePage() {
         }
         description={
           dashboard
-            ? `Leitura pessoal da agenda em ${dashboard.clinicDisplayName ?? "clinica ativa"}, com foco no proximo atendimento e no que ja chegou na recepcao.`
-            : "Agenda pessoal, ritmo do dia e sinais do que precisa da sua atencao."
+            ? `Leitura pessoal da agenda em ${dashboard.clinicDisplayName ?? "clínica ativa"}, com foco no próximo atendimento e no que já chegou na recepção.`
+            : "Agenda pessoal, ritmo do dia e sinais do que precisa da sua atenção."
         }
         actions={
           <button
@@ -744,7 +745,7 @@ export default function ProfessionalWorkspacePage() {
           items={[
             {
               label: "Minha conta",
-              description: "Revisar senha, sessao e dados do acesso atual.",
+              description: "Revisar senha, sessão e dados do acesso atual.",
               href: "/clinic/account",
             },
             {
@@ -801,7 +802,7 @@ export default function ProfessionalWorkspacePage() {
 
               <div className="rounded-[24px] border border-white/10 bg-white/10 p-4 backdrop-blur">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-300">
-                  Proxima atualizacao
+                  Próxima atualização
                 </p>
                 <p className="mt-3 text-3xl font-semibold">
                   {dashboard
@@ -898,7 +899,7 @@ export default function ProfessionalWorkspacePage() {
               Filtros da agenda
             </p>
             <h2 className="mt-2 text-xl font-semibold text-ink">
-              Refine o que precisa de atencao agora
+              Refine o que precisa de atenção agora
             </h2>
             <p className="mt-2 text-sm leading-6 text-muted">
               Busque por paciente, procedimento, contato ou restrinja por status e unidade.
@@ -940,7 +941,7 @@ export default function ProfessionalWorkspacePage() {
             <option value="CALLED">Chamado</option>
             <option value="IN_PROGRESS">Em atendimento</option>
             <option value="AWAITING_CLOSURE">Fechamento</option>
-            <option value="AWAITING_PAYMENT">Na recepcao</option>
+            <option value="AWAITING_PAYMENT">Na recepção</option>
             <option value="RESCHEDULED">Remarcado</option>
             <option value="COMPLETED">Concluido</option>
             <option value="NO_SHOW">No-show</option>
@@ -965,7 +966,7 @@ export default function ProfessionalWorkspacePage() {
             Hoje: {filteredTodayAgenda.length}
           </span>
           <span className="rounded-full bg-slate-100 px-3 py-1">
-            Proximos dias: {filteredUpcomingAgenda.length}
+            Próximos dias: {filteredUpcomingAgenda.length}
           </span>
         </div>
       </Card>
@@ -976,10 +977,10 @@ export default function ProfessionalWorkspacePage() {
             Ritmo semanal
           </p>
           <h2 className="mt-2 text-xl font-semibold text-ink">
-            Como a agenda se distribui nos proximos dias
+            Como a agenda se distribui nos próximos dias
           </h2>
           <p className="mt-2 text-sm leading-6 text-muted">
-            Leitura consolidada do recorte atual para antecipar carga, pendencias e janelas.
+            Leitura consolidada do recorte atual para antecipar carga, pendências e janelas.
           </p>
         </div>
 
@@ -1008,7 +1009,7 @@ export default function ProfessionalWorkspacePage() {
                   </p>
                   <p>Pendendo confirmar: {day.pendingConfirmation}</p>
                   <p>Check-in feito: {day.checkedIn}</p>
-                  <p>Concluidos: {day.completed}</p>
+                  <p>Concluídos: {day.completed}</p>
                 </div>
               </div>
             ))}
@@ -1036,7 +1037,7 @@ export default function ProfessionalWorkspacePage() {
                 Sequencia dos atendimentos do dia
               </h2>
               <p className="mt-2 text-sm leading-6 text-muted">
-                Leitura pessoal da sua agenda atual, sem a superficie operacional da recepcao.
+                Leitura pessoal da sua agenda atual, sem a superfície operacional da recepção.
               </p>
             </div>
             {dashboard ? (
@@ -1063,7 +1064,7 @@ export default function ProfessionalWorkspacePage() {
                         <StatusPill label="Paciente chegou" tone="success" />
                       ) : null}
                       {appointment.hasHistoricalIntercurrence ? (
-                        <StatusPill label="Intercorrencia anterior" tone="danger" />
+                        <StatusPill label="Intercorrência anterior" tone="danger" />
                       ) : null}
                       {appointment.lastPreparationSummary || appointment.lastGuidanceSummary ? (
                         <StatusPill label="Contexto anterior" tone="warning" />
@@ -1104,10 +1105,10 @@ export default function ProfessionalWorkspacePage() {
                       {appointment.hasHistoricalIntercurrence ? (
                         <div className="rounded-[20px] border border-rose-200 bg-rose-50 px-4 py-3">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-700">
-                            Atencao clinica
+                            Atenção clínica
                           </p>
                           <p className="mt-2 text-sm leading-6 text-rose-800">
-                            Ultima intercorrencia registrada em{" "}
+                            Última intercorrência registrada em{" "}
                             {appointment.lastIntercurrenceAt
                               ? formatDateTime(appointment.lastIntercurrenceAt, {
                                   timeZone: dashboardTimeZone,
@@ -1135,14 +1136,14 @@ export default function ProfessionalWorkspacePage() {
                           ) : null}
                           {appointment.lastGuidanceSummary ? (
                             <p className="mt-2 text-sm leading-6 text-amber-800">
-                              Orientacao anterior: {appointment.lastGuidanceSummary}
+                              Orientação anterior: {appointment.lastGuidanceSummary}
                             </p>
                           ) : null}
                         </div>
                       ) : null}
 
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-                        Evolucao guiada de estetica
+                        Evolução guiada de estética
                       </p>
                       <p className="text-sm text-muted">
                         Registre o essencial do atendimento estetico sem depender de texto solto.
@@ -1177,7 +1178,7 @@ export default function ProfessionalWorkspacePage() {
                               }}
                               placeholder={
                                 field.key === "freeText"
-                                  ? "Anotacao complementar livre, se precisar."
+                                  ? "Anotação complementar livre, se precisar."
                                   : `Preencha ${field.label.toLowerCase()}.`
                               }
                               className={
@@ -1238,11 +1239,9 @@ export default function ProfessionalWorkspacePage() {
                           <button
                             key={action.status}
                             type="button"
-                            className={
-                              action.tone === "danger"
-                                ? "inline-flex h-11 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
-                                : "inline-flex h-11 items-center justify-center rounded-2xl bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                            }
+                            className={buttonVariants({
+                              variant: action.tone === "danger" ? "danger" : "primary",
+                            })}
                             onClick={() => {
                               void handleAppointmentAction(
                                 appointment,
@@ -1287,7 +1286,7 @@ export default function ProfessionalWorkspacePage() {
                     >
                       {activeNoteAppointmentId === appointment.id
                         ? "Salvando..."
-                        : "Salvar anotacoes"}
+                        : "Salvar anotações"}
                     </button>
 
                     <Link
@@ -1316,7 +1315,7 @@ export default function ProfessionalWorkspacePage() {
           <Card className="space-y-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted">
-                Proximos dias
+                Próximos dias
               </p>
               <h2 className="mt-2 text-xl font-semibold text-ink">
                 Horizonte curto da agenda
@@ -1389,7 +1388,7 @@ export default function ProfessionalWorkspacePage() {
                 ))
               ) : (
                 <p className="text-sm text-muted">
-                  Nenhum atendimento futuro relevante nos proximos dias.
+                  Nenhum atendimento futuro relevante nos próximos dias.
                 </p>
               )}
             </div>
@@ -1398,7 +1397,7 @@ export default function ProfessionalWorkspacePage() {
           <Card className="space-y-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted">
-                Concluidos recentes
+                Concluídos recentes
               </p>
               <h2 className="mt-2 text-xl font-semibold text-ink">
                 O que ja foi atendido hoje
@@ -1445,8 +1444,8 @@ export default function ProfessionalWorkspacePage() {
         title={selectedPatient?.patient.fullName ?? "Ficha rapida da paciente"}
         description={
           selectedPatient
-            ? "Contato principal, observacoes e historico recente para apoiar o atendimento."
-            : "Resumo rapido da paciente vinculada ao atendimento."
+            ? "Contato principal, observações e histórico recente para apoiar o atendimento."
+            : "Resumo rápido da paciente vinculada ao atendimento."
         }
       >
         {isLoadingPatient ? (
@@ -1521,7 +1520,7 @@ export default function ProfessionalWorkspacePage() {
                 </div>
                 <div className="rounded-[20px] border border-slate-200 bg-white px-4 py-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-                    Ultima passagem
+                    Última passagem
                   </p>
                   <p className="mt-1 text-sm text-ink">
                     {selectedPatient.relationship.lastSeenAt
@@ -1533,7 +1532,7 @@ export default function ProfessionalWorkspacePage() {
                 </div>
                 <div className="rounded-[20px] border border-slate-200 bg-white px-4 py-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-                    Proximo agendamento
+                    Próximo agendamento
                   </p>
                   <p className="mt-1 text-sm text-ink">
                     {selectedPatient.relationship.nextAppointmentAt
@@ -1550,17 +1549,17 @@ export default function ProfessionalWorkspacePage() {
                   Observacoes
                 </p>
                 <p className="mt-2 text-sm leading-6 text-ink">
-                  {selectedPatient.patient.notes?.trim() || "Sem observacoes registradas."}
+                  {selectedPatient.patient.notes?.trim() || "Sem observações registradas."}
                 </p>
               </div>
 
               {selectedPatient.alerts.hasHistoricalIntercurrence ? (
                 <div className="rounded-[20px] border border-rose-200 bg-rose-50 px-4 py-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-700">
-                    Alerta de intercorrencia
+                    Alerta de intercorrência
                   </p>
                   <p className="mt-2 text-sm leading-6 text-rose-800">
-                    Ultimo registro em{" "}
+                    Último registro em{" "}
                     {selectedPatient.alerts.lastIntercurrenceAt
                       ? formatDateTime(selectedPatient.alerts.lastIntercurrenceAt, {
                           timeZone: dashboardTimeZone,
@@ -1580,7 +1579,7 @@ export default function ProfessionalWorkspacePage() {
               selectedPatient.alerts.lastGuidanceSummary ? (
                 <div className="rounded-[20px] border border-amber-200 bg-amber-50 px-4 py-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">
-                    Preparo e orientacao anteriores
+                    Preparo e orientação anteriores
                   </p>
                   {selectedPatient.alerts.lastPreparationSummary ? (
                     <p className="mt-2 text-sm leading-6 text-amber-800">
@@ -1589,7 +1588,7 @@ export default function ProfessionalWorkspacePage() {
                   ) : null}
                   {selectedPatient.alerts.lastGuidanceSummary ? (
                     <p className="mt-2 text-sm leading-6 text-amber-800">
-                      Orientacao: {selectedPatient.alerts.lastGuidanceSummary}
+                      Orientação: {selectedPatient.alerts.lastGuidanceSummary}
                     </p>
                   ) : null}
                 </div>
@@ -1599,10 +1598,10 @@ export default function ProfessionalWorkspacePage() {
             <Card className="space-y-3">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-                  Historico recente
+                  Histórico recente
                 </p>
                 <h3 className="mt-2 text-lg font-semibold text-ink">
-                  Ultimos atendimentos na clinica
+                  Últimos atendimentos na clínica
                 </h3>
               </div>
 
@@ -1640,7 +1639,7 @@ export default function ProfessionalWorkspacePage() {
                       {getEvolutionPreviewEntries(appointment.notes).length ? (
                         <div className="mt-3 rounded-[18px] border border-slate-200 bg-white px-3 py-3">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
-                            Evolucao registrada
+                            Evolução registrada
                           </p>
                           <div className="mt-2 space-y-2">
                             {getEvolutionPreviewEntries(appointment.notes).map((entry) => (
@@ -1657,14 +1656,14 @@ export default function ProfessionalWorkspacePage() {
                         </div>
                       ) : (
                         <div className="mt-3 rounded-[18px] border border-dashed border-slate-200 px-3 py-3 text-sm text-muted">
-                          Sem evolucao registrada nesse atendimento.
+                          Sem evolução registrada nesse atendimento.
                         </div>
                       )}
                     </div>
                   ))
                 ) : (
                   <div className="rounded-[20px] border border-dashed border-slate-200 px-4 py-4 text-sm text-muted">
-                    Sem historico recente para esta paciente.
+                    Sem histórico recente para esta paciente.
                   </div>
                 )}
               </div>
@@ -1672,7 +1671,7 @@ export default function ProfessionalWorkspacePage() {
           </div>
         ) : (
           <div className="rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-muted">
-            Selecione uma paciente da agenda para abrir a ficha rapida.
+            Selecione uma paciente da agenda para abrir a ficha rápida.
           </div>
         )}
       </Sheet>

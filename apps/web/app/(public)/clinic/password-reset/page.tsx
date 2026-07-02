@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { FormEvent, Suspense, useState } from "react";
@@ -29,11 +29,11 @@ function PasswordResetForm() {
       });
 
       setSuccess(
-        "Se houver um usuario ativo com este email, a redefinicao foi preparada.",
+        "Se houver um usuário ativo com este email, a redefinicao foi preparada.",
       );
       setPreviewUrl(response.resetUrlPreview ?? null);
     } catch (err) {
-      setError(toErrorMessage(err, "Nao foi possivel solicitar a redefinicao."));
+      setError(toErrorMessage(err, "Não foi possível solicitar a redefinicao."));
     } finally {
       setIsSubmitting(false);
     }
@@ -51,7 +51,7 @@ function PasswordResetForm() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             className="w-full rounded-xl border border-border bg-white px-3 py-3 text-sm outline-none transition focus:border-accent"
-            placeholder="recepcao@clinica-estetica.com"
+            placeholder="recepção@clinica-estética.com"
             required
           />
         </div>
@@ -93,7 +93,7 @@ function PasswordResetForm() {
         href="/login/clinic"
         className="inline-flex text-sm font-semibold text-accent transition hover:opacity-80"
       >
-        Voltar para o login da clinica estetica
+        Voltar para o login da clínica estética
       </Link>
     </>
   );
@@ -107,10 +107,10 @@ export default function ClinicPasswordResetRequestPage() {
           Recuperar acesso
         </p>
         <h1 className="mt-2 text-3xl font-semibold text-ink">
-          Redefinir senha da clinica estetica
+          Redefinir senha da clínica estética
         </h1>
         <p className="mt-3 text-sm leading-6 text-muted">
-          Informe o email usado na clinica estetica para gerar uma nova senha com token
+          Informe o email usado na clínica estética para gerar uma nova senha com token
           seguro.
         </p>
       </div>

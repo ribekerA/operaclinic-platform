@@ -16,21 +16,21 @@ interface AppHeaderProps {
 
 const profileLabel: Record<UserProfile, string> = {
   platform: "Plataforma",
-  clinic: "Clinica",
+  clinic: "Clínica",
 };
 
 const clinicActorLabel = {
   admin: "Admin",
-  manager: "Gestao",
-  reception: "Recepcao",
+  manager: "Gestão",
+  reception: "Recepção",
   professional: "Profissional",
-  unknown: "Clinica",
+  unknown: "Clínica",
 } as const;
 
 export function AppHeader({
   profile,
   title,
-  subtitle: _subtitle,
+  subtitle,
   user,
   onOpenSidebar,
 }: AppHeaderProps) {
@@ -49,7 +49,7 @@ export function AppHeader({
               type="button"
               onClick={onOpenSidebar}
               className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-slate-200 bg-white text-ink shadow-sm transition hover:bg-slate-50 xl:hidden"
-              aria-label="Abrir navegacao"
+              aria-label="Abrir navegação"
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -63,7 +63,12 @@ export function AppHeader({
                 <span className="inline-flex rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-700">
                   {roleLabel}
                 </span>
-                <p className="truncate text-base font-semibold text-ink">{title}</p>
+                <div>
+                  <p className="truncate text-base font-semibold text-ink">{title}</p>
+                  {subtitle ? (
+                    <p className="truncate text-xs text-muted">{subtitle}</p>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>

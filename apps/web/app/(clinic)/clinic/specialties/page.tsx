@@ -38,9 +38,9 @@ const defaultForm: SpecialtyFormState = {
 };
 
 const AESTHETIC_SPECIALTY_PRESETS = [
-  "Estetica facial",
-  "Harmonizacao orofacial",
-  "Estetica corporal",
+  "Estética facial",
+  "Harmonização orofacial",
+  "Estética corporal",
   "Tecnologias a laser",
   "Tricologia estetica",
   "Cosmiatria",
@@ -90,7 +90,7 @@ export default function ClinicSpecialtiesPage() {
         return nextSpecialties[0]?.id ?? null;
       });
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Nao foi possivel carregar especialidades esteticas."));
+      setError(toErrorMessage(requestError, "Não foi possível carregar especialidades estéticas."));
     } finally {
       setIsLoading(false);
     }
@@ -121,12 +121,12 @@ export default function ClinicSpecialtiesPage() {
       {
         label: "Especialidades",
         value: String(specialties.length),
-        helper: "Base de especialidades esteticas cadastrada.",
+        helper: "Base de especialidades estéticas cadastrada.",
       },
       {
         label: "Ativas",
         value: String(activeCount),
-        helper: "Disponiveis para uso na rotina da estetica.",
+        helper: "Disponíveis para uso na rotina da estética.",
         tone: "accent" as const,
       },
       {
@@ -155,8 +155,8 @@ export default function ClinicSpecialtiesPage() {
         href: "/clinic/professionals",
       },
       {
-        label: "Procedimentos esteticos",
-        description: "Revisar configuracoes da agenda.",
+        label: "Procedimentos estéticos",
+        description: "Revisar configurações da agenda.",
         href: "/clinic/consultation-types",
       },
     ],
@@ -229,9 +229,9 @@ export default function ClinicSpecialtiesPage() {
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        eyebrow="Clinica | Especialidades"
+        eyebrow="Clínica | Especialidades"
         title="Especialidades"
-        description="Organize as especialidades esteticas da clinica com linguagem clara para a equipe operacional."
+        description="Organize as especialidades estéticas da clínica com linguagem clara para a equipe operacional."
         actions={
           <Button
             type="button"
@@ -246,13 +246,13 @@ export default function ClinicSpecialtiesPage() {
         }
       >
         <AdminMetricGrid items={specialtyMetrics} isLoading={isLoading && specialties.length === 0} />
-        <AdminShortcutPanel title="Acoes rapidas" items={shortcutItems} />
+        <AdminShortcutPanel title="Ações rápidas" items={shortcutItems} />
       </AdminPageHeader>
 
       {!canManage ? (
         <Card className="border-amber-200 bg-amber-50" role="alert">
           <p className="text-sm text-amber-700">
-            Seu perfil possui leitura parcial. Apenas admin e gestor da clinica podem editar.
+            Seu perfil possui leitura parcial. Apenas admin e gestor da clínica podem editar.
           </p>
         </Card>
       ) : null}
@@ -274,7 +274,7 @@ export default function ClinicSpecialtiesPage() {
           <AdminSectionHeader
             eyebrow="Base"
             title="Especialidades cadastradas"
-            description="Veja rapidamente nome, status e contexto de cada especialidade estetica."
+            description="Veja rapidamente nome, status e contexto de cada especialidade estética."
             actions={<AdminCountBadge value={specialties.length} loading={isLoading} />}
           />
 
@@ -312,7 +312,7 @@ export default function ClinicSpecialtiesPage() {
                           />
                         </div>
                         <p className="text-sm text-muted">
-                          {specialty.description?.trim() || "Sem descricao da especialidade."}
+                          {specialty.description?.trim() || "Sem descrição da especialidade."}
                         </p>
                       </div>
                       <div className="space-y-2 text-sm text-muted lg:text-right">
@@ -328,7 +328,7 @@ export default function ClinicSpecialtiesPage() {
             ) : (
               <AdminEmptyState
                 title="Nenhuma especialidade cadastrada"
-                description="Crie as especialidades para organizar equipe, agenda e procedimentos esteticos."
+                description="Crie as especialidades para organizar equipe, agenda e procedimentos estéticos."
                 action={
                   canManage ? (
                     <Button
@@ -353,10 +353,10 @@ export default function ClinicSpecialtiesPage() {
           <AdminSectionHeader
             eyebrow="Cadastro"
             title="Nova especialidade"
-            description="Cadastre a especialidade estetica com nome claro e descricao curta para a equipe."
+            description="Cadastre a especialidade estética com nome claro e descrição curta para a equipe."
             actions={
               <StatusPill
-                label={canManage ? "Edicao liberada" : "Somente leitura"}
+                label={canManage ? "Edição liberada" : "Somente leitura"}
                 tone={canManage ? "success" : "warning"}
               />
             }
@@ -364,7 +364,7 @@ export default function ClinicSpecialtiesPage() {
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-              Sugestoes rapidas
+              Sugestões rápidas
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {AESTHETIC_SPECIALTY_PRESETS.map((preset) => (
@@ -399,7 +399,7 @@ export default function ClinicSpecialtiesPage() {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                Descricao
+                Descrição
               </label>
               <textarea
                 value={createForm.description}
@@ -481,7 +481,7 @@ export default function ClinicSpecialtiesPage() {
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                  Descricao
+                  Descrição
                 </label>
                 <textarea
                   value={editForm.description}
@@ -509,14 +509,14 @@ export default function ClinicSpecialtiesPage() {
                 Especialidade ativa
               </label>
               <Button type="submit" className="w-full" disabled={!canManage || isUpdating}>
-                {isUpdating ? "Salvando..." : "Salvar alteracoes"}
+                {isUpdating ? "Salvando..." : "Salvar alterações"}
               </Button>
             </form>
           </div>
         ) : (
           <AdminEmptyState
             title="Selecione uma especialidade"
-            description="Abra um item da lista para editar nome, descricao e status."
+            description="Abra um item da lista para editar nome, descrição e status."
           />
         )}
       </Sheet>
