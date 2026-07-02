@@ -28,9 +28,9 @@ RUN pnpm --filter @operaclinic/shared build || true
 
 # Build Next.js — outputs standalone because next.config.ts has output: 'standalone'
 # NEXT_PUBLIC_API_BASE_URL is baked in at build time; override at runtime via env
-ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:3001/api/v1
-ARG NEXT_PUBLIC_API_URL=http://localhost:3001
-ARG NEXT_PUBLIC_APP_NAME=OperaClinic Web
+ARG NEXT_PUBLIC_API_BASE_URL=https://operaclinic-api.onrender.com/api/v1
+ARG NEXT_PUBLIC_API_URL=https://operaclinic-api.onrender.com
+ARG NEXT_PUBLIC_APP_NAME=OperaClinic
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME
