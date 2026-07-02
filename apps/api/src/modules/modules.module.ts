@@ -16,6 +16,7 @@ import { AgentModule } from "./agent/agent.module";
 import { ProcedureProtocolsModule } from "./procedure-protocols/procedure-protocols.module";
 import { PublicBookingModule } from "./public-booking/public-booking.module";
 import { ReportsModule } from "./reports/reports.module";
+import { AgentApiModule } from "./agent-api/agent-api.module";
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ReportsModule } from "./reports/reports.module";
     ProcedureProtocolsModule,
     PublicBookingModule,
     ReportsModule,
+    AgentApiModule,
   ],
 })
 export class ModulesModule {}

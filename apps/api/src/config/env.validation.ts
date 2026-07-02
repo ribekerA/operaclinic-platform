@@ -24,6 +24,8 @@ interface ValidatedEnv {
   AGENT_LAYER_ENABLED: boolean;
   AGENT_LAYER_ROLLOUT_PERCENTAGE: number;
   CRON_SECRET: string;
+  AGENT_API_KEY: string;
+  AGENT_API_TENANT_ID: string;
 }
 
 const JWT_TTL_PATTERN = /^\d+(s|m|h|d)$/i;
@@ -140,6 +142,8 @@ export function validateEnv(config: RawEnv): ValidatedEnv {
       100,
     ),
     CRON_SECRET: String(config.CRON_SECRET ?? ""),
+    AGENT_API_KEY: String(config.AGENT_API_KEY ?? ""),
+    AGENT_API_TENANT_ID: String(config.AGENT_API_TENANT_ID ?? ""),
   };
 
   if (validated.API_PORT <= 0 || validated.API_PORT > 65535) {
