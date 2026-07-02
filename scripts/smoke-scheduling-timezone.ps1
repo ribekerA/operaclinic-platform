@@ -1,4 +1,5 @@
 #!/usr/bin/env pwsh
+# DEPRECATED: Use smoke-scheduling-timezone.mjs (cross-platform Node.js) instead.
 <#
 .SYNOPSIS
     Smoke test E2E de scheduling com timezone real.

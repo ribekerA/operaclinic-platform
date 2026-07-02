@@ -9,7 +9,7 @@ Current status: the core platform, reception, scheduling, observability, control
 - Patient has no app in MVP.
 - Patient interaction in MVP will happen through WhatsApp.
 - Reception of the aesthetic clinic operates through the web panel.
-- Professional app stays out of scope for now.
+- Professional mobile app (`apps/professional-mobile`) is a Flutter prototype in early development — it is **not part of the pilot** and is not built, deployed, or CI-gated in any environment.
 - Check-in belongs to reception.
 - Backend owns scheduling and business rules.
 - Billing remains separated from aesthetic clinic operation.

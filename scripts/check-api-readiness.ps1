@@ -1,3 +1,4 @@
+# DEPRECATED: Use check-api-readiness.mjs (cross-platform Node.js) instead.
 param(
   [Parameter(Mandatory = $false)]
   [string]$BaseUrl = "http://localhost:3001",

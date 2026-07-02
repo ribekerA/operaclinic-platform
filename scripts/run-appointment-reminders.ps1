@@ -1,4 +1,5 @@
 #!/usr/bin/env pwsh
+# DEPRECATED: Use run-appointment-reminders.mjs (cross-platform Node.js) instead.
 <#
 .SYNOPSIS
     Executa o cron de lembretes de appointment 24h para todos os tenants ativos.
