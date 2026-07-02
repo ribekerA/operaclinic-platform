@@ -29,6 +29,9 @@ interface ValidatedEnv {
   EVOLUTION_API_BASE_URL: string;
   EVOLUTION_API_KEY: string;
   WHATSAPP_PROVIDER: string;
+  ANTHROPIC_API_KEY: string;
+  ANTHROPIC_AGENT_ENABLED: boolean;
+  DEMO_RESET_SECRET: string;
 }
 
 const JWT_TTL_PATTERN = /^\d+(s|m|h|d)$/i;
@@ -150,6 +153,9 @@ export function validateEnv(config: RawEnv): ValidatedEnv {
     EVOLUTION_API_BASE_URL: String(config.EVOLUTION_API_BASE_URL ?? "http://localhost:8080"),
     EVOLUTION_API_KEY: String(config.EVOLUTION_API_KEY ?? ""),
     WHATSAPP_PROVIDER: String(config.WHATSAPP_PROVIDER ?? "mock"),
+    ANTHROPIC_API_KEY: String(config.ANTHROPIC_API_KEY ?? ""),
+    ANTHROPIC_AGENT_ENABLED: toBoolean(config.ANTHROPIC_AGENT_ENABLED, false),
+    DEMO_RESET_SECRET: String(config.DEMO_RESET_SECRET ?? ""),
   };
 
   if (validated.API_PORT <= 0 || validated.API_PORT > 65535) {

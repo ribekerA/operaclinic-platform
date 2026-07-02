@@ -50,7 +50,7 @@ export class AnthropicSchedulingAgentService {
     }
 
     try {
-      const [history, professionals, consultationTypes] = await Promise.all([
+      const [history, professionals, consultationTypes, clinic] = await Promise.all([
         this.loadHistory(input.threadId),
         this.prisma.professional.findMany({
           where: { tenantId: input.tenantId, isActive: true },
@@ -62,9 +62,14 @@ export class AnthropicSchedulingAgentService {
           select: { id: true, name: true, durationMinutes: true },
           orderBy: { name: "asc" },
         }),
+        this.prisma.clinic.findUnique({
+          where: { tenantId: input.tenantId },
+          select: { displayName: true },
+        }),
       ]);
 
       const systemPrompt = this.buildSystemPrompt({
+        clinicName: clinic?.displayName ?? "Clínica",
         patientPhone: input.patientPhone,
         patientName: input.patientName,
         professionals,
@@ -381,6 +386,7 @@ export class AnthropicSchedulingAgentService {
   }
 
   private buildSystemPrompt(params: {
+    clinicName: string;
     patientPhone: string;
     patientName: string | null;
     professionals: Array<{ id: string; displayName: string }>;
@@ -410,7 +416,7 @@ export class AnthropicSchedulingAgentService {
       ? `${params.patientPhone} (${params.patientName})`
       : params.patientPhone;
 
-    return `Você é a assistente virtual de agendamento da Clínica. Responda sempre em português brasileiro, com tom cordial e profissional.
+    return `Você é a assistente virtual de agendamento da ${params.clinicName}. Responda sempre em português brasileiro, com tom cordial e profissional.
 
 Data de hoje: ${today}
 Paciente atual: ${patientIdentifier}

@@ -25,12 +25,15 @@
     "prisma:migrate:reset": "prisma migrate reset",
     "prisma:seed": "prisma db seed",
     "smoke:e2e:seed": "ts-node prisma/seed-smoke-e2e.ts",
+    "seed:vitalis": "ts-node prisma/seed-vitalis.ts",
+    "seed:vitalis:reset": "ts-node prisma/seed-vitalis.ts --reset",
     "prisma:studio": "prisma studio"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
     "@nestjs/common": "^11.1.8",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.8",
