@@ -28,3 +28,12 @@ Thumbs.db
 # Local Netlify folder
 .netlify
 .claude/
+
+# Build artifacts / local output logs
+build-output.txt
+
+# Local test/validation reports (never source of truth)
+tmp/
+
+# Supabase CLI temp state (machine-specific)
+supabase/.temp/

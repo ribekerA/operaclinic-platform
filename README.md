@@ -21,6 +21,7 @@ operaclinic-platform/
   apps/
     api/
     web/
+    professional-mobile/   ← Flutter app; in repo but out of scope for pilot launch
   packages/
     shared/
   docs/
@@ -34,6 +35,7 @@ operaclinic-platform/
 
 - `apps/api`: NestJS backend with Prisma, auth, control plane, aesthetic clinic structure, patients, scheduling and reception baseline.
 - `apps/web`: Next.js web panel with platform area, aesthetic clinic area and reception baseline. Build and typecheck scripts reset generated Next artifacts before execution for reproducible local runs.
+- `apps/professional-mobile`: Flutter app for clinic professionals. The code is in the repo but is **not part of the pilot launch** — it is not built, deployed, or covered by CI for the current phase.
 - `packages/shared`: shared contracts used by backend and frontend for auth and reception payloads/responses focused on OperaClinic flows for aesthetic clinics.
 
 ## Implemented modules
