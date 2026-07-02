@@ -26,6 +26,9 @@ interface ValidatedEnv {
   CRON_SECRET: string;
   AGENT_API_KEY: string;
   AGENT_API_TENANT_ID: string;
+  EVOLUTION_API_BASE_URL: string;
+  EVOLUTION_API_KEY: string;
+  WHATSAPP_PROVIDER: string;
 }
 
 const JWT_TTL_PATTERN = /^\d+(s|m|h|d)$/i;
@@ -144,6 +147,9 @@ export function validateEnv(config: RawEnv): ValidatedEnv {
     CRON_SECRET: String(config.CRON_SECRET ?? ""),
     AGENT_API_KEY: String(config.AGENT_API_KEY ?? ""),
     AGENT_API_TENANT_ID: String(config.AGENT_API_TENANT_ID ?? ""),
+    EVOLUTION_API_BASE_URL: String(config.EVOLUTION_API_BASE_URL ?? "http://localhost:8080"),
+    EVOLUTION_API_KEY: String(config.EVOLUTION_API_KEY ?? ""),
+    WHATSAPP_PROVIDER: String(config.WHATSAPP_PROVIDER ?? "mock"),
   };
 
   if (validated.API_PORT <= 0 || validated.API_PORT > 65535) {

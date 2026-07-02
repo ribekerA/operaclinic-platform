@@ -16,8 +16,10 @@ import { WhatsappWebhooksController } from "./whatsapp-webhooks.controller";
 import { WhatsappWebhooksService } from "./whatsapp-webhooks.service";
 import { MessagingProviderFactory } from "./adapters/messaging-provider.factory";
 import { MessagingGateway } from "./gateways/messaging.gateway";
+import { EvolutionWhatsAppAdapter } from "./adapters/evolution-whatsapp.adapter";
 import { MetaWhatsAppAdapter } from "./adapters/meta-whatsapp.adapter";
 import { MockWhatsAppAdapter } from "./adapters/mock-whatsapp.adapter";
+import { MessageDebounceService } from "./message-debounce.service";
 
 @Module({
   imports: [AuthModule, forwardRef(() => AgentModule)],
@@ -39,7 +41,9 @@ import { MockWhatsAppAdapter } from "./adapters/mock-whatsapp.adapter";
     WhatsappWebhooksService,
     MockWhatsAppAdapter,
     MetaWhatsAppAdapter,
+    EvolutionWhatsAppAdapter,
     MessagingProviderFactory,
+    MessageDebounceService,
     MessagingGateway,
   ],
   exports: [

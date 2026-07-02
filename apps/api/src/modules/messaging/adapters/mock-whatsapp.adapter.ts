@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import type {
   MessagingProviderAdapter,
   NormalizedInboundMessageEvent,
+  OutboundButtonsDispatchInput,
   OutboundMessageDispatchInput,
   OutboundMessageDispatchResult,
   ProviderInboundWebhookInput,
@@ -137,6 +138,26 @@ export class MockWhatsAppAdapter implements MessagingProviderAdapter {
       metadata: {
         provider: "mock",
         connectionDisplayName: input.connection.displayName,
+      },
+    };
+  }
+
+  async sendButtons(
+    input: OutboundButtonsDispatchInput,
+  ): Promise<OutboundMessageDispatchResult> {
+    const providerMessageId = `mock_btn_${randomUUID()}`;
+    const numbered = input.buttons.map((b, i) => `${i + 1}. ${b.title}`).join("\n");
+
+    this.logger.debug(
+      `Mock buttons sent to ${input.recipientPhoneNumber}: [${input.buttons.map((b) => b.title).join(", ")}]`,
+    );
+
+    return {
+      providerMessageId,
+      externalThreadId: input.recipientPhoneNumber,
+      metadata: {
+        provider: "mock",
+        textFallback: `${input.text}\n\n${numbered}`,
       },
     };
   }

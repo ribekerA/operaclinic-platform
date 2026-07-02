@@ -1,6 +1,6 @@
 export type MessagingChannel = "WHATSAPP";
 
-export type MessagingIntegrationProvider = "WHATSAPP_MOCK" | "WHATSAPP_META";
+export type MessagingIntegrationProvider = "WHATSAPP_MOCK" | "WHATSAPP_META" | "WHATSAPP_EVOLUTION";
 
 export type MessagingIntegrationConnectionStatus = "ACTIVE" | "INACTIVE";
 
