@@ -8,6 +8,7 @@ RUN corepack enable \
 
 WORKDIR /app
 
+COPY .npmrc ./
 COPY pnpm-workspace.yaml ./
 COPY pnpm-lock.yaml ./
 COPY turbo.json ./
