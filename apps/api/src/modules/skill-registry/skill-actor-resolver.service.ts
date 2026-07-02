@@ -27,6 +27,19 @@ export class SkillActorResolverService {
       throw new BadRequestException("Skill context requires actorUserId.");
     }
 
+    // System actors (agent bridge, LLM agents) bypass DB lookup — they carry
+    // the minimum role set they need and are trusted at the call site.
+    if (actorUserId.startsWith("system:")) {
+      return {
+        id: actorUserId,
+        email: "agent-system@operaclinic.internal",
+        profile: "clinic",
+        roles: [RoleCode.RECEPTION],
+        tenantIds: [tenantId],
+        activeTenantId: tenantId,
+      };
+    }
+
     const actor = await this.prisma.user.findFirst({
       where: {
         id: actorUserId,

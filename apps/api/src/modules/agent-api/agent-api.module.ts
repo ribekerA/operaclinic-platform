@@ -8,5 +8,6 @@ import { AgentKeyGuard } from './guards/agent-key.guard';
   imports: [SchedulingModule],
   controllers: [AgentApiController],
   providers: [AgentApiService, AgentKeyGuard],
+  exports: [AgentApiService],
 })
 export class AgentApiModule {}

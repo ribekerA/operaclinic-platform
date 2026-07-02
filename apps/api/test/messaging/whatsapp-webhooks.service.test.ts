@@ -41,6 +41,10 @@ describe("WhatsappWebhooksService", () => {
     emitThreadUpdated: vi.fn(),
   };
 
+  const debounce = {
+    schedule: vi.fn(),
+  };
+
   beforeEach(() => {
     prisma.webhookEvent.findFirst.mockReset();
     prisma.webhookEvent.create.mockReset();
@@ -56,6 +60,7 @@ describe("WhatsappWebhooksService", () => {
     agentBridge.routeInboundMessage.mockReset();
     messagingGateway.emitThreadActivity.mockReset();
     messagingGateway.emitThreadUpdated.mockReset();
+    debounce.schedule.mockReset();
   });
 
   it("deduplicates inbound webhook processing by providerEventId", async () => {
@@ -101,6 +106,7 @@ describe("WhatsappWebhooksService", () => {
       handoffsService as never,
       agentBridge as never,
       messagingGateway as never,
+      debounce as never,
     );
 
     const result = await service.handleInboundWebhook(
@@ -209,6 +215,7 @@ describe("WhatsappWebhooksService", () => {
       handoffsService as never,
       agentBridge as never,
       messagingGateway as never,
+      debounce as never,
     );
 
     const result = await service.handleInboundWebhook(

@@ -3,6 +3,7 @@ import { createHash, randomUUID } from "crypto";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../database/prisma.service";
 import { AgentOrchestratorService } from "./agent-orchestrator.service";
+import { AnthropicSchedulingAgentService } from "./anthropic-scheduling-agent.service";
 import { HandoffStatus } from "@prisma/client";
 
 const BOOKING_INTENTS = new Set([
@@ -56,6 +57,7 @@ export class AgentMessageBridgeService {
     private readonly prisma: PrismaService,
     private readonly orchestrator: AgentOrchestratorService,
     private readonly configService: ConfigService,
+    private readonly anthropicAgent: AnthropicSchedulingAgentService,
   ) {}
 
   /**
@@ -93,8 +95,30 @@ export class AgentMessageBridgeService {
         return;
       }
 
-      const systemActor = this.buildSystemActor(payload.tenantId);
       const correlationId = payload.correlationId ?? randomUUID();
+
+      // LLM agent path — takes precedence when enabled and API key is set
+      const anthropicEnabled =
+        this.configService.get<boolean>("ANTHROPIC_AGENT_ENABLED", false) &&
+        !!this.configService.get<string>("ANTHROPIC_API_KEY", "");
+
+      if (anthropicEnabled) {
+        this.logger.debug(
+          `AgentBridge: LLM path for thread ${payload.threadId} (tenant: ${payload.tenantId})`,
+        );
+        await this.anthropicAgent.handle({
+          tenantId: payload.tenantId,
+          threadId: payload.threadId,
+          patientId: payload.patientId,
+          patientPhone: payload.senderPhoneNumber,
+          patientName: payload.senderDisplayName,
+          messageText: payload.messageText.trim(),
+          correlationId,
+        });
+        return;
+      }
+
+      const systemActor = this.buildSystemActor(payload.tenantId);
 
       // Decide which agent handles this message
       const threadCtx = await this.resolveThreadContext(
