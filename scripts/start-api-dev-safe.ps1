@@ -1,3 +1,4 @@
+# DEPRECATED: Use start-api-dev-safe.mjs (cross-platform Node.js) instead.
 param(
   [Parameter(Mandatory = $false)]
   [string]$BaseUrl = "http://localhost:3001",

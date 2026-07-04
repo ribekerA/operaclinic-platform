@@ -13,11 +13,11 @@
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "test": "vitest run",
-    "api:ready:check": "powershell -ExecutionPolicy Bypass -File ../../scripts/check-api-readiness.ps1 -BaseUrl http://localhost:3001",
-    "api:ready:strict": "powershell -ExecutionPolicy Bypass -File ../../scripts/check-api-readiness.ps1 -BaseUrl http://localhost:3001 -RequireHealthy",
-    "agent:gate:run": "powershell -ExecutionPolicy Bypass -File ../../scripts/run-agent-gate.ps1 -BaseUrl http://localhost:3001 -IntervalMinutes 15 -DurationHours 0 -FailureRateThreshold 0.05 -P95ThresholdMs 1500 -MinSnapshots 3 -Environment local-runtime -OutputCsv tmp/agent-readiness-local-runtime.csv -OutputReport tmp/agent-gate-local-runtime.md -ValidationDoc ../../tmp/AGENT_GATE_LOCAL_VALIDATION.md",
-    "agent:gate:run:cwd": "powershell -ExecutionPolicy Bypass -File ../../scripts/run-agent-gate.ps1 -BaseUrl http://localhost:3001 -IntervalMinutes 15 -DurationHours 0 -FailureRateThreshold 0.05 -P95ThresholdMs 1500 -MinSnapshots 3 -Environment local-runtime-cwd -OutputCsv tmp/agent-readiness-local-cwd.csv -OutputReport tmp/agent-gate-local-cwd.md -ValidationDoc ../../tmp/AGENT_GATE_LOCAL_VALIDATION.md",
-    "agent:gate:evaluate": "powershell -ExecutionPolicy Bypass -File ../../scripts/evaluate-agent-gate.ps1 -InputCsv agent-readiness-staging-5pct.csv -FailureRateThreshold 0.05 -P95ThresholdMs 1500 -MinSnapshots 3 -OutputMarkdown agent-gate-report-staging-5pct.md",
+    "api:ready:check": "node ../../scripts/check-api-readiness.mjs --base-url http://localhost:3001",
+    "api:ready:strict": "node ../../scripts/check-api-readiness.mjs --base-url http://localhost:3001 --require-healthy",
+    "agent:gate:run": "node ../../scripts/run-agent-gate.mjs --base-url http://localhost:3001 --interval-minutes 15 --duration-hours 0 --failure-rate-threshold 0.05 --p95-threshold-ms 1500 --min-snapshots 3 --environment local-runtime --output-csv tmp/agent-readiness-local-runtime.csv --output-report tmp/agent-gate-local-runtime.md --validation-doc ../../tmp/AGENT_GATE_LOCAL_VALIDATION.md",
+    "agent:gate:run:cwd": "node ../../scripts/run-agent-gate.mjs --base-url http://localhost:3001 --interval-minutes 15 --duration-hours 0 --failure-rate-threshold 0.05 --p95-threshold-ms 1500 --min-snapshots 3 --environment local-runtime-cwd --output-csv tmp/agent-readiness-local-cwd.csv --output-report tmp/agent-gate-local-cwd.md --validation-doc ../../tmp/AGENT_GATE_LOCAL_VALIDATION.md",
+    "agent:gate:evaluate": "node ../../scripts/evaluate-agent-gate.mjs --input-csv agent-readiness-staging-5pct.csv --failure-rate-threshold 0.05 --p95-threshold-ms 1500 --min-snapshots 3 --output-markdown agent-gate-report-staging-5pct.md",
     "clean": "rimraf dist",
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
@@ -25,12 +25,15 @@
     "prisma:migrate:reset": "prisma migrate reset",
     "prisma:seed": "prisma db seed",
     "smoke:e2e:seed": "ts-node prisma/seed-smoke-e2e.ts",
+    "seed:vitalis": "ts-node prisma/seed-vitalis.ts",
+    "seed:vitalis:reset": "ts-node prisma/seed-vitalis.ts --reset",
     "prisma:studio": "prisma studio"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
     "@nestjs/common": "^11.1.8",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.8",

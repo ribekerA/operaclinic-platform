@@ -1,3 +1,4 @@
+# DEPRECATED: Use debug-reception-appointment.mjs (cross-platform Node.js) instead.
 param(
   [Parameter(Mandatory = $false)]
   [string]$BaseUrl = "http://localhost:3002",

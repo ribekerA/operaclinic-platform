@@ -6,17 +6,17 @@
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "turbo run dev --parallel",
-    "start:dev": "powershell -ExecutionPolicy Bypass -File scripts/start-api-dev-safe.ps1 -BaseUrl http://localhost:3001",
-    "api:start:dev": "powershell -ExecutionPolicy Bypass -File scripts/start-api-dev-safe.ps1 -BaseUrl http://localhost:3001",
-    "api:ready:check": "powershell -ExecutionPolicy Bypass -File scripts/check-api-readiness.ps1 -BaseUrl http://localhost:3001",
-    "api:ready:strict": "powershell -ExecutionPolicy Bypass -File scripts/check-api-readiness.ps1 -BaseUrl http://localhost:3001 -RequireHealthy",
+    "start:dev": "node scripts/start-api-dev-safe.mjs --base-url http://localhost:3001",
+    "api:start:dev": "node scripts/start-api-dev-safe.mjs --base-url http://localhost:3001",
+    "api:ready:check": "node scripts/check-api-readiness.mjs --base-url http://localhost:3001",
+    "api:ready:strict": "node scripts/check-api-readiness.mjs --base-url http://localhost:3001 --require-healthy",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "clean": "turbo run clean",
     "format": "turbo run format",
-    "agent:gate:run:local": "powershell -ExecutionPolicy Bypass -File scripts/run-agent-gate.ps1 -BaseUrl http://localhost:3001 -IntervalMinutes 15 -DurationHours 0 -FailureRateThreshold 0.05 -P95ThresholdMs 1500 -MinSnapshots 3 -Environment local-runtime-root -OutputCsv tmp/agent-readiness-local-root.csv -OutputReport tmp/agent-gate-local-root.md -ValidationDoc tmp/AGENT_GATE_LOCAL_VALIDATION.md",
+    "agent:gate:run:local": "node scripts/run-agent-gate.mjs --base-url http://localhost:3001 --interval-minutes 15 --duration-hours 0 --failure-rate-threshold 0.05 --p95-threshold-ms 1500 --min-snapshots 3 --environment local-runtime-root --output-csv tmp/agent-readiness-local-root.csv --output-report tmp/agent-gate-local-root.md --validation-doc tmp/AGENT_GATE_LOCAL_VALIDATION.md",
     "smoke:e2e": "pnpm --filter @operaclinic/api prisma:seed && pnpm --filter @operaclinic/api smoke:e2e:seed && pnpm --filter @operaclinic/web smoke:e2e"
   },
   "devDependencies": {

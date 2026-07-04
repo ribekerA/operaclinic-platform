@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { ConfigService } from "@nestjs/config";
-import { ValidationPipe } from "@nestjs/common";
+import { RequestMethod, ValidationPipe } from "@nestjs/common";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
 import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
@@ -42,7 +42,11 @@ async function bootstrap(): Promise<void> {
     maxAge: 86400,
   });
 
-  app.setGlobalPrefix(prefix);
+  // Exclude /api/agent/v1/* from the global api/v1 prefix so those routes
+  // register at their own path without the version prefix being duplicated.
+  app.setGlobalPrefix(prefix, {
+    exclude: [{ path: 'api/agent/(.*)', method: RequestMethod.ALL }],
+  });
   app.useGlobalFilters(new GlobalExceptionFilter());
   // Use DI-managed interceptors so TraceContextService is properly injected.
   app.useGlobalInterceptors(

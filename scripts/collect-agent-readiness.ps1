@@ -1,3 +1,4 @@
+# DEPRECATED: Use collect-agent-readiness.mjs (cross-platform Node.js) instead.
 param(
   [Parameter(Mandatory = $true)]
   [string]$BaseUrl,

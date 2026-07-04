@@ -38,6 +38,7 @@ enum MessagingChannel {
 enum IntegrationProvider {
   WHATSAPP_MOCK
   WHATSAPP_META
+  WHATSAPP_EVOLUTION
 }
 
 enum IntegrationConnectionStatus {

@@ -23,6 +23,7 @@ import type {
 import { HandoffRequestsService } from "./handoff-requests.service";
 import { IntegrationConnectionsService } from "./integration-connections.service";
 import { MessagingGateway } from "./gateways/messaging.gateway";
+import { MessageDebounceService } from "./message-debounce.service";
 import { MessagingPatientLinkService } from "./messaging-patient-link.service";
 import { MessagingWebhookAbuseProtectionService } from "./messaging-webhook-abuse-protection.service";
 
@@ -39,6 +40,7 @@ export class WhatsappWebhooksService {
     private readonly handoffsService: HandoffRequestsService,
     private readonly agentBridge: AgentMessageBridgeService,
     private readonly messagingGateway: MessagingGateway,
+    private readonly debounce: MessageDebounceService,
   ) {}
 
   async verifyWebhook(
@@ -418,8 +420,7 @@ export class WhatsappWebhooksService {
         }
       }
 
-      // Trigger agent bridge asynchronously — non-blocking, errors are suppressed
-      void this.agentBridge.routeInboundMessage({
+      this.debounce.schedule({
         tenantId: connection.tenantId,
         threadId: result.threadId,
         messageText: event.messageText ?? null,

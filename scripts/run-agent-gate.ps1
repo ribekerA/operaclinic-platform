@@ -1,3 +1,4 @@
+# DEPRECATED: Use run-agent-gate.mjs (cross-platform Node.js) instead.
 param(
   [Parameter(Mandatory = $true)]
   [string]$BaseUrl,

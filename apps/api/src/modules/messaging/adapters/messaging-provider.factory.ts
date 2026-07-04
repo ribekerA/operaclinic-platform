@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { IntegrationProvider } from "@prisma/client";
+import { EvolutionWhatsAppAdapter } from "./evolution-whatsapp.adapter";
 import { MetaWhatsAppAdapter } from "./meta-whatsapp.adapter";
 import { MockWhatsAppAdapter } from "./mock-whatsapp.adapter";
 import type {
@@ -14,8 +15,13 @@ export class MessagingProviderFactory {
   constructor(
     private readonly mockWhatsAppAdapter: MockWhatsAppAdapter,
     private readonly metaWhatsAppAdapter: MetaWhatsAppAdapter,
+    private readonly evolutionWhatsAppAdapter: EvolutionWhatsAppAdapter,
   ) {
-    this.adapters = [this.mockWhatsAppAdapter, this.metaWhatsAppAdapter];
+    this.adapters = [
+      this.mockWhatsAppAdapter,
+      this.metaWhatsAppAdapter,
+      this.evolutionWhatsAppAdapter,
+    ];
   }
 
   getAdapter(provider: IntegrationProvider): MessagingProviderAdapter {

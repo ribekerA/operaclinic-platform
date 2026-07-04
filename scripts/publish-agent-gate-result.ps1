@@ -1,3 +1,4 @@
+# DEPRECATED: Use publish-agent-gate-result.mjs (cross-platform Node.js) instead.
 param(
   [Parameter(Mandatory = $true)]
   [string]$ReportMarkdown,

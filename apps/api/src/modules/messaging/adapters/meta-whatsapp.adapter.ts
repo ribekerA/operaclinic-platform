@@ -12,6 +12,7 @@ import type { Request as ExpressRequest } from "express";
 import type {
   MessagingProviderAdapter,
   NormalizedInboundMessageEvent,
+  OutboundButtonsDispatchInput,
   OutboundMessageDispatchInput,
   OutboundMessageDispatchResult,
   ProviderInboundWebhookInput,
@@ -206,6 +207,72 @@ export class MetaWhatsAppAdapter implements MessagingProviderAdapter {
         provider: "meta",
         phoneNumberId: config.phoneNumberId,
       },
+    };
+  }
+
+  async sendButtons(
+    input: OutboundButtonsDispatchInput,
+  ): Promise<OutboundMessageDispatchResult> {
+    const config = this.resolveConfig(input.connection);
+    const endpoint = `${config.apiBaseUrl.replace(/\/$/, "")}/${config.apiVersion}/${config.phoneNumberId}/messages`;
+    const body = {
+      messaging_product: "whatsapp",
+      to: input.recipientPhoneNumber,
+      type: "interactive",
+      interactive: {
+        type: "button",
+        body: { text: input.text },
+        action: {
+          buttons: input.buttons.slice(0, 3).map((btn) => ({
+            type: "reply",
+            reply: { id: btn.id, title: btn.title.slice(0, 20) },
+          })),
+        },
+      },
+    };
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    const responseText = await response.text();
+    const responseJson = this.safeParseJson(responseText);
+
+    if (!response.ok) {
+      this.logger.warn(
+        `Meta buttons outbound failed for connection ${input.connectionId}: ${response.status}`,
+      );
+      throw new BadGatewayException(
+        `Meta WhatsApp buttons outbound failed with status ${response.status}.`,
+      );
+    }
+
+    const providerMessageId = this.asString(
+      this.asArray(responseJson?.messages)?.[0]
+        ? this.asRecord(this.asArray(responseJson?.messages)[0])?.id
+        : undefined,
+    );
+
+    if (!providerMessageId) {
+      throw new BadGatewayException(
+        "Meta WhatsApp buttons response did not return a provider message id.",
+      );
+    }
+
+    return {
+      providerMessageId,
+      externalThreadId:
+        this.asString(
+          this.asArray(responseJson?.contacts)?.[0]
+            ? this.asRecord(this.asArray(responseJson?.contacts)[0])?.wa_id
+            : undefined,
+        ) ?? input.recipientPhoneNumber,
+      metadata: { provider: "meta", phoneNumberId: config.phoneNumberId },
     };
   }
 

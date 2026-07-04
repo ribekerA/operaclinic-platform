@@ -53,6 +53,15 @@ export interface OutboundMessageDispatchInput {
   context?: Record<string, unknown>;
 }
 
+export interface OutboundButton {
+  id: string;
+  title: string;
+}
+
+export interface OutboundButtonsDispatchInput extends OutboundMessageDispatchInput {
+  buttons: OutboundButton[];
+}
+
 export interface OutboundMessageDispatchResult {
   providerMessageId: string;
   externalThreadId?: string | null;
@@ -76,5 +85,9 @@ export interface MessagingProviderAdapter {
 
   sendTextMessage(
     input: OutboundMessageDispatchInput,
+  ): Promise<OutboundMessageDispatchResult>;
+
+  sendButtons?(
+    input: OutboundButtonsDispatchInput,
   ): Promise<OutboundMessageDispatchResult>;
 }

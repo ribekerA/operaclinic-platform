@@ -61,7 +61,9 @@ function maskToken(value: string | null | undefined): string {
 }
 
 function resolveProviderLabel(provider: MessagingIntegrationProvider): string {
-  return provider === "WHATSAPP_META" ? "Meta WhatsApp" : "WhatsApp mock";
+  if (provider === "WHATSAPP_META") return "Meta WhatsApp";
+  if (provider === "WHATSAPP_EVOLUTION") return "Evolution API (QR code)";
+  return "WhatsApp mock";
 }
 
 export default function ClinicIntegrationsPage() {

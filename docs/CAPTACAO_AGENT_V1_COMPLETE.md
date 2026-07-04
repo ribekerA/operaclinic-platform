@@ -1,6 +1,6 @@
 # Agente de Captação v1 ✅ IMPLEMENTADO
 
-## Status: PRODUÇÃO READY (com testes principais passando)
+## Status: BETA — infraestrutura validada (81/107 testes), pendente validação de campo e correção dos testes de skill-executor
 
 Data: 17 de março de 2026  
 Build: ✅ PASSING (exit code 0)  
@@ -399,6 +399,24 @@ const result = await captacaoAgent.execute(session, input);
 
 ---
 
+## Como comunicar externamente
+
+**Frase segura para pitch e materiais comerciais:**
+
+> "Automação assistida de qualificação de leads via WhatsApp, com escalação garantida para humano quando necessário."
+
+**O que NÃO dizer:**
+- ❌ "IA que capta pacientes sozinha" — o agente sempre escala para humano em casos ambíguos
+- ❌ "Sistema pronto para produção" — está em beta, pendente validação de campo com clínicas reais
+- ❌ Mencionar percentuais de testes ou detalhes técnicos de infraestrutura em contexto comercial
+
+**Enquadramento correto:**
+- O agente **qualifica e roteia** leads; a decisão final de agendamento continua com a recepção
+- A **escalação para humano é garantida** por design — não é fallback, é regra
+- Clientes fundadores entram como **beta** com expectativa explícita de evolução contínua
+
+---
+
 ## ✨ Highlights
 
 🎯 **100% sobre Agent Runtime BASE** - Sem código duplicado  
@@ -406,5 +424,5 @@ const result = await captacaoAgent.execute(session, input);
 🛡️ **Segurança by default** - Guardrails em cada ponto  
 📊 **Observável** - Correlação ID em cada log  
 🧪 **Testado** - 81 testes da infraestrutura passando  
-🚀 **Deploy ready** - Build passing, sem warnings
+🧪 **Beta** - Build passing, 81/107 testes passando, 26 testes pendentes de conversão de mock (skill-executor + agent-runtime legado)
 
