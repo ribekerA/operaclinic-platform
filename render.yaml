@@ -77,6 +77,22 @@ services:
         value: "60000"
       - key: THROTTLE_LIMIT
         value: "60"
+      - key: WHATSAPP_PROVIDER
+        value: mock
+      - key: EVOLUTION_API_BASE_URL
+        value: http://localhost:8080
+      - key: EVOLUTION_API_KEY
+        sync: false
+      - key: ANTHROPIC_AGENT_ENABLED
+        value: "false"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: DEMO_RESET_SECRET
+        sync: false
+      - key: AGENT_API_KEY
+        sync: false
+      - key: AGENT_API_TENANT_ID
+        sync: false
 
   - type: web
     name: operaclinic-web
