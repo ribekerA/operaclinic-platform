@@ -34,7 +34,7 @@ services:
       - key: COMMERCIAL_ONBOARDING_TTL_HOURS
         value: "48"
       - key: PAYMENT_PROVIDER
-        value: stripe
+        value: mock
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET

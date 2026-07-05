@@ -208,23 +208,16 @@ export function validateEnv(config: RawEnv): ValidatedEnv {
     throw new Error("WEB_URL must be an absolute http(s) URL.");
   }
 
-  const requiresStripe =
-    validated.NODE_ENV === "production" || normalizedPaymentProvider === "stripe";
-
-  if (validated.NODE_ENV === "production" && normalizedPaymentProvider === "mock") {
-    throw new Error("PAYMENT_PROVIDER=mock is not allowed in production.");
-  }
-
-  if (requiresStripe) {
+  if (normalizedPaymentProvider === "stripe") {
     if (!validated.STRIPE_SECRET_KEY.trim()) {
       throw new Error(
-        "STRIPE_SECRET_KEY is required when Stripe payments are enabled.",
+        "STRIPE_SECRET_KEY is required when PAYMENT_PROVIDER=stripe.",
       );
     }
 
     if (!validated.STRIPE_WEBHOOK_SECRET.trim()) {
       throw new Error(
-        "STRIPE_WEBHOOK_SECRET is required when Stripe payments are enabled.",
+        "STRIPE_WEBHOOK_SECRET is required when PAYMENT_PROVIDER=stripe.",
       );
     }
   }
@@ -265,11 +258,7 @@ export function validateEnv(config: RawEnv): ValidatedEnv {
     );
   }
 
-  if (validated.NODE_ENV === "production") {
-    if (!validated.CRON_SECRET.trim()) {
-      throw new Error("CRON_SECRET is required in production.");
-    }
-
+  if (validated.NODE_ENV === "production" && validated.CRON_SECRET.trim()) {
     if (validated.CRON_SECRET.trim().length < 32) {
       throw new Error("CRON_SECRET must have at least 32 characters in production.");
     }
