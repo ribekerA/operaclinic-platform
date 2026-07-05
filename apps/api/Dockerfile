@@ -46,6 +46,8 @@ WORKDIR /app
 COPY --from=builder /app/deploy ./
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/prisma ./prisma
+COPY apps/api/start.sh ./start.sh
+RUN chmod +x ./start.sh
 
 # Gera o Prisma client no BUILD do runner (não no CMD).
 # A engine já foi baixada pelo postinstall do pnpm deploy no builder.
@@ -57,4 +59,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
   CMD curl -f http://localhost:3001/api/v1/health || exit 1
 
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema=./prisma/schema.prisma && node dist/src/main.js"]
+CMD ["./start.sh"]
