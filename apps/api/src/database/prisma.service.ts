@@ -25,9 +25,13 @@ export class PrismaService
     });
   }
 
-  async onModuleInit(): Promise<void> {
-    await this.$connect();
-  }
+  // onModuleInit intentionally does NOT call $connect(). Prisma connects lazily
+  // on the first query. Calling $connect() eagerly causes a rolling-deploy
+  // deadlock on Render's free tier: the old container holds all connection
+  // slots until the new one passes its health check, but the new one can't
+  // pass the health check because it can't connect. The health endpoint does
+  // not query the DB, so skipping $connect() here is safe.
+  async onModuleInit(): Promise<void> {}
 
   async onModuleDestroy(): Promise<void> {
     await this.$disconnect();
