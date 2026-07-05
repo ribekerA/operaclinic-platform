@@ -8,23 +8,18 @@ import { GlobalExceptionFilter } from "./common/filters/global-exception.filter"
 import { RequestIdInterceptor } from "./common/interceptors/request-id.interceptor";
 import { RequestLoggingInterceptor } from "./common/interceptors/request-logging.interceptor";
 
-// During a rolling deploy on Render's free tier the old container holds all
-// DB connection slots until the new one passes its health check. Background
-// services (billing dunning, etc.) fire immediately and may throw unhandled
-// rejections when they can't connect. Keep the process alive so the health
-// check can return 200, Render stops the old container, DB slots free up, and
-// subsequent queries succeed. bootstrap() failures still crash the process.
 process.on("unhandledRejection", (reason: unknown) => {
   console.error(
     "[WARN] Unhandled promise rejection (process kept alive):",
-    reason instanceof Error ? reason.message : reason,
+    reason instanceof Error ? reason.stack : reason,
   );
 });
 process.on("uncaughtException", (err: Error) => {
-  console.error("[WARN] Uncaught exception (process kept alive):", err.message);
+  console.error("[WARN] Uncaught exception (process kept alive):", err.stack);
 });
 
 async function bootstrap(): Promise<void> {
+  console.log("[STARTUP] bootstrap() called");
   const app = await NestFactory.create(AppModule, {
     rawBody: true,
   });
@@ -78,6 +73,13 @@ async function bootstrap(): Promise<void> {
   );
 
   await app.listen(port);
+  console.log(`[STARTUP] Application listening on port ${port}`);
 }
 
-void bootstrap();
+bootstrap().catch((err: unknown) => {
+  console.error(
+    "[FATAL] Bootstrap failed — exiting:",
+    err instanceof Error ? err.stack : err,
+  );
+  process.exit(1);
+});
