@@ -51,4 +51,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
   CMD curl -f http://localhost:3001/api/v1/health || exit 1
 
-CMD ["sh", "-c", "node_modules/.bin/prisma generate --schema=./prisma/schema.prisma && node_modules/.bin/prisma migrate deploy --schema=./prisma/schema.prisma && node dist/src/main.js"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema=./prisma/schema.prisma && node dist/src/main.js"]
