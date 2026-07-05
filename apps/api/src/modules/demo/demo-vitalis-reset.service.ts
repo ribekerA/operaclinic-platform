@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../../database/prisma.service";
 import {
   AppointmentStatus,
@@ -6,11 +6,11 @@ import {
   IntegrationProvider,
   MessagingChannel,
   PatientContactType,
+  RoleCode,
   ScheduleDayOfWeek,
   SubscriptionStatus,
   TenantStatus,
   UserStatus,
-  RoleCode,
 } from "@prisma/client";
 import { hash } from "bcryptjs";
 
@@ -51,6 +51,32 @@ export interface ResetResult {
   };
 }
 
+const ROLE_CATALOG = [
+  { code: RoleCode.SUPER_ADMIN, name: "Super Admin", description: "Global control plane administrator." },
+  { code: RoleCode.PLATFORM_ADMIN, name: "Platform Admin", description: "Platform administration operations." },
+  { code: RoleCode.TENANT_ADMIN, name: "Tenant Admin", description: "Clinic tenant administration." },
+  { code: RoleCode.CLINIC_MANAGER, name: "Clinic Manager", description: "Clinic structure and operational configuration management." },
+  { code: RoleCode.RECEPTION, name: "Reception", description: "Clinic reception operations." },
+  { code: RoleCode.PROFESSIONAL, name: "Professional", description: "Healthcare professional role." },
+];
+
+const VITALIS_SERVICES = [
+  { name: "Avaliação Inicial Vitalis", durationMinutes: 30, isFirstVisit: true, isReturnVisit: false, aestheticArea: "FACIAL" as const, invasivenessLevel: "NON_INVASIVE" as const, recoveryDays: 0, recommendedFrequencyDays: 365 },
+  { name: "Limpeza de Pele Profunda", durationMinutes: 60, isFirstVisit: false, isReturnVisit: false, aestheticArea: "FACIAL" as const, invasivenessLevel: "NON_INVASIVE" as const, recoveryDays: 0, recommendedFrequencyDays: 30 },
+  { name: "Toxina Botulínica", durationMinutes: 30, isFirstVisit: false, isReturnVisit: false, aestheticArea: "FACIAL" as const, invasivenessLevel: "MINIMALLY_INVASIVE" as const, recoveryDays: 3, recommendedFrequencyDays: 120 },
+  { name: "Preenchimento Labial", durationMinutes: 45, isFirstVisit: false, isReturnVisit: false, aestheticArea: "FACIAL" as const, invasivenessLevel: "MINIMALLY_INVASIVE" as const, recoveryDays: 3, recommendedFrequencyDays: 180 },
+  { name: "Microagulhamento Facial", durationMinutes: 45, isFirstVisit: false, isReturnVisit: false, aestheticArea: "FACIAL" as const, invasivenessLevel: "MINIMALLY_INVASIVE" as const, recoveryDays: 7, recommendedFrequencyDays: 30 },
+  { name: "Radiofrequência Facial", durationMinutes: 60, isFirstVisit: false, isReturnVisit: false, aestheticArea: "FACIAL" as const, invasivenessLevel: "NON_INVASIVE" as const, recoveryDays: 1, recommendedFrequencyDays: 21 },
+];
+
+const VITALIS_PATIENTS = [
+  { fullName: "Sofia Almeida", documentNumber: "55500011101", birthDate: "1993-03-15", phone: "5511981110001" },
+  { fullName: "Bruno Carvalho", documentNumber: "55500011102", birthDate: "1988-07-22", phone: "5511981110002" },
+  { fullName: "Mariana Costa", documentNumber: "55500011103", birthDate: "1995-11-08", phone: "5511981110003" },
+  { fullName: "Lucas Pereira", documentNumber: "55500011104", birthDate: "1990-01-30", phone: "5511981110004" },
+  { fullName: "Beatriz Santos", documentNumber: "55500011105", birthDate: "1997-05-19", phone: "5511981110005" },
+];
+
 @Injectable()
 export class DemoVitalisResetService {
   private readonly logger = new Logger(DemoVitalisResetService.name);
@@ -58,71 +84,81 @@ export class DemoVitalisResetService {
   constructor(private readonly prisma: PrismaService) {}
 
   async reset(): Promise<ResetResult> {
-    this.logger.log("DemoVitalisReset: starting reset");
+    this.logger.log("DemoVitalisReset: starting full upsert + reset");
 
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { slug: VITALIS_SLUG },
-      select: { id: true },
-    });
+    // Ensure foundational data (roles + base plan)
+    await this.ensureRoles();
+    const planId = await this.ensureBasePlan();
 
-    if (!tenant) {
-      throw new NotFoundException(
-        `Vitalis demo tenant not found. Run 'pnpm --filter api seed:vitalis' first.`,
-      );
-    }
-
-    const tenantId = tenant.id;
-
-    // Ensure static data exists
-    await this.ensureStaticData(tenantId);
+    // Upsert Vitalis tenant + static structure
+    const tenantId = await this.ensureTenant(planId);
+    await this.ensureStructure(tenantId);
+    await this.ensureServices(tenantId);
+    await this.ensureUsers(tenantId);
+    await this.ensurePatients(tenantId);
+    await this.ensureIntegrationConnection(tenantId);
 
     // Clear transient data
-    const { count: apptCount } = await this.prisma.appointment.deleteMany({
-      where: { tenantId, idempotencyKey: { startsWith: "demo-vitalis-" } },
-    });
+    const cleared = await this.clearTransientData(tenantId);
 
-    const threads = await this.prisma.messageThread.findMany({
-      where: { tenantId },
-      select: { id: true },
-    });
-    const threadIds = threads.map((t) => t.id);
-
-    let eventsCount = 0;
-    if (threadIds.length > 0) {
-      const { count } = await this.prisma.messageEvent.deleteMany({
-        where: { threadId: { in: threadIds } },
-      });
-      eventsCount = count;
-    }
-
-    const { count: threadsCount } = await this.prisma.messageThread.deleteMany({
-      where: { tenantId },
-    });
-
-    this.logger.log(
-      `DemoVitalisReset: cleared appointments=${apptCount} threads=${threadsCount} events=${eventsCount}`,
-    );
-
-    // Re-seed appointments
+    // Re-seed demo appointments
     const created = await this.createDemoAppointments(tenantId);
 
-    this.logger.log(`DemoVitalisReset: created ${created} appointments`);
+    this.logger.log(
+      `DemoVitalisReset: done — tenantId=${tenantId} cleared=${JSON.stringify(cleared)} created=${created}`,
+    );
 
-    return {
-      ok: true,
-      tenantId,
-      cleared: { appointments: apptCount, threads: threadsCount, events: eventsCount },
-      created: { appointments: created },
-    };
+    return { ok: true, tenantId, cleared, created: { appointments: created } };
   }
 
-  private async ensureStaticData(tenantId: string): Promise<void> {
-    // Upsert clinic
+  private async ensureRoles(): Promise<void> {
+    for (const r of ROLE_CATALOG) {
+      await this.prisma.role.upsert({
+        where: { code: r.code },
+        update: { name: r.name, description: r.description },
+        create: { code: r.code, name: r.name, description: r.description },
+      });
+    }
+  }
+
+  private async ensureBasePlan(): Promise<string> {
+    const existing = await this.prisma.plan.findFirst({
+      where: { isActive: true },
+      orderBy: { createdAt: "asc" },
+      select: { id: true },
+    });
+    if (existing) return existing.id;
+
+    const plan = await this.prisma.plan.create({
+      data: {
+        code: "BASE_MVP",
+        name: "Base MVP",
+        description: "Plano base para onboarding inicial.",
+        priceCents: 0,
+        isActive: true,
+      },
+      select: { id: true },
+    });
+    return plan.id;
+  }
+
+  private async ensureTenant(planId: string): Promise<string> {
+    const tenant = await this.prisma.tenant.upsert({
+      where: { slug: VITALIS_SLUG },
+      update: { name: "Clínica Vitalis", status: TenantStatus.ACTIVE },
+      create: {
+        slug: VITALIS_SLUG,
+        name: "Clínica Vitalis",
+        status: TenantStatus.ACTIVE,
+        timezone: "America/Sao_Paulo",
+      },
+    });
+
     await this.prisma.clinic.upsert({
-      where: { tenantId },
+      where: { tenantId: tenant.id },
       update: { displayName: "Clínica Vitalis", isActive: true },
       create: {
-        tenantId,
+        tenantId: tenant.id,
         displayName: "Clínica Vitalis",
         legalName: "Clínica Vitalis Estética LTDA",
         contactEmail: "contato@vitalis.demo",
@@ -132,28 +168,165 @@ export class DemoVitalisResetService {
       },
     });
 
-    // Ensure subscription exists
-    const sub = await this.prisma.subscription.findFirst({ where: { tenantId } });
-    if (!sub) {
-      const plan = await this.prisma.plan.findFirst({ where: { isActive: true }, orderBy: { createdAt: "asc" } });
-      if (plan) {
-        await this.prisma.subscription.create({
-          data: {
-            tenantId,
-            planId: plan.id,
-            status: SubscriptionStatus.TRIAL,
-            startsAt: new Date(),
-            endsAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-          },
-        });
-      }
+    const existingSub = await this.prisma.subscription.findFirst({ where: { tenantId: tenant.id } });
+    if (!existingSub) {
+      await this.prisma.subscription.create({
+        data: {
+          tenantId: tenant.id,
+          planId,
+          status: SubscriptionStatus.TRIAL,
+          startsAt: new Date(),
+          endsAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+        },
+      });
     }
 
-    // Ensure integration connection
-    const conn = await this.prisma.integrationConnection.findFirst({
-      where: { tenantId, channel: MessagingChannel.WHATSAPP },
+    return tenant.id;
+  }
+
+  private async ensureStructure(tenantId: string): Promise<{ unitId: string; proAnaId: string; proCarlosId: string }> {
+    const unit = await this.prisma.unit.upsert({
+      where: { tenantId_name: { tenantId, name: "Vitalis - Unidade Centro" } },
+      update: { isActive: true },
+      create: { tenantId, name: "Vitalis - Unidade Centro", description: "Unidade principal da Clínica Vitalis", isActive: true },
     });
-    if (!conn) {
+
+    const specialty = await this.prisma.specialty.upsert({
+      where: { tenantId_name: { tenantId, name: "Estética Avançada" } },
+      update: { isActive: true },
+      create: { tenantId, name: "Estética Avançada", isActive: true },
+    });
+
+    const proAna = await this.prisma.professional.upsert({
+      where: { tenantId_professionalRegister: { tenantId, professionalRegister: "VITALIS-ANA-001" } },
+      update: { isActive: true },
+      create: { tenantId, fullName: "Dra. Ana Ferreira", displayName: "Dra. Ana", professionalRegister: "VITALIS-ANA-001", visibleForSelfBooking: true, isActive: true },
+    });
+
+    const proCarlos = await this.prisma.professional.upsert({
+      where: { tenantId_professionalRegister: { tenantId, professionalRegister: "VITALIS-CARLOS-001" } },
+      update: { isActive: true },
+      create: { tenantId, fullName: "Dr. Carlos Lima", displayName: "Dr. Carlos", professionalRegister: "VITALIS-CARLOS-001", visibleForSelfBooking: true, isActive: true },
+    });
+
+    for (const pro of [proAna, proCarlos]) {
+      const existingPU = await this.prisma.professionalUnit.findFirst({ where: { professionalId: pro.id, unitId: unit.id } });
+      if (!existingPU) {
+        await this.prisma.professionalUnit.create({ data: { tenantId, professionalId: pro.id, unitId: unit.id } });
+      }
+      const existingPS = await this.prisma.professionalSpecialty.findFirst({ where: { professionalId: pro.id, specialtyId: specialty.id } });
+      if (!existingPS) {
+        await this.prisma.professionalSpecialty.create({ data: { tenantId, professionalId: pro.id, specialtyId: specialty.id } });
+      }
+
+      await this.prisma.professionalSchedule.deleteMany({ where: { tenantId, professionalId: pro.id } });
+
+      const weekdays = [ScheduleDayOfWeek.MONDAY, ScheduleDayOfWeek.TUESDAY, ScheduleDayOfWeek.WEDNESDAY, ScheduleDayOfWeek.THURSDAY, ScheduleDayOfWeek.FRIDAY];
+      await this.prisma.professionalSchedule.createMany({
+        data: [
+          ...weekdays.flatMap((dayOfWeek) => [
+            { tenantId, professionalId: pro.id, unitId: unit.id, dayOfWeek, startTime: new Date("1970-01-01T08:00:00.000Z"), endTime: new Date("1970-01-01T12:00:00.000Z"), slotIntervalMinutes: 30, isActive: true },
+            { tenantId, professionalId: pro.id, unitId: unit.id, dayOfWeek, startTime: new Date("1970-01-01T13:00:00.000Z"), endTime: new Date("1970-01-01T17:00:00.000Z"), slotIntervalMinutes: 30, isActive: true },
+          ]),
+          { tenantId, professionalId: pro.id, unitId: unit.id, dayOfWeek: ScheduleDayOfWeek.SATURDAY, startTime: new Date("1970-01-01T08:00:00.000Z"), endTime: new Date("1970-01-01T12:00:00.000Z"), slotIntervalMinutes: 30, isActive: true },
+        ],
+      });
+    }
+
+    return { unitId: unit.id, proAnaId: proAna.id, proCarlosId: proCarlos.id };
+  }
+
+  private async ensureServices(tenantId: string): Promise<void> {
+    for (const svc of VITALIS_SERVICES) {
+      await this.prisma.consultationType.upsert({
+        where: { tenantId_name: { tenantId, name: svc.name } },
+        update: { ...svc, isActive: true },
+        create: { tenantId, ...svc, isActive: true },
+      });
+    }
+  }
+
+  private async ensureUsers(tenantId: string): Promise<void> {
+    const passwordHash = await hash(VITALIS_DEMO_PASSWORD, 10);
+
+    const proAna = await this.prisma.professional.findFirst({
+      where: { tenantId, professionalRegister: "VITALIS-ANA-001" },
+      select: { id: true },
+    });
+    const proCarlos = await this.prisma.professional.findFirst({
+      where: { tenantId, professionalRegister: "VITALIS-CARLOS-001" },
+      select: { id: true },
+    });
+
+    const users = [
+      { email: "admin@vitalis.demo", fullName: "Admin Vitalis", role: RoleCode.TENANT_ADMIN, proId: null },
+      { email: "recepcao@vitalis.demo", fullName: "Recepção Vitalis", role: RoleCode.RECEPTION, proId: null },
+      { email: "ana@vitalis.demo", fullName: "Dra. Ana Ferreira", role: RoleCode.PROFESSIONAL, proId: proAna?.id ?? null },
+      { email: "carlos@vitalis.demo", fullName: "Dr. Carlos Lima", role: RoleCode.PROFESSIONAL, proId: proCarlos?.id ?? null },
+    ];
+
+    for (const u of users) {
+      const user = await this.prisma.user.upsert({
+        where: { email: u.email },
+        update: { fullName: u.fullName, passwordHash, status: UserStatus.ACTIVE },
+        create: { email: u.email, fullName: u.fullName, passwordHash, status: UserStatus.ACTIVE },
+      });
+
+      const role = await this.prisma.role.findUnique({ where: { code: u.role } });
+      if (role) {
+        const existingRole = await this.prisma.userRole.findFirst({ where: { userId: user.id, roleId: role.id, tenantId } });
+        if (!existingRole) {
+          await this.prisma.userRole.create({ data: { userId: user.id, roleId: role.id, tenantId } });
+        }
+      }
+
+      if (u.proId) {
+        await this.prisma.professional.update({ where: { id: u.proId }, data: { userId: user.id } });
+      }
+    }
+  }
+
+  private async ensurePatients(tenantId: string): Promise<void> {
+    for (const p of VITALIS_PATIENTS) {
+      const normalized = normalizePhone(p.phone);
+
+      let patient = await this.prisma.patient.findFirst({
+        where: { tenantId, documentNumber: p.documentNumber },
+        select: { id: true },
+      });
+
+      if (!patient) {
+        patient = await this.prisma.patient.create({
+          data: { tenantId, fullName: p.fullName, documentNumber: p.documentNumber, birthDate: new Date(p.birthDate), isActive: true },
+          select: { id: true },
+        });
+      } else {
+        await this.prisma.patient.update({ where: { id: patient.id }, data: { fullName: p.fullName, birthDate: new Date(p.birthDate), isActive: true } });
+      }
+
+      const existingContact = await this.prisma.patientContact.findFirst({
+        where: { tenantId, type: PatientContactType.PHONE, normalizedValue: normalized },
+        select: { id: true, patientId: true },
+      });
+
+      if (existingContact && existingContact.patientId !== patient.id) {
+        await this.prisma.patientContact.delete({ where: { id: existingContact.id } });
+      }
+
+      await this.prisma.patientContact.upsert({
+        where: { tenantId_type_normalizedValue: { tenantId, type: PatientContactType.PHONE, normalizedValue: normalized } },
+        update: { patientId: patient.id, value: p.phone, isPrimary: true },
+        create: { tenantId, patientId: patient.id, type: PatientContactType.PHONE, value: p.phone, normalizedValue: normalized, isPrimary: true },
+      });
+    }
+  }
+
+  private async ensureIntegrationConnection(tenantId: string): Promise<void> {
+    const existing = await this.prisma.integrationConnection.findFirst({
+      where: { tenantId, channel: MessagingChannel.WHATSAPP },
+      select: { id: true },
+    });
+    if (!existing) {
       await this.prisma.integrationConnection.create({
         data: {
           tenantId,
@@ -167,40 +340,38 @@ export class DemoVitalisResetService {
     }
   }
 
-  private async createDemoAppointments(tenantId: string): Promise<number> {
-    const proAna = await this.prisma.professional.findFirst({
-      where: { tenantId, professionalRegister: "VITALIS-ANA-001" },
-      select: { id: true },
-    });
-    const proCarlos = await this.prisma.professional.findFirst({
-      where: { tenantId, professionalRegister: "VITALIS-CARLOS-001" },
-      select: { id: true },
-    });
-    const unit = await this.prisma.unit.findFirst({
-      where: { tenantId, name: "Vitalis - Unidade Centro" },
-      select: { id: true },
-    });
-    const adminUser = await this.prisma.user.findFirst({
-      where: { email: "admin@vitalis.demo" },
-      select: { id: true },
+  private async clearTransientData(tenantId: string): Promise<{ appointments: number; threads: number; events: number }> {
+    const { count: appointments } = await this.prisma.appointment.deleteMany({
+      where: { tenantId, idempotencyKey: { startsWith: "demo-vitalis-" } },
     });
 
-    if (!proAna || !proCarlos || !unit) {
-      throw new NotFoundException("Vitalis professionals/unit not found. Run full seed first.");
+    const threads = await this.prisma.messageThread.findMany({ where: { tenantId }, select: { id: true } });
+    const threadIds = threads.map((t) => t.id);
+
+    let events = 0;
+    if (threadIds.length > 0) {
+      const { count } = await this.prisma.messageEvent.deleteMany({ where: { threadId: { in: threadIds } } });
+      events = count;
     }
 
-    const services = await this.prisma.consultationType.findMany({
-      where: { tenantId },
-      select: { id: true, name: true, durationMinutes: true },
-    });
+    const { count: threadsCount } = await this.prisma.messageThread.deleteMany({ where: { tenantId } });
+
+    return { appointments, threads: threadsCount, events };
+  }
+
+  private async createDemoAppointments(tenantId: string): Promise<number> {
+    const proAna = await this.prisma.professional.findFirst({ where: { tenantId, professionalRegister: "VITALIS-ANA-001" }, select: { id: true } });
+    const proCarlos = await this.prisma.professional.findFirst({ where: { tenantId, professionalRegister: "VITALIS-CARLOS-001" }, select: { id: true } });
+    const unit = await this.prisma.unit.findFirst({ where: { tenantId, name: "Vitalis - Unidade Centro" }, select: { id: true } });
+    const adminUser = await this.prisma.user.findFirst({ where: { email: "admin@vitalis.demo" }, select: { id: true } });
+
+    if (!proAna || !proCarlos || !unit) return 0;
+
+    const services = await this.prisma.consultationType.findMany({ where: { tenantId }, select: { id: true, name: true, durationMinutes: true } });
     const svcMap = new Map(services.map((s) => [s.name, s]));
 
     const patients = await this.prisma.patientContact.findMany({
-      where: {
-        tenantId,
-        type: PatientContactType.PHONE,
-        normalizedValue: { in: ["5511981110001", "5511981110002", "5511981110003", "5511981110004", "5511981110005"] },
-      },
+      where: { tenantId, type: PatientContactType.PHONE, normalizedValue: { in: ["5511981110001", "5511981110002", "5511981110003", "5511981110004", "5511981110005"] } },
       select: { patientId: true, normalizedValue: true },
     });
     const patientByPhone = new Map(patients.map((p) => [p.normalizedValue, p.patientId]));
@@ -208,18 +379,9 @@ export class DemoVitalisResetService {
     const now = roundUpToQuarterHour(new Date());
 
     type Fixture = {
-      key: string;
-      phone: string;
-      proId: string;
-      serviceName: string;
-      startsAt: Date;
-      status: AppointmentStatus;
-      room: string;
-      confirmedAt?: Date;
-      checkedInAt?: Date;
-      startedAt?: Date;
-      completedAt?: Date;
-      notes?: string;
+      key: string; phone: string; proId: string; serviceName: string;
+      startsAt: Date; status: AppointmentStatus; room: string;
+      confirmedAt?: Date; checkedInAt?: Date; startedAt?: Date; completedAt?: Date; notes?: string;
     };
 
     const fixtures: Fixture[] = [
@@ -239,7 +401,6 @@ export class DemoVitalisResetService {
     for (const f of fixtures) {
       const svc = svcMap.get(f.serviceName);
       if (!svc) continue;
-
       const patientId = patientByPhone.get(f.phone);
       if (!patientId) continue;
 

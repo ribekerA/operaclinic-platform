@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Controller,
   Post,
   UseGuards,
@@ -10,6 +11,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { PrismaService } from "../../database/prisma.service";
 import { timingSafeEqual } from "crypto";
 import type { Request } from "express";
 import { DemoVitalisResetService, ResetResult } from "./demo-vitalis-reset.service";
@@ -47,7 +49,30 @@ class DemoResetGuard implements CanActivate {
 
 @Controller("demo")
 export class DemoController {
-  constructor(private readonly resetService: DemoVitalisResetService) {}
+  constructor(
+    private readonly resetService: DemoVitalisResetService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  /**
+   * Bootstrap endpoint — no auth, but only works once (when the Vitalis tenant
+   * does not yet exist). Subsequent calls return 409 Conflict.
+   * Use POST /demo/vitalis/reset (with x-demo-reset-token) for resets.
+   */
+  @Post("vitalis/init")
+  @HttpCode(HttpStatus.OK)
+  async initVitalis(): Promise<ResetResult> {
+    const existing = await this.prisma.tenant.findUnique({
+      where: { slug: "vitalis" },
+      select: { id: true },
+    });
+    if (existing) {
+      throw new ConflictException(
+        "Vitalis demo tenant already exists. Use POST /demo/vitalis/reset to refresh demo data.",
+      );
+    }
+    return this.resetService.reset();
+  }
 
   @Post("vitalis/reset")
   @UseGuards(DemoResetGuard)
