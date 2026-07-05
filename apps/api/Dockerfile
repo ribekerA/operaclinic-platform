@@ -31,6 +31,13 @@ RUN pnpm --filter @operaclinic/api run build
 # que @prisma/engines e prisma rodem seus postinstall (baixam binaries)
 RUN pnpm --filter @operaclinic/api deploy --prod /app/deploy
 
+# Copia o Prisma client JÁ GERADO para o diretório de deploy.
+# pnpm deploy --prod instala o pacote base @prisma/client do npm (sem os
+# arquivos gerados pelo prisma generate). Ao copiar o .prisma gerado aqui no
+# builder evitamos ter que rodar prisma generate de novo no CMD do runner,
+# o que eliminaria a latência de ~30-60s no startup de produção.
+RUN cp -r /app/apps/api/node_modules/.prisma /app/deploy/node_modules/ 2>/dev/null || true
+
 # =============================================================================
 # Stage 2 — runner
 # =============================================================================
