@@ -20,7 +20,10 @@ export interface AnthropicAgentResult {
 @Injectable()
 export class AnthropicSchedulingAgentService {
   private readonly logger = new Logger(AnthropicSchedulingAgentService.name);
-  private readonly anthropic: Anthropic;
+  // Null when ANTHROPIC_API_KEY is not configured. The Anthropic SDK constructor
+  // throws for an empty apiKey, so we skip instantiation and return FAILED from
+  // handle() instead — this lets the app start on Render even without the key.
+  private readonly anthropic: Anthropic | null;
 
   constructor(
     private readonly config: ConfigService,
@@ -28,9 +31,8 @@ export class AnthropicSchedulingAgentService {
     private readonly agentApi: AgentApiService,
     private readonly skillExecutor: SkillExecutorService,
   ) {
-    this.anthropic = new Anthropic({
-      apiKey: this.config.get<string>("ANTHROPIC_API_KEY", ""),
-    });
+    const apiKey = this.config.get<string>("ANTHROPIC_API_KEY", "");
+    this.anthropic = apiKey ? new Anthropic({ apiKey }) : null;
   }
 
   async handle(input: {
@@ -134,6 +136,10 @@ export class AnthropicSchedulingAgentService {
     messages: Anthropic.MessageParam[];
     systemPrompt: string;
   }): Promise<AnthropicAgentResult> {
+    if (!this.anthropic) {
+      return { replyText: null, status: "FAILED" };
+    }
+
     const { tenantId, patientPhone, patientName, threadId, systemPrompt } = params;
     const messages = [...params.messages];
     let iterations = 0;
