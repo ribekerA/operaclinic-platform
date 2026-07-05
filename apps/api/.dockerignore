@@ -1,0 +1,54 @@
+# ── Version control ───────────────────────────────────────────────────────────
+.git
+.gitignore
+.gitattributes
+
+# ── Node modules (rebuilt inside Docker) ─────────────────────────────────────
+node_modules
+**/node_modules
+
+# ── Build artefacts ───────────────────────────────────────────────────────────
+dist
+**/dist
+
+# ── TypeScript incremental cache ──────────────────────────────────────────────
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# ── Tests ─────────────────────────────────────────────────────────────────────
+test
+**/*.spec.ts
+**/*.test.ts
+vitest.config.ts
+coverage
+
+# ── Local dev / env ───────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Logs & temp ───────────────────────────────────────────────────────────────
+*.log
+tmp
+tmp/
+agent-test-results.json
+test-results.txt
+test_output*.txt
+plans.json
+check-plans.ts
+tmp-check-stripe-keys.js
+
+# ── Editor / OS ───────────────────────────────────────────────────────────────
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# ── Docker itself ─────────────────────────────────────────────────────────────
+Dockerfile
+.dockerignore
+
+# ── CI / tooling ─────────────────────────────────────────────────────────────
+.turbo
+.eslintrc*
+.prettierrc*
