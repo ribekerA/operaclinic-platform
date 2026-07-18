@@ -16,6 +16,7 @@ import { AuthenticatedUser } from "../../auth/interfaces/authenticated-user.inte
 import { SCHEDULING_ADMIN_ROLES } from "./scheduling.constants";
 import { AUDIT_ACTIONS } from "../../common/audit/audit.constants";
 import { AuditService } from "../../common/audit/audit.service";
+import { PlanEntitlementsService } from "../../common/plan-entitlements/plan-entitlements.service";
 import { PrismaService } from "../../database/prisma.service";
 import { CancelAppointmentDto } from "./dto/cancel-appointment.dto";
 import { CreateAppointmentDto } from "./dto/create-appointment.dto";
@@ -101,6 +102,7 @@ export class AppointmentsService {
     private readonly referencesService: SchedulingReferencesService,
     private readonly timezoneService: SchedulingTimezoneService,
     private readonly auditService: AuditService,
+    private readonly planEntitlements: PlanEntitlementsService,
     private readonly professionalWorkspaceGateway: ProfessionalWorkspaceGateway,
     private readonly receptionGateway: ReceptionGateway,
   ) {}
@@ -137,6 +139,7 @@ export class AppointmentsService {
           "Only clinic managers and admins can schedule appointments outside configured hours.",
         );
       }
+      await this.planEntitlements.assertFeatureEnabled(tenantId, "scheduleOverride", actor);
     }
 
     if (startsAt.getTime() <= currentInstant.getTime()) {
@@ -515,6 +518,7 @@ export class AppointmentsService {
           "Only clinic managers and admins can reschedule appointments outside configured hours.",
         );
       }
+      await this.planEntitlements.assertFeatureEnabled(tenantId, "scheduleOverride", actor);
     }
 
     if (startsAt.getTime() <= currentInstant.getTime()) {

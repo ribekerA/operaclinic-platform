@@ -4,16 +4,19 @@ import type {
 } from "@operaclinic/shared";
 import { RoleCode } from "@prisma/client";
 import { CurrentUser } from "../../auth/decorators/current-user.decorator";
+import { RequirePlanFeature } from "../../auth/decorators/require-plan-feature.decorator";
 import { Roles } from "../../auth/decorators/roles.decorator";
 import { AuthGuard } from "../../auth/guards/auth.guard";
+import { PlanFeatureGuard } from "../../auth/guards/plan-feature.guard";
 import { RoleGuard } from "../../auth/guards/role.guard";
 import { AuthenticatedUser } from "../../auth/interfaces/authenticated-user.interface";
 import { CreateMessageTemplateDto } from "./dto/create-message-template.dto";
 import { MessageTemplatesService } from "./message-templates.service";
 
 @Controller("messaging/templates")
-@UseGuards(AuthGuard, RoleGuard)
+@UseGuards(AuthGuard, RoleGuard, PlanFeatureGuard)
 @Roles(RoleCode.TENANT_ADMIN, RoleCode.CLINIC_MANAGER)
+@RequirePlanFeature("messagingTemplates")
 export class MessageTemplatesController {
   constructor(
     private readonly messageTemplatesService: MessageTemplatesService,

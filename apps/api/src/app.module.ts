@@ -15,6 +15,7 @@ import { validateEnv } from "./config/env.validation";
 import { DatabaseModule } from "./database/database.module";
 import { AuthModule } from "./auth/auth.module";
 import { AuditModule } from "./common/audit/audit.module";
+import { PlanEntitlementsModule } from "./common/plan-entitlements/plan-entitlements.module";
 import { ObservabilityModule } from "./common/observability/observability.module";
 import { ModulesModule } from "./modules/modules.module";
 
@@ -45,6 +46,7 @@ import { ModulesModule } from "./modules/modules.module";
     }),
     DatabaseModule,
     AuditModule,
+    PlanEntitlementsModule,
     ObservabilityModule,
     AuthModule,
     ModulesModule,

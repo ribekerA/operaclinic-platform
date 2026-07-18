@@ -1,6 +1,7 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { AuthModule } from "../../auth/auth.module";
 import { AgentApiModule } from "../agent-api/agent-api.module";
+import { MessagingModule } from "../messaging/messaging.module";
 import { SkillRegistryModule } from "../skill-registry/skill-registry.module";
 import { AgentController } from "./agent.controller";
 import { AgentRuntimeService } from "./agent-runtime.service";
@@ -18,7 +19,12 @@ import { SkillExecutorService } from "./services/skill-executor.service";
 import { AgentObservabilityService } from "./services/agent-observability.service";
 
 @Module({
-  imports: [AuthModule, SkillRegistryModule, AgentApiModule],
+  imports: [
+    AuthModule,
+    SkillRegistryModule,
+    AgentApiModule,
+    forwardRef(() => MessagingModule),
+  ],
   controllers: [AgentController],
   providers: [
     // Base infrastructure - order matters (dependencies)

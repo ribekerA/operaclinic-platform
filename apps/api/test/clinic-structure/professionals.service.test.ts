@@ -35,9 +35,14 @@ describe("ProfessionalsService", () => {
     resolveRoleIdsByCodes: vi.fn(),
   };
 
+  const planEntitlements = {
+    assertWithinLimit: vi.fn(),
+  };
+
   const prisma = {
     professional: {
       findFirst: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
     },
     $transaction: vi.fn(),
   };
@@ -47,7 +52,9 @@ describe("ProfessionalsService", () => {
     accessService.resolveActiveTenantId.mockReset();
     accessService.ensureAdminAccess.mockReset();
     rolesService.resolveRoleIdsByCodes.mockReset();
+    planEntitlements.assertWithinLimit.mockReset();
     prisma.professional.findFirst.mockReset();
+    prisma.professional.count.mockReset().mockResolvedValue(0);
     prisma.$transaction.mockReset();
   });
 
@@ -110,6 +117,7 @@ describe("ProfessionalsService", () => {
       accessService as never,
       rolesService as never,
       auditService as never,
+      planEntitlements as never,
     );
 
     const result = await service.createProfessional(
@@ -171,6 +179,7 @@ describe("ProfessionalsService", () => {
       accessService as never,
       rolesService as never,
       auditService as never,
+      planEntitlements as never,
     );
 
     await expect(
@@ -216,6 +225,7 @@ describe("ProfessionalsService", () => {
       accessService as never,
       rolesService as never,
       auditService as never,
+      planEntitlements as never,
     );
 
     await expect(

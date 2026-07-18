@@ -5,8 +5,10 @@ import type {
 } from "@operaclinic/shared";
 import { RoleCode } from "@prisma/client";
 import { CurrentUser } from "../../auth/decorators/current-user.decorator";
+import { RequirePlanFeature } from "../../auth/decorators/require-plan-feature.decorator";
 import { Roles } from "../../auth/decorators/roles.decorator";
 import { AuthGuard } from "../../auth/guards/auth.guard";
+import { PlanFeatureGuard } from "../../auth/guards/plan-feature.guard";
 import { RoleGuard } from "../../auth/guards/role.guard";
 import { AuthenticatedUser } from "../../auth/interfaces/authenticated-user.interface";
 import { ClinicOperationalKpisService } from "./clinic-operational-kpis.service";
@@ -14,7 +16,7 @@ import { AestheticClinicExecutiveDashboardQueryDto } from "./dto/clinic-executiv
 import { ClinicInsightsService } from "./clinic-insights.service";
 
 @Controller("clinic")
-@UseGuards(AuthGuard, RoleGuard)
+@UseGuards(AuthGuard, RoleGuard, PlanFeatureGuard)
 @Roles(RoleCode.TENANT_ADMIN, RoleCode.CLINIC_MANAGER)
 export class ClinicInsightsController {
   constructor(
@@ -23,6 +25,7 @@ export class ClinicInsightsController {
   ) {}
 
   @Get("executive-dashboard")
+  @RequirePlanFeature("executiveDashboard")
   async getExecutiveDashboard(
     @CurrentUser() actor: AuthenticatedUser,
     @Query() query: AestheticClinicExecutiveDashboardQueryDto,
@@ -31,6 +34,7 @@ export class ClinicInsightsController {
   }
 
   @Get("operational-kpis")
+  @RequirePlanFeature("operationalKpis")
   async getOperationalKpis(
     @CurrentUser() actor: AuthenticatedUser,
     @Query() query: AestheticClinicExecutiveDashboardQueryDto,

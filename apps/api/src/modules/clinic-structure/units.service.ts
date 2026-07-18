@@ -8,6 +8,7 @@ import { Prisma } from "@prisma/client";
 import { AuthenticatedUser } from "../../auth/interfaces/authenticated-user.interface";
 import { AUDIT_ACTIONS } from "../../common/audit/audit.constants";
 import { AuditService } from "../../common/audit/audit.service";
+import { PlanEntitlementsService } from "../../common/plan-entitlements/plan-entitlements.service";
 import { PrismaService } from "../../database/prisma.service";
 import { ClinicStructureAccessService } from "./clinic-structure-access.service";
 import { CreateUnitDto } from "./dto/create-unit.dto";
@@ -20,6 +21,7 @@ export class UnitsService {
     private readonly prisma: PrismaService,
     private readonly accessService: ClinicStructureAccessService,
     private readonly auditService: AuditService,
+    private readonly planEntitlements: PlanEntitlementsService,
   ) {}
 
   async listUnits(actor: AuthenticatedUser): Promise<UnitResponse[]> {
@@ -39,6 +41,9 @@ export class UnitsService {
   ): Promise<UnitResponse> {
     this.accessService.ensureAdminAccess(actor);
     const tenantId = this.accessService.resolveActiveTenantId(actor);
+
+    const currentUnitCount = await this.prisma.unit.count({ where: { tenantId } });
+    await this.planEntitlements.assertWithinLimit(tenantId, "maxUnits", currentUnitCount, actor);
 
     const name = input.name?.trim();
 

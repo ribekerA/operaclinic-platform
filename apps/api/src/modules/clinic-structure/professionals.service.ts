@@ -10,6 +10,7 @@ import { Prisma, RoleCode, UserStatus } from "@prisma/client";
 import { AuthenticatedUser } from "../../auth/interfaces/authenticated-user.interface";
 import { AUDIT_ACTIONS } from "../../common/audit/audit.constants";
 import { AuditService } from "../../common/audit/audit.service";
+import { PlanEntitlementsService } from "../../common/plan-entitlements/plan-entitlements.service";
 import { PrismaService } from "../../database/prisma.service";
 import { RolesService } from "../identity/roles.service";
 import { ClinicStructureAccessService } from "./clinic-structure-access.service";
@@ -49,6 +50,7 @@ export class ProfessionalsService {
     private readonly accessService: ClinicStructureAccessService,
     private readonly rolesService: RolesService,
     private readonly auditService: AuditService,
+    private readonly planEntitlements: PlanEntitlementsService,
   ) {}
 
   async listProfessionals(actor: AuthenticatedUser): Promise<ProfessionalResponse[]> {
@@ -69,6 +71,17 @@ export class ProfessionalsService {
   ): Promise<ProfessionalResponse> {
     this.accessService.ensureAdminAccess(actor);
     const tenantId = this.accessService.resolveActiveTenantId(actor);
+
+    const currentProfessionalCount = await this.prisma.professional.count({
+      where: { tenantId },
+    });
+    await this.planEntitlements.assertWithinLimit(
+      tenantId,
+      "maxProfessionals",
+      currentProfessionalCount,
+      actor,
+    );
+
     const roleIdMap = await this.rolesService.resolveRoleIdsByCodes([
       RoleCode.PROFESSIONAL,
     ]);

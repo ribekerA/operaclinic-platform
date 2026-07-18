@@ -1,7 +1,11 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { forwardRef, Inject, Injectable, Logger } from "@nestjs/common";
 import { createHash, randomUUID } from "crypto";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../database/prisma.service";
+import { AUDIT_ACTIONS } from "../../common/audit/audit.constants";
+import { AuditService } from "../../common/audit/audit.service";
+import { PlanEntitlementsService } from "../../common/plan-entitlements/plan-entitlements.service";
+import { HandoffRequestsService } from "../messaging/handoff-requests.service";
 import { AgentOrchestratorService } from "./agent-orchestrator.service";
 import { AnthropicSchedulingAgentService } from "./anthropic-scheduling-agent.service";
 import { HandoffStatus } from "@prisma/client";
@@ -58,6 +62,10 @@ export class AgentMessageBridgeService {
     private readonly orchestrator: AgentOrchestratorService,
     private readonly configService: ConfigService,
     private readonly anthropicAgent: AnthropicSchedulingAgentService,
+    private readonly planEntitlements: PlanEntitlementsService,
+    private readonly auditService: AuditService,
+    @Inject(forwardRef(() => HandoffRequestsService))
+    private readonly handoffRequestsService: HandoffRequestsService,
   ) {}
 
   /**
@@ -92,6 +100,34 @@ export class AgentMessageBridgeService {
         this.logger.debug(
           `AgentBridge: Skipping thread ${payload.threadId} — active handoff present`,
         );
+        return;
+      }
+
+      const quota = await this.planEntitlements.checkAiConversationQuota(
+        payload.tenantId,
+        payload.threadId,
+      );
+
+      if (!quota.allowed) {
+        this.logger.warn(
+          `AgentBridge: Skipping thread ${payload.threadId} — monthly AI conversation quota exceeded (tenant: ${payload.tenantId}, used: ${quota.usedThisMonth}, limit: ${quota.limit})`,
+        );
+
+        await this.handoffRequestsService.ensureAutomaticHandoffForThread({
+          tenantId: payload.tenantId,
+          threadId: payload.threadId,
+          reason: "Limite mensal de conversas atendidas por IA do plano contratado foi atingido.",
+        });
+
+        await this.auditService.record({
+          action: AUDIT_ACTIONS.PLAN_AI_CONVERSATION_QUOTA_EXCEEDED,
+          actor: this.buildSystemActor(payload.tenantId),
+          tenantId: payload.tenantId,
+          targetType: "message_thread",
+          targetId: payload.threadId,
+          metadata: { limit: quota.limit, usedThisMonth: quota.usedThisMonth },
+        });
+
         return;
       }
 

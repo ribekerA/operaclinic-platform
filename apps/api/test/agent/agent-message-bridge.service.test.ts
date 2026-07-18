@@ -4,6 +4,24 @@ import { AgentMessageBridgeService } from "../../src/modules/agent/agent-message
 const makeHandoffFind = (hasHandoff: boolean) =>
   vi.fn().mockResolvedValue(hasHandoff ? { id: "handoff-1" } : null);
 
+function makePlanEntitlements() {
+  return {
+    checkAiConversationQuota: vi.fn().mockResolvedValue({
+      allowed: true,
+      limit: null,
+      usedThisMonth: 0,
+    }),
+  };
+}
+
+function makeAuditService() {
+  return { record: vi.fn().mockResolvedValue(undefined) };
+}
+
+function makeHandoffRequestsService() {
+  return { ensureAutomaticHandoffForThread: vi.fn().mockResolvedValue(undefined) };
+}
+
 function buildService(
   hasActiveHandoff: boolean,
   orchestratorResult?: object,
@@ -43,13 +61,21 @@ function buildService(
     }),
   };
 
+  const planEntitlements = makePlanEntitlements();
+  const auditService = makeAuditService();
+  const handoffRequestsService = makeHandoffRequestsService();
+
   const service = new AgentMessageBridgeService(
     prisma as never,
     orchestrator as never,
     configService as never,
+    undefined as never,
+    planEntitlements as never,
+    auditService as never,
+    handoffRequestsService as never,
   );
 
-  return { service, prisma, orchestrator, configService };
+  return { service, prisma, orchestrator, configService, planEntitlements, auditService, handoffRequestsService };
 }
 
 describe("AgentMessageBridgeService", () => {
@@ -149,6 +175,10 @@ describe("AgentMessageBridgeService", () => {
             return fallback;
           }),
         } as never,
+        undefined as never,
+        makePlanEntitlements() as never,
+        makeAuditService() as never,
+        makeHandoffRequestsService() as never,
       );
 
       // Should resolve without throwing
@@ -190,6 +220,10 @@ describe("AgentMessageBridgeService", () => {
             return fallback;
           }),
         } as never,
+        undefined as never,
+        makePlanEntitlements() as never,
+        makeAuditService() as never,
+        makeHandoffRequestsService() as never,
       );
 
       await expect(

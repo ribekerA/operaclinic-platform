@@ -13,8 +13,10 @@ import {
 } from "@nestjs/common";
 import { WaitlistStatus } from "@prisma/client";
 import { CurrentUser } from "../../auth/decorators/current-user.decorator";
+import { RequirePlanFeature } from "../../auth/decorators/require-plan-feature.decorator";
 import { Roles } from "../../auth/decorators/roles.decorator";
 import { AuthGuard } from "../../auth/guards/auth.guard";
+import { PlanFeatureGuard } from "../../auth/guards/plan-feature.guard";
 import { RoleGuard } from "../../auth/guards/role.guard";
 import { AuthenticatedUser } from "../../auth/interfaces/authenticated-user.interface";
 import { SCHEDULING_OPERATION_ROLES } from "./scheduling.constants";
@@ -25,8 +27,9 @@ import {
 } from "./waitlist.service";
 
 @Controller("waitlist")
-@UseGuards(AuthGuard, RoleGuard)
+@UseGuards(AuthGuard, RoleGuard, PlanFeatureGuard)
 @Roles(...SCHEDULING_OPERATION_ROLES)
+@RequirePlanFeature("waitlist")
 export class WaitlistController {
   constructor(private readonly waitlistService: WaitlistService) {}
 
