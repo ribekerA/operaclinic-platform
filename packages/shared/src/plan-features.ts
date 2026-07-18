@@ -89,8 +89,19 @@ export const PLAN_FEATURES: Record<CommercialPlanCode, PlanFeatureSet> = {
   },
 } as const;
 
+/**
+ * Códigos de plano internos (não comerciais) que precisam resolver para uma entrada de {@link PLAN_FEATURES}.
+ * `BASE_MVP` é o plano padrão atribuído na criação de tenant antes da escolha de um plano comercial;
+ * mapeia para `ESTETICA_START` (ver D-013) para que tenants sem plano comercial explícito recebam o
+ * conjunto de features do plano de entrada em vez de ficarem bloqueados quando os guards forem ligados.
+ */
+const LEGACY_PLAN_CODE_ALIASES: Record<string, CommercialPlanCode> = {
+  BASE_MVP: "ESTETICA_START",
+};
+
 export function getPlanFeatures(planCode: string): PlanFeatureSet | null {
-  return PLAN_FEATURES[planCode as CommercialPlanCode] ?? null;
+  const resolvedCode = LEGACY_PLAN_CODE_ALIASES[planCode] ?? (planCode as CommercialPlanCode);
+  return PLAN_FEATURES[resolvedCode] ?? null;
 }
 
 /**
