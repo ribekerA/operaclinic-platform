@@ -13,7 +13,6 @@ import { MessagingModule } from "./messaging/messaging.module";
 import { FollowUpsModule } from "./follow-ups/follow-ups.module";
 import { SkillRegistryModule } from "./skill-registry/skill-registry.module";
 import { AgentModule } from "./agent/agent.module";
-import { ProcedureProtocolsModule } from "./procedure-protocols/procedure-protocols.module";
 import { PublicBookingModule } from "./public-booking/public-booking.module";
 import { ReportsModule } from "./reports/reports.module";
 import { AgentApiModule } from "./agent-api/agent-api.module";
@@ -35,7 +34,6 @@ import { DemoModule } from "./demo/demo.module";
     FollowUpsModule,
     SkillRegistryModule,
     AgentModule,
-    ProcedureProtocolsModule,
     PublicBookingModule,
     ReportsModule,
     AgentApiModule,

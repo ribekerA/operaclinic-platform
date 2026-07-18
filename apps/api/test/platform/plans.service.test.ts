@@ -51,7 +51,7 @@ describe("PlansService", () => {
           code: "ESTETICA_FLOW",
           name: "Flow Estética",
           description:
-            "Para clínicas com forte operação no WhatsApp, confirmação e remarcação frequente.",
+            "Para clínicas com maior volume de conversas por IA no WhatsApp e necessidade de gestão operacional mais profunda.",
           priceCents: 34900,
           currency: "BRL",
           isPublic: true,
@@ -86,7 +86,7 @@ describe("PlansService", () => {
           code: "ESTETICA_FLOW",
           name: "Flow Estética",
           description:
-            "Para clínicas com forte operação no WhatsApp, confirmação e remarcação frequente.",
+            "Para clínicas com maior volume de conversas por IA no WhatsApp e necessidade de gestão operacional mais profunda.",
           priceCents: 34900,
           currency: "BRL",
           isPublic: true,

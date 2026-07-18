@@ -39,18 +39,22 @@ export const COMMERCIAL_PUBLIC_PLAN_CATALOG: readonly CommercialPublicPlanCatalo
     code: "ESTETICA_START",
     name: "Start Estética",
     description:
-      "Para clínicas estéticas privadas com recepção enxuta e agenda em organização inicial.",
+      "Para clínicas estéticas privadas que querem captação e agendamento por IA no WhatsApp desde o primeiro dia.",
     priceCents: 19900,
     currency: "BRL",
     publicMetadata: {
       slug: "start-estética",
       summary:
-        "Para clínicas de estética que querem sair da agenda bagunçada e organizar recepção, confirmação e atendimento do dia em um só lugar — sem planilha e sem improviso.",
+        "Para clínicas de estética que querem sair da agenda bagunçada e ativar um agente de IA no WhatsApp que capta e agenda pacientes sozinho — sem planilha, sem improviso e sem depender só da recepção.",
       idealFor: "Clínicas com até 3 profissionais e recepção enxuta.",
       implementation:
-        "Ativação guiada em até 48h. Foco total em colocar agenda e recepção rodando no primeiro dia.",
+        "Ativação guiada em até 48h. Foco total em colocar agenda, recepção e o agente de IA no WhatsApp rodando no primeiro dia.",
       highlights: [
         "Até 3 profissionais · 1 unidade",
+        "Agente de IA para captação e qualificação de leads no WhatsApp",
+        "Agente de IA para agendamento automático via WhatsApp",
+        "Até 200 conversas atendidas por IA por mês",
+        "Lembretes e confirmação automática de agendamento",
         "Agenda por profissional com controle de disponibilidade",
         "Recepção web — criar, confirmar, remarcar e check-in",
         "Base de pacientes com histórico de atendimentos",
@@ -62,21 +66,22 @@ export const COMMERCIAL_PUBLIC_PLAN_CATALOG: readonly CommercialPublicPlanCatalo
     code: "ESTETICA_FLOW",
     name: "Flow Estética",
     description:
-      "Para clínicas com forte operação no WhatsApp, confirmação e remarcação frequente.",
+      "Para clínicas com maior volume de conversas por IA no WhatsApp e necessidade de gestão operacional mais profunda.",
     priceCents: 34900,
     currency: "BRL",
     publicMetadata: {
       slug: "flow-estética",
       summary:
-        "Para clínicas de estética com forte volume no WhatsApp que precisam reduzir no-show, dominar remarcações e dar mais leitura operacional para recepção e gestão — sem precisar de planilha paralela.",
+        "Para clínicas de estética com maior volume de leads e agendamentos via IA no WhatsApp que precisam de mais profissionais, lista de espera, templates e KPIs operacionais para sustentar o crescimento.",
       idealFor: "Clínicas com até 8 profissionais e recepção ativa com alto volume de mensagens.",
       implementation:
-        "Onboarding assistido com foco em redução de no-show e ativação do canal WhatsApp desde o primeiro dia.",
+        "Onboarding assistido com foco em ampliar o volume de conversas atendidas por IA e destravar gestão operacional desde o primeiro dia.",
       highlights: [
         "Até 8 profissionais · 2 unidades",
-        "Canal WhatsApp integrado — inbox, threads e handoff para equipe",
-        "Confirmação automática de agendamento 24h antes",
+        "Agentes de IA de captação e agendamento no WhatsApp",
+        "Até 800 conversas atendidas por IA por mês",
         "Lista de espera para preencher cancelamentos de última hora",
+        "Agendamento fora do horário configurado (schedule override)",
         "KPIs operacionais — taxa de ocupação, no-show e confirmações",
         "Templates de mensagem personalizados por procedimento",
       ],
@@ -87,22 +92,21 @@ export const COMMERCIAL_PUBLIC_PLAN_CATALOG: readonly CommercialPublicPlanCatalo
     code: "ESTETICA_SCALE",
     name: "Scale Estética",
     description:
-      "Para clínicas com mais profissionais, múltiplas unidades e necessidade de automação com IA.",
+      "Para clínicas com mais profissionais, múltiplas unidades e volume de conversas por IA sem limite mensal.",
     priceCents: 54900,
     currency: "BRL",
     publicMetadata: {
       slug: "scale-estética",
       summary:
-        "Para clínicas de estética em crescimento ou operação premium que precisam de visibilidade executiva completa, protocolos de procedimento padronizados e automação com IA para captação e agendamento.",
+        "Para clínicas de estética em crescimento ou operação premium que precisam de conversas por IA sem limite mensal, visibilidade executiva completa e protocolos de procedimento padronizados.",
       idealFor: "Clínicas com equipe grande, múltiplas unidades ou alto volume de leads novos.",
       implementation:
-        "Implantação por etapas com time de sucesso dedicado. Ativação da IA após estabilização da operação base.",
+        "Implantação por etapas com time de sucesso dedicado. Agentes de IA de captação e agendamento já ativos desde o primeiro dia, sem limite mensal de conversas.",
       highlights: [
         "Profissionais e unidades ilimitados",
+        "Conversas atendidas por IA sem limite mensal",
         "Dashboard executivo com visão completa da operação",
         "Protocolos de procedimento por tipo de atendimento",
-        "Agente de IA para captação e qualificação de leads no WhatsApp",
-        "Agente de IA para agendamento automático via WhatsApp",
         "Relatórios avançados por profissional, unidade e período",
       ],
     },
