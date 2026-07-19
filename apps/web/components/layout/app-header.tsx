@@ -3,6 +3,7 @@ import { BrandMark } from "@/components/brand/brand-mark";
 import { resolveAestheticClinicActor } from "@/lib/clinic-actor";
 import { UserProfile } from "@/lib/navigation";
 import { SessionUser } from "@/lib/session/types";
+import { AiUsageBadge } from "./ai-usage-badge";
 import { ClinicSwitcher } from "./clinic-switcher";
 import { LogoutButton } from "./logout-button";
 
@@ -74,6 +75,7 @@ export function AppHeader({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+            {profile === "clinic" ? <AiUsageBadge user={user} /> : null}
             {profile === "clinic" ? <ClinicSwitcher user={user} /> : null}
 
             <div className="flex items-center gap-2 rounded-[20px] border border-white/80 bg-white px-3 py-1.5 shadow-sm">

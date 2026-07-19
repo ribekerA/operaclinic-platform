@@ -120,3 +120,18 @@ export function applyPlanFeatureOverrides(
     limits: { ...base.limits, ...limitOverrides },
   };
 }
+
+/** Resposta de `GET clinic/plan-entitlements`: entitlements efetivos do tenant + consumo mensal de IA,
+ *  usada pelo frontend para renderizar barra de uso e estados de upsell (ver docs/decisions.md D-013/D-014). */
+export interface PlanEntitlementsSummary {
+  planCode: string;
+  features: PlanFeatureSet;
+  usage: {
+    aiConversations: {
+      usedThisMonth: number;
+      limit: number | null;
+      /** true quando usedThisMonth/limit >= 0.8; sempre false para limite ilimitado (null). */
+      warningThresholdReached: boolean;
+    };
+  };
+}

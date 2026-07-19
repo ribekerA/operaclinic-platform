@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { getPlanFeatures } from "@operaclinic/shared";
 import {
   AdminCollectionSkeleton,
   AdminCountBadge,
@@ -67,6 +68,28 @@ const defaultCreateTenantForm: CreateTenantFormState = {
   locale: "pt-BR",
   currency: "BRL",
 };
+
+/** Client-side only: PlanFeatureSet is a static typed matrix (packages/shared/src/plan-features.ts),
+ *  so tenant.currentPlan.code already carries everything needed for this summary — no new backend
+ *  call. Does not reflect per-tenant TenantFeature/TenantSetting overrides (see D-013/D-015). */
+function formatPlanLimitsSummary(planCode: string): string | null {
+  const features = getPlanFeatures(planCode);
+
+  if (!features) {
+    return null;
+  }
+
+  const { maxProfessionals, maxUnits, monthlyAiConversations } = features.limits;
+  const professionalsLabel =
+    maxProfessionals === null ? "profissionais ilimitados" : `${maxProfessionals} profissionais`;
+  const unitsLabel = maxUnits === null ? "unidades ilimitadas" : `${maxUnits} unidades`;
+  const aiLabel =
+    monthlyAiConversations === null
+      ? "IA ilimitada"
+      : `${monthlyAiConversations} conversas IA/mês`;
+
+  return `${professionalsLabel} · ${unitsLabel} · ${aiLabel}`;
+}
 
 function resolveTenantTone(status: TenantStatus): "success" | "warning" | "danger" {
   if (status === "ACTIVE") {
@@ -518,6 +541,11 @@ export default function PlatformTenantsPage() {
                         <p className="mt-1 font-medium text-ink">
                           {tenant.currentPlan?.name ?? "Sem contrato ativo"}
                         </p>
+                        {tenant.currentPlan ? (
+                          <p className="mt-0.5 text-xs text-muted">
+                            {formatPlanLimitsSummary(tenant.currentPlan.code)}
+                          </p>
+                        ) : null}
                       </div>
                       <div>
                         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
@@ -848,6 +876,9 @@ export default function PlatformTenantsPage() {
                         ? getSubscriptionStatusLabel(selectedTenant.currentPlan.status)
                         : "-"}
                     </p>
+                    {selectedTenant.currentPlan ? (
+                      <p>{formatPlanLimitsSummary(selectedTenant.currentPlan.code)}</p>
+                    ) : null}
                   </div>
                 </div>
 

@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sheet } from "@/components/ui/sheet";
 import { StatusPill } from "@/components/ui/status-pill";
+import { UpsellCard } from "@/components/plan/upsell-card";
 import { useSession } from "@/hooks/use-session";
 import { toErrorMessage } from "@/lib/client/http";
 import {
@@ -26,6 +27,7 @@ import {
   ProcedureProtocolResponse,
   updateProcedureProtocol,
 } from "@/lib/client/clinic-structure-api";
+import { getPlanUpsellInfo, PlanUpsellInfo } from "@/lib/client/plan-entitlements-api";
 import { formatDateTime } from "@/lib/formatters";
 
 interface ProtocolFormState {
@@ -56,6 +58,7 @@ export default function ClinicProtocolsPage() {
   const [protocols, setProtocols] = useState<ProcedureProtocolResponse[]>([]);
   const [consultationTypes, setConsultationTypes] = useState<ConsultationTypeResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [upsellInfo, setUpsellInfo] = useState<PlanUpsellInfo | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -74,6 +77,7 @@ export default function ClinicProtocolsPage() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    setUpsellInfo(null);
     try {
       const [nextProtocols, nextTypes] = await Promise.all([
         listProcedureProtocols(),
@@ -86,7 +90,12 @@ export default function ClinicProtocolsPage() {
         return nextProtocols[0]?.id ?? null;
       });
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Não foi possível carregar protocolos."));
+      const upsell = getPlanUpsellInfo(requestError);
+      if (upsell) {
+        setUpsellInfo(upsell);
+      } else {
+        setError(toErrorMessage(requestError, "Não foi possível carregar protocolos."));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -169,6 +178,7 @@ export default function ClinicProtocolsPage() {
     if (!canManage) return;
     setIsCreating(true);
     setError(null);
+    setUpsellInfo(null);
     setSuccess(null);
     try {
       await createProcedureProtocol({
@@ -183,7 +193,12 @@ export default function ClinicProtocolsPage() {
       setSuccess("Protocolo criado com sucesso.");
       await loadData();
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Falha ao criar protocolo."));
+      const upsell = getPlanUpsellInfo(requestError);
+      if (upsell) {
+        setUpsellInfo(upsell);
+      } else {
+        setError(toErrorMessage(requestError, "Falha ao criar protocolo."));
+      }
     } finally {
       setIsCreating(false);
     }
@@ -194,6 +209,7 @@ export default function ClinicProtocolsPage() {
     if (!canManage || !selectedProtocol || !editForm) return;
     setIsUpdating(true);
     setError(null);
+    setUpsellInfo(null);
     setSuccess(null);
     try {
       const updated = await updateProcedureProtocol(selectedProtocol.id, {
@@ -207,7 +223,12 @@ export default function ClinicProtocolsPage() {
       setProtocols((current) => current.map((p) => (p.id === updated.id ? updated : p)));
       setSuccess("Protocolo atualizado.");
     } catch (requestError) {
-      setError(toErrorMessage(requestError, "Falha ao atualizar protocolo."));
+      const upsell = getPlanUpsellInfo(requestError);
+      if (upsell) {
+        setUpsellInfo(upsell);
+      } else {
+        setError(toErrorMessage(requestError, "Falha ao atualizar protocolo."));
+      }
     } finally {
       setIsUpdating(false);
     }
@@ -242,7 +263,9 @@ export default function ClinicProtocolsPage() {
         </Card>
       ) : null}
 
-      {error ? (
+      {upsellInfo ? (
+        <UpsellCard info={upsellInfo} />
+      ) : error ? (
         <Card className="border-red-200 bg-red-50" role="alert">
           <p className="text-sm text-red-700">{error}</p>
         </Card>

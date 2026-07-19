@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable } from "@nestjs/common";
 import {
   applyPlanFeatureOverrides,
   getPlanFeatures,
+  type PlanEntitlementsSummary,
   type PlanFeatureOverrides,
   type PlanFeatureSet,
   type PlanLimitOverrides,
@@ -76,6 +77,13 @@ export class PlanEntitlementsService {
    *  getPlanFeatures) composed with any per-tenant overrides. */
   async getEffectiveFeatures(tenantId: string): Promise<PlanFeatureSet> {
     const planCode = await this.resolvePlanCode(tenantId);
+    return this.computeEffectiveFeatures(tenantId, planCode);
+  }
+
+  private async computeEffectiveFeatures(
+    tenantId: string,
+    planCode: string | null,
+  ): Promise<PlanFeatureSet> {
     const base =
       (planCode ? getPlanFeatures(planCode) : null) ?? getPlanFeatures(FALLBACK_PLAN_CODE)!;
 
@@ -186,6 +194,20 @@ export class PlanEntitlementsService {
       return { allowed: true, limit: null, usedThisMonth: 0 };
     }
 
+    const countedThreadIds = await this.getCountedThreadIdsThisMonth(tenantId);
+    const usedThisMonth = countedThreadIds.size;
+
+    if (countedThreadIds.has(threadId)) {
+      // Continuing a conversation already counted this month never gets newly blocked mid-flow.
+      return { allowed: true, limit, usedThisMonth };
+    }
+
+    return { allowed: usedThisMonth < limit, limit, usedThisMonth };
+  }
+
+  /** Distinct threadIds with at least one AgentExecution since the start of the current UTC
+   *  calendar month — the shared basis for both quota enforcement and usage reporting (D-014). */
+  private async getCountedThreadIdsThisMonth(tenantId: string): Promise<Set<string>> {
     const now = new Date();
     const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 
@@ -195,14 +217,31 @@ export class PlanEntitlementsService {
       select: { threadId: true },
     });
 
-    const countedThreadIds = new Set(activeThreadsThisMonth.map((row) => row.threadId));
+    return new Set(activeThreadsThisMonth.map((row) => row.threadId));
+  }
+
+  /** Tenant-level (non-thread-specific) view of effective entitlements + this month's AI-conversation
+   *  usage, for frontend usage bars / upsell states (`GET clinic/plan-entitlements`). */
+  async getUsageSummary(tenantId: string): Promise<PlanEntitlementsSummary> {
+    const [planCode, countedThreadIds] = await Promise.all([
+      this.resolvePlanCode(tenantId),
+      this.getCountedThreadIdsThisMonth(tenantId),
+    ]);
+
+    const features = await this.computeEffectiveFeatures(tenantId, planCode);
+    const limit = features.limits.monthlyAiConversations;
     const usedThisMonth = countedThreadIds.size;
 
-    if (countedThreadIds.has(threadId)) {
-      // Continuing a conversation already counted this month never gets newly blocked mid-flow.
-      return { allowed: true, limit, usedThisMonth };
-    }
-
-    return { allowed: usedThisMonth < limit, limit, usedThisMonth };
+    return {
+      planCode: planCode ?? FALLBACK_PLAN_CODE,
+      features,
+      usage: {
+        aiConversations: {
+          usedThisMonth,
+          limit,
+          warningThresholdReached: limit !== null && limit > 0 && usedThisMonth / limit >= 0.8,
+        },
+      },
+    };
   }
 }
