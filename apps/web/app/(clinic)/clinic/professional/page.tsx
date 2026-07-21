@@ -18,6 +18,8 @@ import {
   adminTextareaClassName,
 } from "@/components/platform/platform-admin";
 import { Card } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
+import { ErrorState } from "@/components/ui/error-state";
 import { Sheet } from "@/components/ui/sheet";
 import { buttonVariants } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -759,17 +761,9 @@ export default function ProfessionalWorkspacePage() {
         />
       </AdminPageHeader>
 
-      {error ? (
-        <Card className="border-rose-200 bg-rose-50" role="alert">
-          <p className="text-sm text-rose-700">{error}</p>
-        </Card>
-      ) : null}
+      {error ? <Alert tone="danger" title={error} /> : null}
 
-      {feedback ? (
-        <Card className="border-emerald-200 bg-emerald-50" role="status">
-          <p className="text-sm text-emerald-700">{feedback}</p>
-        </Card>
-      ) : null}
+      {feedback ? <Alert tone="success" title={feedback} /> : null}
 
       <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <Card tone="dark" className="space-y-4 overflow-hidden border-0">
@@ -1453,9 +1447,10 @@ export default function ProfessionalWorkspacePage() {
             Carregando resumo da paciente...
           </div>
         ) : patientError ? (
-          <div className="rounded-[24px] border border-rose-200 bg-rose-50 px-4 py-6 text-sm text-rose-700">
-            {patientError}
-          </div>
+          <ErrorState
+            message={patientError}
+            onRetry={selectedPatientId ? () => void handleOpenPatient(selectedPatientId) : undefined}
+          />
         ) : selectedPatient ? (
           <div className="space-y-4">
             <Card className="space-y-3">

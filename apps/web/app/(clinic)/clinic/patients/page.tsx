@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sheet } from "@/components/ui/sheet";
 import { StatusPill } from "@/components/ui/status-pill";
+import { PatientCard } from "@/components/clinic/patient-card";
+import { Alert } from "@/components/ui/alert";
 import { useSession } from "@/hooks/use-session";
 import { toErrorMessage } from "@/lib/client/http";
 import {
@@ -414,17 +416,9 @@ export default function ClinicPatientsPage() {
         <AdminShortcutPanel title="Ações rápidas" items={shortcutItems} />
       </AdminPageHeader>
 
-      {error ? (
-        <Card className="border-red-200 bg-red-50" role="alert">
-          <p className="text-sm text-red-700">{error}</p>
-        </Card>
-      ) : null}
+      {error ? <Alert tone="danger" title={error} /> : null}
 
-      {success ? (
-        <Card className="border-emerald-200 bg-emerald-50" role="status">
-          <p className="text-sm text-emerald-700">{success}</p>
-        </Card>
-      ) : null}
+      {success ? <Alert tone="success" title={success} /> : null}
 
       <Card className="space-y-4">
         <AdminSectionHeader
@@ -496,50 +490,17 @@ export default function ClinicPatientsPage() {
                 const nextProtocolDate = getPatientNextProtocolDate(patient);
 
                 return (
-                  <button
+                  <PatientCard
                     key={patient.id}
-                    type="button"
-                    onClick={() => setSelectedPatientId(patient.id)}
-                    className={`w-full rounded-[24px] border p-4 text-left transition ${
-                      isSelected
-                        ? "border-teal-300 bg-teal-50 shadow-sm"
-                        : "border-slate-200 bg-white hover:bg-slate-50"
-                    }`}
-                  >
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-base font-semibold text-ink">
-                            {patient.fullName ?? "Paciente sem nome"}
-                          </p>
-                          <StatusPill
-                            label={patient.isActive ? "Ativo" : "Inativo"}
-                            tone={patient.isActive ? "success" : "warning"}
-                          />
-                          {activeProtocolCount > 0 ? (
-                            <StatusPill
-                              label={`${activeProtocolCount} em tratamento`}
-                              tone="neutral"
-                            />
-                          ) : null}
-                        </div>
-                        <p className="text-sm text-muted">{resolvePrimaryContact(patient)}</p>
-                        <div className="flex flex-wrap gap-2 text-xs text-muted">
-                          <span>{patient.documentNumber ?? "Sem documento"}</span>
-                          <span>{patient.notes?.trim() ? "Com observações" : "Sem observações"}</span>
-                          {nextProtocolDate ? (
-                            <span>Próxima sessão: {formatDateTime(nextProtocolDate)}</span>
-                          ) : null}
-                        </div>
-                      </div>
-                      <div className="space-y-2 text-sm text-muted lg:text-right">
-                        <p>Atualizado em {formatDateTime(patient.updatedAt)}</p>
-                        <span className="inline-flex rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-ink">
-                          Abrir ficha
-                        </span>
-                      </div>
-                    </div>
-                  </button>
+                    patient={patient}
+                    primaryContact={resolvePrimaryContact(patient)}
+                    activeProtocolCount={activeProtocolCount}
+                    nextProtocolDate={nextProtocolDate}
+                    nextProtocolDateLabel={nextProtocolDate ? formatDateTime(nextProtocolDate) : undefined}
+                    updatedAtLabel={formatDateTime(patient.updatedAt)}
+                    selected={isSelected}
+                    onSelect={() => setSelectedPatientId(patient.id)}
+                  />
                 );
               })
             ) : (

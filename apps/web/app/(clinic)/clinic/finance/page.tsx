@@ -9,6 +9,7 @@ import {
   AdminShortcutPanel,
 } from "@/components/platform/platform-admin";
 import { Card } from "@/components/ui/card";
+import { ErrorState } from "@/components/ui/error-state";
 import { StatusPill } from "@/components/ui/status-pill";
 import { toErrorMessage } from "@/lib/client/http";
 import { requestJson } from "@/lib/client/http";
@@ -174,11 +175,7 @@ export default function ClinicFinancePage() {
         />
       </AdminPageHeader>
 
-      {error && (
-        <Card className="border-red-200 bg-red-50">
-          <p className="text-sm text-red-700">{error}</p>
-        </Card>
-      )}
+      {error && <ErrorState message={error} onRetry={() => void load(period)} />}
 
       {data && !data.hasPrices && <PriceWarning />}
 

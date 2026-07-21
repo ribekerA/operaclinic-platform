@@ -10,6 +10,7 @@ import {
   adminSelectClassName,
 } from "@/components/platform/platform-admin";
 import { Card } from "@/components/ui/card";
+import { ErrorState } from "@/components/ui/error-state";
 import { StatusPill } from "@/components/ui/status-pill";
 import { requestJson, toErrorMessage } from "@/lib/client/http";
 import { formatDateTime } from "@/lib/formatters";
@@ -209,11 +210,7 @@ export default function ClinicFollowUpsPage() {
         <AdminMetricGrid items={metricItems} isLoading={isStatsLoading} />
       </AdminPageHeader>
 
-      {error ? (
-        <Card className="border-red-200 bg-red-50" role="alert">
-          <p className="text-sm text-red-700">{error}</p>
-        </Card>
-      ) : null}
+      {error ? <ErrorState message={error} onRetry={() => void loadDispatches()} /> : null}
 
       <Card className="space-y-4">
         <AdminSectionHeader

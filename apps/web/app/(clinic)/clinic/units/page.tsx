@@ -13,6 +13,7 @@ import {
 } from "@/components/platform/platform-admin";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { Sheet } from "@/components/ui/sheet";
 import { StatusPill } from "@/components/ui/status-pill";
 import { useSession } from "@/hooks/use-session";
@@ -242,17 +243,9 @@ export default function ClinicUnitsPage() {
         </Card>
       ) : null}
 
-      {error ? (
-        <Card className="border-red-200 bg-red-50" role="alert">
-          <p className="text-sm text-red-700">{error}</p>
-        </Card>
-      ) : null}
+      {error ? <Alert tone="danger" title={error} /> : null}
 
-      {success ? (
-        <Card className="border-emerald-200 bg-emerald-50" role="status">
-          <p className="text-sm text-emerald-700">{success}</p>
-        </Card>
-      ) : null}
+      {success ? <Alert tone="success" title={success} /> : null}
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="space-y-4">

@@ -9,7 +9,7 @@ interface CardProps extends React.HTMLAttributes<HTMLElement> {
 
 const toneClassName: Record<NonNullable<CardProps["tone"]>, string> = {
   default: "border-slate-200/80 bg-white/90 text-ink backdrop-blur",
-  dark: "border-slate-900/70 bg-slate-950 text-white",
+  dark: "border-slate-900/70 bg-navy text-white",
 };
 
 export function Card({
@@ -22,7 +22,7 @@ export function Card({
   return (
     <Tag
       {...props}
-      className={`rounded-[28px] border p-5 shadow-panel ${toneClassName[tone]} ${className}`}
+      className={`rounded-card border p-5 shadow-panel ${toneClassName[tone]} ${className}`}
     >
       {children}
     </Tag>

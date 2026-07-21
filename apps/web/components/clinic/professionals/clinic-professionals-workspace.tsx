@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sheet } from "@/components/ui/sheet";
 import { StatusPill } from "@/components/ui/status-pill";
+import { ProfessionalCard } from "@/components/clinic/professional-card";
 import { useSession } from "@/hooks/use-session";
 import {
   createProfessional,
@@ -1166,62 +1167,15 @@ export function ClinicProfessionalsWorkspace() {
                 </div>
               ))
             ) : professionals.length > 0 ? (
-              professionals.map((professional) => {
-                const isSelected = selectedProfessionalId === professional.id;
-
-                return (
-                  <button
-                    key={professional.id}
-                    type="button"
-                    onClick={() => setSelectedProfessionalId(professional.id)}
-                    className={`w-full rounded-[24px] border p-4 text-left transition ${
-                      isSelected
-                        ? "border-teal-300 bg-teal-50 shadow-sm"
-                        : "border-slate-200 bg-white hover:bg-slate-50"
-                    }`}
-                  >
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-base font-semibold text-ink">
-                            {professional.displayName}
-                          </p>
-                          <StatusPill
-                            label={professional.isActive ? "Ativo" : "Inativo"}
-                            tone={professional.isActive ? "success" : "warning"}
-                          />
-                          <StatusPill
-                            label={
-                              professional.visibleForSelfBooking
-                                ? "Autoagendamento"
-                                : "Sem autoagendamento"
-                            }
-                            tone={professional.visibleForSelfBooking ? "success" : "neutral"}
-                          />
-                        </div>
-                        <p className="text-sm text-muted">{professional.fullName}</p>
-                        <div className="flex flex-wrap gap-2 text-xs text-muted">
-                          <span>
-                            {formatProfessionalCredential(professional.professionalRegister)}
-                          </span>
-                          <span>{professional.specialties.length} especialidades</span>
-                          <span>{professional.units.length} unidades</span>
-                        </div>
-                      </div>
-                      <div className="space-y-2 text-sm text-muted lg:text-right">
-                        <StatusPill
-                          label={professional.linkedUser ? "Login pronto" : "Sem login"}
-                          tone={professional.linkedUser ? "success" : "warning"}
-                        />
-                        <p>
-                          {professional.linkedUser?.email ??
-                            "Cadastro sem acesso vinculado"}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })
+              professionals.map((professional) => (
+                <ProfessionalCard
+                  key={professional.id}
+                  professional={professional}
+                  credentialLabel={formatProfessionalCredential(professional.professionalRegister)}
+                  selected={selectedProfessionalId === professional.id}
+                  onSelect={() => setSelectedProfessionalId(professional.id)}
+                />
+              ))
             ) : (
               <AdminEmptyState
                 title="Nenhum profissional cadastrado"

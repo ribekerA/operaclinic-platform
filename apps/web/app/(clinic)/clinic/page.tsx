@@ -10,6 +10,7 @@ import {
 } from "@/components/platform/platform-admin";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ErrorState } from "@/components/ui/error-state";
 import { StatusPill } from "@/components/ui/status-pill";
 import { useSession } from "@/hooks/use-session";
 import { getAestheticClinicExecutiveDashboard } from "@/lib/client/clinic-dashboard-api";
@@ -282,11 +283,7 @@ export default function ClinicDashboardPage() {
 
   return (
     <div className="space-y-4">
-      {error ? (
-        <Card className="border-red-200 bg-red-50" role="alert">
-          <p className="text-sm text-red-700">{error}</p>
-        </Card>
-      ) : null}
+      {error ? <ErrorState message={error} onRetry={() => void loadDashboard()} /> : null}
 
       <section className="grid gap-4 xl:grid-cols-[1fr_1.4fr]">
         {/* Fazer agora — primary, left */}

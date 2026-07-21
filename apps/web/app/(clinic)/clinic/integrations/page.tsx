@@ -12,7 +12,9 @@ import {
 } from "@/components/platform/platform-admin";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { StatusPill } from "@/components/ui/status-pill";
+import { WhatsAppConnectionStatus } from "@/components/clinic/whatsapp-connection-status";
 import { useSession } from "@/hooks/use-session";
 import { toErrorMessage } from "@/lib/client/http";
 import {
@@ -379,17 +381,9 @@ export default function ClinicIntegrationsPage() {
         </Card>
       ) : null}
 
-      {error ? (
-        <Card className="border-red-200 bg-red-50" role="alert">
-          <p className="text-sm text-red-700">{error}</p>
-        </Card>
-      ) : null}
+      {error ? <Alert tone="danger" title={error} /> : null}
 
-      {success ? (
-        <Card className="border-emerald-200 bg-emerald-50" role="status">
-          <p className="text-sm text-emerald-700">{success}</p>
-        </Card>
-      ) : null}
+      {success ? <Alert tone="success" title={success} /> : null}
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="space-y-4">
@@ -415,19 +409,27 @@ export default function ClinicIntegrationsPage() {
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-base font-semibold text-ink">
-                          {integration.displayName}
-                        </h2>
-                        <StatusPill label={integration.status} />
-                      </div>
+                      <h2 className="text-base font-semibold text-ink">
+                        {integration.displayName}
+                      </h2>
                       <p className="mt-1 text-sm text-muted">
                         {resolveProviderLabel(integration.provider)}
                       </p>
                     </div>
-                    <StatusPill
-                      label={integration.externalAccountId ? "Phone ID OK" : "Phone ID pendente"}
-                      tone={integration.externalAccountId ? "success" : "warning"}
+                    <WhatsAppConnectionStatus
+                      state={
+                        integration.status !== "ACTIVE"
+                          ? "disconnected"
+                          : integration.externalAccountId
+                            ? "connected"
+                            : "degraded"
+                      }
+                      label={integration.status === "ACTIVE" ? "Conexão ativa" : "Conexão inativa"}
+                      description={
+                        integration.status === "ACTIVE" && !integration.externalAccountId
+                          ? "Phone ID pendente"
+                          : undefined
+                      }
                     />
                   </div>
 

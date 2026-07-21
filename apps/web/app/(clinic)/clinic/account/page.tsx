@@ -11,6 +11,7 @@ import {
 } from "@/components/platform/platform-admin";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { useSession } from "@/hooks/use-session";
 import { changeOwnPassword, RoleCode } from "@/lib/client/platform-identity-api";
 import { toErrorMessage } from "@/lib/client/http";
@@ -143,17 +144,9 @@ export default function ClinicAccountPage() {
         </Card>
       ) : null}
 
-      {error ? (
-        <Card className="border-red-200 bg-red-50" role="alert">
-          <p className="text-sm text-red-700">{error}</p>
-        </Card>
-      ) : null}
+      {error ? <Alert tone="danger" title={error} /> : null}
 
-      {success ? (
-        <Card className="border-emerald-200 bg-emerald-50" role="status" aria-live="polite">
-          <p className="text-sm text-emerald-700">{success}</p>
-        </Card>
-      ) : null}
+      {success ? <Alert tone="success" title={success} /> : null}
 
       {user ? (
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">

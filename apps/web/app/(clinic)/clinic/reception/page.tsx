@@ -8,6 +8,7 @@ import type {
   ReceptionPatientSummary,
 } from "@operaclinic/shared";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { AlertTriangle, CalendarClock, CheckCircle2, Clock, Wallet } from "lucide-react";
 import {
   AdminMetricGrid,
   AdminPageHeader,
@@ -23,6 +24,8 @@ import { AppointmentDrawer } from "@/components/reception/appointment-drawer";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StatusPill } from "@/components/ui/status-pill";
+import { AppointmentCard } from "@/components/clinic/appointment-card";
+import { Alert } from "@/components/ui/alert";
 import {
   listProcedureProtocols,
   listConsultationTypes,
@@ -307,6 +310,62 @@ export default function ReceptionPage() {
         .map((item) => `${item.id}:${getMinutesElapsed(item.checkedInAt ?? item.startsAt, nowTimestamp)}`)
         .join("|"),
     [criticalQueueItems, nowTimestamp],
+  );
+  const attentionGroups = useMemo(
+    () =>
+      (
+        [
+          {
+            key: "fila-critica",
+            title: "Fila crítica",
+            description: "Aguardando chamada há 20 min ou mais.",
+            tone: "danger" as const,
+            icon: AlertTriangle,
+            items: criticalQueueItems,
+            metaFor: (item: ReceptionAgendaAppointment) =>
+              `Na fila há ${getMinutesElapsed(item.checkedInAt ?? item.startsAt, nowTimestamp)} min · ${item.professionalName}`,
+          },
+          {
+            key: "atrasados",
+            title: "Atrasados",
+            description: "Horário previsto já passou e ainda não chegaram.",
+            tone: "danger" as const,
+            icon: Clock,
+            items: delayedAppointments,
+            metaFor: (item: ReceptionAgendaAppointment) =>
+              `Atrasado ${getMinutesElapsed(item.startsAt, nowTimestamp)} min · ${item.professionalName}`,
+          },
+          {
+            key: "confirmacoes",
+            title: "Confirmações pendentes",
+            description: "Ainda não confirmaram presença.",
+            tone: "warning" as const,
+            icon: CalendarClock,
+            items: pendingConfirmation,
+            metaFor: (item: ReceptionAgendaAppointment) =>
+              `${formatTime(item.startsAt, { timeZone: timezone ?? undefined })} · ${item.professionalName}`,
+          },
+          {
+            key: "pagamentos",
+            title: "Retorno para pagamento",
+            description: "Atendimento concluído, aguardando baixa financeira.",
+            tone: "warning" as const,
+            icon: Wallet,
+            items: awaitingPayment,
+            metaFor: (item: ReceptionAgendaAppointment) =>
+              `Desde ${formatTime(item.awaitingPaymentAt ?? item.closureReadyAt ?? item.startsAt, { timeZone: timezone ?? undefined })} · ${item.professionalName}`,
+          },
+        ] satisfies Array<{
+          key: string;
+          title: string;
+          description: string;
+          tone: "danger" | "warning";
+          icon: typeof AlertTriangle;
+          items: ReceptionAgendaAppointment[];
+          metaFor: (item: ReceptionAgendaAppointment) => string;
+        }>
+      ).filter((group) => group.items.length > 0),
+    [awaitingPayment, criticalQueueItems, delayedAppointments, nowTimestamp, pendingConfirmation, timezone],
   );
   const selectedPatientContact = useMemo(
     () =>
@@ -743,6 +802,20 @@ export default function ReceptionPage() {
     return activeAction === getActionKey(id, status);
   }
 
+  function renderAttentionItem(item: ReceptionAgendaAppointment, meta: string) {
+    return (
+      <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0 space-y-1">
+            <p className="font-semibold text-ink">{item.patientName ?? "Paciente sem nome"}</p>
+            <p className="text-sm text-muted">{meta}</p>
+          </div>
+          {renderQuickActions(item)}
+        </div>
+      </div>
+    );
+  }
+
   function renderQuickActions(
     appointment: ReceptionAgendaAppointment,
     tone: "default" | "inverse" = "default",
@@ -884,41 +957,62 @@ export default function ReceptionPage() {
         <AdminShortcutPanel title="Ações rápidas" items={shortcutItems} />
       </AdminPageHeader>
 
-      <Card className="space-y-4">
+      <Card className="space-y-5">
         <AdminSectionHeader
-          eyebrow="Chegada do dia"
-          title="Próximos a chegar"
-          description="Próximos pacientes previstos para hoje. Abra a ficha para fazer check-in ou confirmar."
-          actions={<StatusPill label={`${dashboard?.nextAppointments.length ?? 0} ${(dashboard?.nextAppointments.length ?? 0) === 1 ? "item" : "itens"}`} />}
+          eyebrow="Prioridades"
+          title="Central de atenção"
+          description="O que precisa de ação agora, em ordem de urgência."
+          actions={
+            <StatusPill
+              label={`${attentionGroups.reduce((sum, group) => sum + group.items.length, 0)} ${
+                attentionGroups.reduce((sum, group) => sum + group.items.length, 0) === 1
+                  ? "pendência"
+                  : "pendências"
+              }`}
+              tone={attentionGroups.length > 0 ? "warning" : "success"}
+            />
+          }
         />
-        <div className="space-y-3">
-          {dashboard?.nextAppointments.length ? dashboard.nextAppointments.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-border bg-panel/70 px-4 py-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-ink">{item.patientName ?? "Paciente sem nome"}</p>
-                  <p className="text-xs text-muted">
-                    {formatTime(item.startsAt, { timeZone: timezone ?? undefined })} · {item.professionalName}
-                  </p>
+        {attentionGroups.length === 0 ? (
+          <div className="flex items-center gap-3 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-700">
+            <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden="true" />
+            Nenhuma pendência crítica agora. Fila e confirmações em dia.
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {attentionGroups.map((group) => (
+              <div key={group.key} className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                        group.tone === "danger" ? "bg-danger-soft text-danger" : "bg-warning-soft text-warning"
+                      }`}
+                    >
+                      <group.icon className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-ink">{group.title}</p>
+                      <p className="text-xs text-muted">{group.description}</p>
+                    </div>
+                  </div>
+                  <StatusPill label={String(group.items.length)} tone={group.tone} />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void handleOpenAppointment(item.id)}
-                  className="whitespace-nowrap rounded-lg border border-border px-3 py-2 text-xs font-semibold text-ink transition hover:bg-accentSoft"
-                >
-                  Ver ficha
-                </button>
+                <div className="space-y-2">
+                  {group.items.slice(0, 3).map((item) => renderAttentionItem(item, group.metaFor(item)))}
+                  {group.items.length > 3 ? (
+                    <p className="text-xs text-muted">
+                      + {group.items.length - 3} {group.items.length - 3 === 1 ? "pendência" : "pendências"} na lista abaixo.
+                    </p>
+                  ) : null}
+                </div>
               </div>
-            </div>
-          )) : (
-            <div className="rounded-xl border border-dashed border-border px-4 py-4 text-sm text-muted">
-              Nenhum atendimento previsto para hoje.
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </Card>
 
-      {error ? <Card className="border-red-200 bg-red-50" role="alert"><p className="text-sm text-red-700">{error}</p></Card> : null}
+      {error ? <Alert tone="danger" title={error} /> : null}
 
       <section className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[0.95fr_1.05fr]">
         <Card id="pacientes" className="space-y-4 scroll-mt-24">
@@ -1752,37 +1846,18 @@ export default function ReceptionPage() {
                       const isDelayed = new Date(item.startsAt).getTime() < nowTimestamp;
 
                       return (
-                        <div
+                        <AppointmentCard
                           key={item.id}
-                          className={`rounded-[24px] border p-4 ${
+                          appointment={item}
+                          timeLabel={formatTime(item.startsAt, { timeZone: timezone ?? undefined })}
+                          isDelayed={isDelayed}
+                          delayLabel={
                             isDelayed
-                              ? "border-rose-300 bg-rose-50"
-                              : "border-emerald-300 bg-white"
-                          }`}
-                        >
-                          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                            <div className="space-y-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${isDelayed ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"}`}>
-                                  {isDelayed
-                                    ? `Atrasado ${getMinutesElapsed(item.startsAt, nowTimestamp)} min`
-                                    : `Chega em ${getMinutesFromNow(item.startsAt, nowTimestamp)} min`}
-                                </span>
-                                <StatusPill
-                                  label={getAppointmentStatusLabel(item.status)}
-                                  tone={getAppointmentStatusTone(item.status)}
-                                />
-                              </div>
-                              <p className="text-lg font-semibold text-ink">
-                                {item.patientName ?? "Paciente sem nome"}
-                              </p>
-                              <p className="text-sm text-muted">
-                                {formatTime(item.startsAt, { timeZone: timezone ?? undefined })} - {item.professionalName}
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">{renderQuickActions(item)}</div>
-                          </div>
-                        </div>
+                              ? `Atrasado ${getMinutesElapsed(item.startsAt, nowTimestamp)} min`
+                              : `Chega em ${getMinutesFromNow(item.startsAt, nowTimestamp)} min`
+                          }
+                          actions={renderQuickActions(item)}
+                        />
                       );
                     })}
                     {delayedAppointments.length === 0 && nextAgendaItems.length === 0 ? (

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope, IBM_Plex_Mono } from "next/font/google";
+import { ToastProvider } from "@/components/ui/toast";
 import "./globals.css";
 
 // Analytics — quando tiver os IDs, instale @next/third-parties e descomente:
@@ -109,7 +110,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
         />
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
       {/* Analytics: descomente após instalar @next/third-parties e configurar os IDs */}
       {/* {GA_ID && <GoogleAnalytics gaId={GA_ID} />} */}
