@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import type { MessagingWhatsappWebhookResponsePayload } from "@operaclinic/shared";
 import {
+  InputModality,
   MessageEventDirection,
   MessageEventType,
   MessageThreadStatus,
@@ -15,6 +16,7 @@ import {
 import type { Request } from "express";
 import { PrismaService } from "../../database/prisma.service";
 import { AgentMessageBridgeService } from "../agent/agent-message-bridge.service";
+import { AudioTranscriptionService } from "./audio-transcription.service";
 import { MessagingProviderFactory } from "./adapters/messaging-provider.factory";
 import type {
   NormalizedInboundMessageEvent,
@@ -41,6 +43,7 @@ export class WhatsappWebhooksService {
     private readonly agentBridge: AgentMessageBridgeService,
     private readonly messagingGateway: MessagingGateway,
     private readonly debounce: MessageDebounceService,
+    private readonly audioTranscriptionService: AudioTranscriptionService,
   ) {}
 
   async verifyWebhook(
@@ -325,7 +328,7 @@ export class WhatsappWebhooksService {
                 patientDisplayName: resolvedPatientDisplayName,
                 status: nextThreadStatus,
                 contactDisplayValue: senderPhoneNumber,
-                lastMessagePreview: this.truncatePreview(event.messageText ?? ""),
+                lastMessagePreview: this.resolveLastMessagePreview(event),
                 lastMessageAt: event.occurredAt,
                 lastInboundAt: event.occurredAt,
               },
@@ -342,7 +345,7 @@ export class WhatsappWebhooksService {
                 patientDisplayName:
                   patientLink.patientDisplayName || event.senderDisplayName || null,
                 externalThreadId: event.providerMessageId ?? null,
-                lastMessagePreview: this.truncatePreview(event.messageText ?? ""),
+                lastMessagePreview: this.resolveLastMessagePreview(event),
                 lastMessageAt: event.occurredAt,
                 lastInboundAt: event.occurredAt,
               },
@@ -366,23 +369,44 @@ export class WhatsappWebhooksService {
           });
         }
 
-        const messageEvent = await tx.messageEvent.create({
-          data: {
-            tenantId: connection.tenantId,
-            threadId: thread.id,
-            patientId: thread.patientId,
-            integrationConnectionId: connection.id,
-            webhookEventId: createdWebhook.id,
-            direction: MessageEventDirection.INBOUND,
-            eventType: MessageEventType.MESSAGE_RECEIVED,
-            providerMessageId: event.providerMessageId ?? null,
-            contentText: event.messageText ?? null,
-            metadata: {
-              senderDisplayName: event.senderDisplayName ?? null,
-            },
-            occurredAt: event.occurredAt,
-          },
-        });
+        const messageEvent = event.media
+          ? await tx.messageEvent.create({
+              data: {
+                tenantId: connection.tenantId,
+                threadId: thread.id,
+                patientId: thread.patientId,
+                integrationConnectionId: connection.id,
+                webhookEventId: createdWebhook.id,
+                direction: MessageEventDirection.INBOUND,
+                eventType: MessageEventType.AUDIO,
+                providerMessageId: event.providerMessageId ?? null,
+                contentText: null,
+                metadata: {
+                  senderDisplayName: event.senderDisplayName ?? null,
+                  mediaId: event.media.mediaId,
+                  mimeType: event.media.mimeType,
+                  transcriptionStatus: "PENDING",
+                },
+                occurredAt: event.occurredAt,
+              },
+            })
+          : await tx.messageEvent.create({
+              data: {
+                tenantId: connection.tenantId,
+                threadId: thread.id,
+                patientId: thread.patientId,
+                integrationConnectionId: connection.id,
+                webhookEventId: createdWebhook.id,
+                direction: MessageEventDirection.INBOUND,
+                eventType: MessageEventType.MESSAGE_RECEIVED,
+                providerMessageId: event.providerMessageId ?? null,
+                contentText: event.messageText ?? null,
+                metadata: {
+                  senderDisplayName: event.senderDisplayName ?? null,
+                },
+                occurredAt: event.occurredAt,
+              },
+            });
 
         await tx.webhookEvent.update({
           where: {
@@ -420,20 +444,47 @@ export class WhatsappWebhooksService {
         }
       }
 
-      this.debounce.schedule({
-        tenantId: connection.tenantId,
-        threadId: result.threadId,
-        messageText: event.messageText ?? null,
-        senderPhoneNumber,
-        senderDisplayName: event.senderDisplayName ?? null,
-        patientId: patientLink.patientId,
-        correlationId: result.eventId,
-      });
+      if (event.media) {
+        // Fire-and-forget verdadeiro (sem await): download + transcrição podem
+        // levar vários segundos, e o webhook precisa responder rápido ao
+        // provider. O pipeline nunca lança — qualquer falha termina em handoff,
+        // tratado dentro do próprio AudioTranscriptionService.
+        this.audioTranscriptionService
+          .processInboundAudio({
+            tenantId: connection.tenantId,
+            threadId: result.threadId,
+            eventId: result.eventId,
+            mediaId: event.media.mediaId,
+            mimeType: event.media.mimeType,
+            senderPhoneNumber,
+            senderDisplayName: event.senderDisplayName ?? null,
+            patientId: patientLink.patientId,
+            connection: this.buildProviderConnectionContext(connection),
+          })
+          .catch((error) => {
+            this.logger.error(
+              `Audio transcription pipeline crashed unexpectedly for event ${result.eventId}: ${
+                error instanceof Error ? error.message : "unknown error"
+              }`,
+            );
+          });
+      } else {
+        this.debounce.schedule({
+          tenantId: connection.tenantId,
+          threadId: result.threadId,
+          messageText: event.messageText ?? null,
+          senderPhoneNumber,
+          senderDisplayName: event.senderDisplayName ?? null,
+          patientId: patientLink.patientId,
+          correlationId: result.eventId,
+          inputModality: InputModality.TEXT,
+        });
+      }
 
       this.messagingGateway.emitThreadActivity(connection.tenantId, {
         threadId: result.threadId,
         direction: "INBOUND",
-        eventType: "MESSAGE_RECEIVED",
+        eventType: event.media ? "AUDIO" : "MESSAGE_RECEIVED",
         occurredAt: event.occurredAt.toISOString(),
       });
       this.messagingGateway.emitThreadUpdated(connection.tenantId, {
@@ -491,6 +542,16 @@ export class WhatsappWebhooksService {
     } catch (_error) {
       throw new BadRequestException("senderPhoneNumber is invalid.");
     }
+  }
+
+  private resolveLastMessagePreview(
+    event: NormalizedInboundMessageEvent,
+  ): string | null {
+    if (event.media) {
+      return "🎤 Mensagem de voz (transcrevendo...)";
+    }
+
+    return this.truncatePreview(event.messageText ?? "");
   }
 
   private truncatePreview(text: string): string | null {

@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnApplicationShutdown } from "@nestjs/common";
+import { InputModality } from "@prisma/client";
 import { AgentMessageBridgeService } from "../agent/agent-message-bridge.service";
 
 interface RouteParams {
@@ -9,12 +10,14 @@ interface RouteParams {
   senderDisplayName: string | null;
   patientId: string | null;
   correlationId: string;
+  inputModality: InputModality;
 }
 
 interface PendingEntry {
   timer: ReturnType<typeof setTimeout>;
   texts: (string | null)[];
   latest: RouteParams;
+  hasAudio: boolean;
 }
 
 const DEBOUNCE_WINDOW_MS = 5_000;
@@ -35,6 +38,7 @@ export class MessageDebounceService implements OnApplicationShutdown {
       clearTimeout(existing.timer);
       existing.texts.push(params.messageText);
       existing.latest = params;
+      existing.hasAudio = existing.hasAudio || params.inputModality === InputModality.AUDIO;
     } else {
       if (this.pending.size >= MAX_PENDING_KEYS) {
         this.logger.warn(
@@ -48,6 +52,7 @@ export class MessageDebounceService implements OnApplicationShutdown {
         timer: null!,
         texts: [params.messageText],
         latest: params,
+        hasAudio: params.inputModality === InputModality.AUDIO,
       });
     }
 
@@ -80,6 +85,9 @@ export class MessageDebounceService implements OnApplicationShutdown {
     void this.agentBridge.routeInboundMessage({
       ...entry.latest,
       messageText: aggregatedText,
+      // Se qualquer mensagem acumulada na janela veio de áudio transcrito,
+      // a execução agregada conta como AUDIO — o enum não tem valor MIXED.
+      inputModality: entry.hasAudio ? InputModality.AUDIO : InputModality.TEXT,
     });
   }
 }

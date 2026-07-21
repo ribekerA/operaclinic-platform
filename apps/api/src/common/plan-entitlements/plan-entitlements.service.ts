@@ -38,7 +38,12 @@ const BOOLEAN_FEATURE_KEYS: PlanFeatureKey[] = [
   "multiUnit",
 ];
 
-const LIMIT_KEYS: PlanLimitKey[] = ["maxProfessionals", "maxUnits", "monthlyAiConversations"];
+const LIMIT_KEYS: PlanLimitKey[] = [
+  "maxProfessionals",
+  "maxUnits",
+  "monthlyAiConversations",
+  "monthlyTranscriptionSeconds",
+];
 
 /** Fallback plan applied to a tenant with no open (TRIAL/ACTIVE/PAST_DUE) subscription — the most
  *  restrictive commercial tier, never the most permissive, so a lapsed/canceled tenant never
@@ -49,6 +54,12 @@ export interface AiConversationQuotaResult {
   allowed: boolean;
   limit: number | null;
   usedThisMonth: number;
+}
+
+export interface AudioTranscriptionQuotaResult {
+  allowed: boolean;
+  limit: number | null;
+  usedSecondsThisMonth: number;
 }
 
 /**
@@ -218,6 +229,54 @@ export class PlanEntitlementsService {
     });
 
     return new Set(activeThreadsThisMonth.map((row) => row.threadId));
+  }
+
+  /**
+   * Checks whether transcribing an incoming audio message would push the tenant past its monthly
+   * transcription-seconds budget (protection against provider cost abuse, distinct from
+   * checkAiConversationQuota's conversation-count metric). The real duration of the audio being
+   * evaluated is unknown until after it's transcribed, so this is checked *before* download using
+   * `estimatedAdditionalSeconds` (the tenant's configured maxDurationSeconds) as a conservative
+   * worst-case increment — real usage is reconciled afterward from actual durationSeconds.
+   */
+  async checkAudioTranscriptionQuota(
+    tenantId: string,
+    estimatedAdditionalSeconds: number,
+  ): Promise<AudioTranscriptionQuotaResult> {
+    const features = await this.getEffectiveFeatures(tenantId);
+    const limit = features.limits.monthlyTranscriptionSeconds;
+
+    if (limit === null) {
+      return { allowed: true, limit: null, usedSecondsThisMonth: 0 };
+    }
+
+    const usedSecondsThisMonth = await this.getTranscriptionSecondsUsedThisMonth(tenantId);
+
+    return {
+      allowed: usedSecondsThisMonth + estimatedAdditionalSeconds <= limit,
+      limit,
+      usedSecondsThisMonth,
+    };
+  }
+
+  /** Sum of durationSeconds recorded on every AUDIO MessageEvent since the start of the current UTC
+   *  calendar month whose transcription actually ran (COMPLETED or rejected post-transcription, e.g.
+   *  DURATION_EXCEEDED/LOW_CONFIDENCE) — durationSeconds is only ever persisted when the transcription
+   *  provider was actually called, so this reflects real provider cost, not just accepted messages. */
+  private async getTranscriptionSecondsUsedThisMonth(tenantId: string): Promise<number> {
+    const now = new Date();
+    const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+
+    const rows = await this.prisma.$queryRaw<Array<{ total: number }>>`
+      SELECT COALESCE(SUM((metadata->>'durationSeconds')::numeric), 0)::float8 AS total
+      FROM message_events
+      WHERE tenant_id = ${tenantId}::uuid
+        AND event_type = 'AUDIO'
+        AND occurred_at >= ${startOfMonth}
+        AND metadata->>'durationSeconds' IS NOT NULL
+    `;
+
+    return rows[0]?.total ?? 0;
   }
 
   /** Tenant-level (non-thread-specific) view of effective entitlements + this month's AI-conversation

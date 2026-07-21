@@ -10,11 +10,15 @@ import { IntegrationProvider } from "@prisma/client";
 import { createHmac, timingSafeEqual } from "crypto";
 import type { Request as ExpressRequest } from "express";
 import type {
+  DownloadedMedia,
+  MediaMetadata,
   MessagingProviderAdapter,
+  NormalizedInboundMedia,
   NormalizedInboundMessageEvent,
   OutboundButtonsDispatchInput,
   OutboundMessageDispatchInput,
   OutboundMessageDispatchResult,
+  ProviderConnectionContext,
   ProviderInboundWebhookInput,
   ProviderWebhookLookup,
   ProviderWebhookVerificationInput,
@@ -276,6 +280,90 @@ export class MetaWhatsAppAdapter implements MessagingProviderAdapter {
     };
   }
 
+  async downloadMedia(
+    mediaId: string,
+    connection: ProviderConnectionContext,
+  ): Promise<DownloadedMedia> {
+    const config = this.resolveConfig(connection);
+    const { url: temporaryUrl, mimeType } = await this.fetchMediaMetadata(
+      mediaId,
+      connection,
+    );
+
+    const binaryResponse = await fetch(temporaryUrl, {
+      headers: { Authorization: `Bearer ${config.accessToken}` },
+    });
+
+    if (!binaryResponse.ok) {
+      this.logger.warn(
+        `Meta media binary download failed for media ${mediaId}: ${binaryResponse.status}`,
+      );
+      throw new BadGatewayException(
+        `Meta WhatsApp media download failed with status ${binaryResponse.status}.`,
+      );
+    }
+
+    const buffer = Buffer.from(await binaryResponse.arrayBuffer());
+
+    return {
+      buffer,
+      mimeType,
+      sizeBytes: buffer.length,
+    };
+  }
+
+  async getMediaMetadata(
+    mediaId: string,
+    connection: ProviderConnectionContext,
+  ): Promise<MediaMetadata> {
+    const { mimeType, sizeBytes } = await this.fetchMediaMetadata(
+      mediaId,
+      connection,
+    );
+
+    return { mimeType, sizeBytes };
+  }
+
+  private async fetchMediaMetadata(
+    mediaId: string,
+    connection: ProviderConnectionContext,
+  ): Promise<{ url: string; mimeType: string; sizeBytes: number | null }> {
+    const config = this.resolveConfig(connection);
+    const metadataEndpoint = `${config.apiBaseUrl.replace(/\/$/, "")}/${config.apiVersion}/${mediaId}`;
+
+    const metadataResponse = await fetch(metadataEndpoint, {
+      headers: { Authorization: `Bearer ${config.accessToken}` },
+    });
+
+    if (!metadataResponse.ok) {
+      this.logger.warn(
+        `Meta media metadata lookup failed for media ${mediaId}: ${metadataResponse.status}`,
+      );
+      throw new BadGatewayException(
+        `Meta WhatsApp media metadata lookup failed with status ${metadataResponse.status}.`,
+      );
+    }
+
+    const metadataJson = this.safeParseJson(await metadataResponse.text());
+    const url = this.asString(metadataJson?.url);
+    const mimeType = this.asString(metadataJson?.mime_type) ?? "application/octet-stream";
+    const rawFileSize = metadataJson?.file_size;
+    const sizeBytes =
+      typeof rawFileSize === "number"
+        ? rawFileSize
+        : typeof rawFileSize === "string" && /^\d+$/.test(rawFileSize)
+          ? Number(rawFileSize)
+          : null;
+
+    if (!url) {
+      throw new BadGatewayException(
+        "Meta WhatsApp media metadata response did not include a download URL.",
+      );
+    }
+
+    return { url, mimeType, sizeBytes };
+  }
+
   private extractMessageEvents(
     entryId: string | null,
     field: string,
@@ -299,7 +387,8 @@ export class MetaWhatsAppAdapter implements MessagingProviderAdapter {
         continue;
       }
 
-      const messageText = this.extractTextBody(messageRecord);
+      const media = this.extractAudioMedia(messageRecord);
+      const messageText = media ? null : this.extractTextBody(messageRecord);
       const senderDisplayName = this.resolveContactDisplayName(
         contacts,
         senderPhoneNumber,
@@ -314,6 +403,7 @@ export class MetaWhatsAppAdapter implements MessagingProviderAdapter {
         senderDisplayName,
         messageText,
         occurredAt,
+        media,
         payload: {
           entryId,
           field,
@@ -373,6 +463,26 @@ export class MetaWhatsAppAdapter implements MessagingProviderAdapter {
     const profile = this.asRecord(match?.profile);
 
     return this.asString(profile?.name);
+  }
+
+  private extractAudioMedia(
+    message: Record<string, unknown>,
+  ): NormalizedInboundMedia | null {
+    if (this.asString(message.type) !== "audio") {
+      return null;
+    }
+
+    const audio = this.asRecord(message.audio);
+    const mediaId = this.asString(audio?.id);
+
+    if (!mediaId) {
+      return null;
+    }
+
+    return {
+      mediaId,
+      mimeType: this.asString(audio?.mime_type),
+    };
   }
 
   private extractTextBody(message: Record<string, unknown>): string | null {

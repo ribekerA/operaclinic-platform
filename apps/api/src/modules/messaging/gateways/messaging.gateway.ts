@@ -25,7 +25,8 @@ interface MessagingThreadActivityPayload {
     | "MESSAGE_SENT"
     | "MESSAGE_SEND_FAILED"
     | "THREAD_RESOLVED"
-    | "THREAD_PATIENT_LINKED";
+    | "THREAD_PATIENT_LINKED"
+    | "AUDIO";
   occurredAt: string;
 }
 

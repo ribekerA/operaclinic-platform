@@ -10,6 +10,7 @@ import messagingConfig from "./config/messaging.config";
 import paymentConfig from "./config/payment.config";
 import stripeConfig from "./config/stripe.config";
 import agentConfig from "./config/agent.config";
+import transcriptionConfig from "./config/transcription.config";
 import { getEnvFilePaths } from "./config/env";
 import { validateEnv } from "./config/env.validation";
 import { DatabaseModule } from "./database/database.module";
@@ -34,6 +35,7 @@ import { ModulesModule } from "./modules/modules.module";
         paymentConfig,
         stripeConfig,
         agentConfig,
+        transcriptionConfig,
       ],
       validate: validateEnv,
     }),

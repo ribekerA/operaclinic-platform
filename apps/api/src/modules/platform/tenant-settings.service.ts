@@ -4,6 +4,18 @@ import { PrismaService } from "../../database/prisma.service";
 
 type DbClient = Prisma.TransactionClient | PrismaClient | PrismaService;
 
+export interface AudioSettings {
+  enabled: boolean;
+  maxDurationSeconds: number;
+  minConfidence: number;
+}
+
+const AUDIO_SETTING_KEYS = {
+  enabled: "audio.enabled",
+  maxDurationSeconds: "audio.maxDurationSeconds",
+  minConfidence: "audio.minConfidence",
+} as const;
+
 @Injectable()
 export class TenantSettingsService {
   private static readonly DEFAULT_SETTINGS: Record<string, string> = {
@@ -11,7 +23,72 @@ export class TenantSettingsService {
     currency: "BRL",
   };
 
+  // Defaults resolvidos em código, não seedados no banco por tenant — um tenant
+  // sem override em `tenant_settings` recebe estes valores. Alterar aqui muda
+  // o comportamento padrão de todos os tenants sem precisar de migração/backfill.
+  private static readonly AUDIO_SETTING_DEFAULTS: AudioSettings = {
+    enabled: true,
+    maxDurationSeconds: 120,
+    minConfidence: 0.6,
+  };
+
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Resolve as configurações de áudio do tenant: default global do código,
+   * sobrescrito por qualquer chave `audio.*` presente em `tenant_settings`
+   * (gravada via o endpoint genérico de update de tenant, que já aceita
+   * `settings` arbitrário).
+   */
+  async getAudioSettings(
+    tenantId: string,
+    dbClient?: DbClient,
+  ): Promise<AudioSettings> {
+    const db = dbClient ?? this.prisma;
+
+    const overrides = await db.tenantSetting.findMany({
+      where: {
+        tenantId,
+        key: { in: Object.values(AUDIO_SETTING_KEYS) },
+      },
+      select: { key: true, value: true },
+    });
+
+    const overrideMap = this.toMap(overrides);
+    const defaults = TenantSettingsService.AUDIO_SETTING_DEFAULTS;
+
+    return {
+      enabled: this.parseBooleanSetting(
+        overrideMap[AUDIO_SETTING_KEYS.enabled],
+        defaults.enabled,
+      ),
+      maxDurationSeconds: this.parseIntSetting(
+        overrideMap[AUDIO_SETTING_KEYS.maxDurationSeconds],
+        defaults.maxDurationSeconds,
+      ),
+      minConfidence: this.parseFloatSetting(
+        overrideMap[AUDIO_SETTING_KEYS.minConfidence],
+        defaults.minConfidence,
+      ),
+    };
+  }
+
+  private parseBooleanSetting(value: string | undefined, fallback: boolean): boolean {
+    if (value === undefined) return fallback;
+    return value === "true";
+  }
+
+  private parseIntSetting(value: string | undefined, fallback: number): number {
+    if (value === undefined) return fallback;
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  private parseFloatSetting(value: string | undefined, fallback: number): number {
+    if (value === undefined) return fallback;
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
 
   buildInitialSettings(
     incoming?: Record<string, string>,

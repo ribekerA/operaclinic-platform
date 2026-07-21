@@ -23,6 +23,7 @@ import type { AgentIntentType, ConversationContext } from "./types/agent-runtime
 import {
   AgentExecutionStatus as PrismaAgentExecutionStatus,
   AgentKind as PrismaAgentKind,
+  InputModality,
   MessageThreadResolutionActorType,
   MessageThreadStatus,
   Prisma,
@@ -41,7 +42,10 @@ export class AgentOrchestratorService {
 
   async executeCaptacao(
     actor: AuthenticatedUser,
-    input: CaptacaoAgentRequestPayload & { correlationId?: string },
+    input: CaptacaoAgentRequestPayload & {
+      correlationId?: string;
+      inputModality?: InputModality;
+    },
   ): Promise<CaptacaoAgentResponsePayload> {
     const baseContext = this.buildContext(actor, input.threadId, input.correlationId);
     const conversationContext = await this.buildConversationContextWithMemory(baseContext);
@@ -73,6 +77,7 @@ export class AgentOrchestratorService {
         threadStatus: result.thread?.status ?? null,
         replyText: result.replyText,
         errorMessage: null,
+        inputModality: input.inputModality ?? InputModality.TEXT,
       });
 
       if (
@@ -128,6 +133,7 @@ export class AgentOrchestratorService {
         threadStatus: null,
         replyText: null,
         errorMessage: error instanceof Error ? error.message : String(error),
+        inputModality: input.inputModality ?? InputModality.TEXT,
       });
 
       throw error;
@@ -136,7 +142,10 @@ export class AgentOrchestratorService {
 
   async executeAgendamento(
     actor: AuthenticatedUser,
-    input: AgendamentoAgentRequestPayload & { correlationId?: string },
+    input: AgendamentoAgentRequestPayload & {
+      correlationId?: string;
+      inputModality?: InputModality;
+    },
   ): Promise<AgendamentoAgentResponsePayload> {
     const baseContext = this.buildContext(actor, input.threadId, input.correlationId);
     const conversationContext = await this.buildAgendamentoContextWithMemory(baseContext);
@@ -170,6 +179,7 @@ export class AgentOrchestratorService {
         threadStatus: result.thread?.status ?? null,
         replyText: result.replyText,
         errorMessage: null,
+        inputModality: input.inputModality ?? InputModality.TEXT,
       });
 
       if (
@@ -213,6 +223,7 @@ export class AgentOrchestratorService {
         threadStatus: null,
         replyText: null,
         errorMessage: error instanceof Error ? error.message : String(error),
+        inputModality: input.inputModality ?? InputModality.TEXT,
       });
 
       throw error;
@@ -392,6 +403,7 @@ export class AgentOrchestratorService {
     threadStatus: string | null;
     replyText: string | null;
     errorMessage: string | null;
+    inputModality: InputModality;
   }): Promise<string | null> {
     try {
       const summary = input.session.getSummary();
@@ -415,6 +427,7 @@ export class AgentOrchestratorService {
           startedAt: input.session.startedAt,
           finishedAt,
           errorMessage: input.errorMessage,
+          inputModality: input.inputModality,
           metadata: {
             intents: summary.intents,
             steps: input.session.getSteps().map((step) => ({

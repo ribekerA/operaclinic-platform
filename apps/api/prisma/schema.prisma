@@ -68,6 +68,7 @@ enum MessageEventType {
   HANDOFF_CLOSED
   THREAD_PATIENT_LINKED
   THREAD_RESOLVED
+  AUDIO
 }
 
 enum MessageThreadResolutionActorType {
@@ -120,6 +121,11 @@ enum AgentExecutionStatus {
   HANDOFF_OPENED
   COMPLETED
   FAILED
+}
+
+enum InputModality {
+  TEXT
+  AUDIO
 }
 
 enum UserStatus {
@@ -828,6 +834,7 @@ model AgentExecution {
   correlationId    String               @map("correlation_id") @db.VarChar(120)
   agent            AgentKind
   status           AgentExecutionStatus
+  inputModality    InputModality        @default(TEXT) @map("input_modality")
   durationMs       Int                  @map("duration_ms")
   skillCalls       Int                  @default(0) @map("skill_calls")
   failedSkillCalls Int                  @default(0) @map("failed_skill_calls")

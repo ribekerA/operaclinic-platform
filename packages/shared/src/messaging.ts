@@ -17,7 +17,8 @@ export type MessageEventType =
   | "HANDOFF_ASSIGNED"
   | "HANDOFF_CLOSED"
   | "THREAD_PATIENT_LINKED"
-  | "THREAD_RESOLVED";
+  | "THREAD_RESOLVED"
+  | "AUDIO";
 
 export type WebhookEventStatus = "RECEIVED" | "PROCESSED" | "IGNORED" | "FAILED";
 

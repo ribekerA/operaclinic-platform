@@ -4,6 +4,7 @@ export interface PlanLimits {
   maxProfessionals: number | null; // null = sem limite
   maxUnits: number | null; // null = sem limite
   monthlyAiConversations: number | null; // null = sem limite; janela mensal alinhada ao ciclo de cobrança
+  monthlyTranscriptionSeconds: number | null; // null = sem limite; segundos de áudio transcrito/mês, proteção de custo do provider de transcrição
 }
 
 export interface PlanFeatureSet {
@@ -37,7 +38,12 @@ export type PlanFeatureOverrides = Partial<Omit<PlanFeatureSet, "limits">>;
 
 export const PLAN_FEATURES: Record<CommercialPlanCode, PlanFeatureSet> = {
   ESTETICA_START: {
-    limits: { maxProfessionals: 3, maxUnits: 1, monthlyAiConversations: 200 },
+    limits: {
+      maxProfessionals: 3,
+      maxUnits: 1,
+      monthlyAiConversations: 200,
+      monthlyTranscriptionSeconds: 3_000,
+    },
     receptionAndSchedule: true,
     patientManagement: true,
     scheduleBlocking: true,
@@ -54,7 +60,12 @@ export const PLAN_FEATURES: Record<CommercialPlanCode, PlanFeatureSet> = {
     multiUnit: false,
   },
   ESTETICA_FLOW: {
-    limits: { maxProfessionals: 8, maxUnits: 2, monthlyAiConversations: 800 },
+    limits: {
+      maxProfessionals: 8,
+      maxUnits: 2,
+      monthlyAiConversations: 800,
+      monthlyTranscriptionSeconds: 12_000,
+    },
     receptionAndSchedule: true,
     patientManagement: true,
     scheduleBlocking: true,
@@ -71,7 +82,12 @@ export const PLAN_FEATURES: Record<CommercialPlanCode, PlanFeatureSet> = {
     multiUnit: false,
   },
   ESTETICA_SCALE: {
-    limits: { maxProfessionals: null, maxUnits: null, monthlyAiConversations: null },
+    limits: {
+      maxProfessionals: null,
+      maxUnits: null,
+      monthlyAiConversations: null,
+      monthlyTranscriptionSeconds: null,
+    },
     receptionAndSchedule: true,
     patientManagement: true,
     scheduleBlocking: true,

@@ -32,6 +32,7 @@ interface ValidatedEnv {
   ANTHROPIC_API_KEY: string;
   ANTHROPIC_AGENT_ENABLED: boolean;
   DEMO_RESET_SECRET: string;
+  TRANSCRIPTION_PROVIDER: string;
 }
 
 const JWT_TTL_PATTERN = /^\d+(s|m|h|d)$/i;
@@ -156,6 +157,7 @@ export function validateEnv(config: RawEnv): ValidatedEnv {
     ANTHROPIC_API_KEY: String(config.ANTHROPIC_API_KEY ?? ""),
     ANTHROPIC_AGENT_ENABLED: toBoolean(config.ANTHROPIC_AGENT_ENABLED, false),
     DEMO_RESET_SECRET: String(config.DEMO_RESET_SECRET ?? ""),
+    TRANSCRIPTION_PROVIDER: String(config.TRANSCRIPTION_PROVIDER ?? ""),
   };
 
   if (validated.API_PORT <= 0 || validated.API_PORT > 65535) {
@@ -206,6 +208,19 @@ export function validateEnv(config: RawEnv): ValidatedEnv {
 
   if (!/^https?:\/\//i.test(validated.WEB_URL)) {
     throw new Error("WEB_URL must be an absolute http(s) URL.");
+  }
+
+  const normalizedTranscriptionProvider = validated.TRANSCRIPTION_PROVIDER.trim().toLowerCase();
+
+  if (
+    normalizedTranscriptionProvider &&
+    normalizedTranscriptionProvider !== "mock" &&
+    normalizedTranscriptionProvider !== "whisper" &&
+    normalizedTranscriptionProvider !== "deepgram"
+  ) {
+    throw new Error(
+      "TRANSCRIPTION_PROVIDER must be one of: mock, whisper, deepgram.",
+    );
   }
 
   if (normalizedPaymentProvider === "stripe") {

@@ -8,7 +8,7 @@ import { PlanEntitlementsService } from "../../common/plan-entitlements/plan-ent
 import { HandoffRequestsService } from "../messaging/handoff-requests.service";
 import { AgentOrchestratorService } from "./agent-orchestrator.service";
 import { AnthropicSchedulingAgentService } from "./anthropic-scheduling-agent.service";
-import { HandoffStatus } from "@prisma/client";
+import { HandoffStatus, InputModality } from "@prisma/client";
 
 const BOOKING_INTENTS = new Set([
   "BOOK_APPOINTMENT",
@@ -35,6 +35,8 @@ export interface AgentBridgeInboundPayload {
   patientId: string | null;
   /** A correlation ID for end-to-end tracing */
   correlationId?: string;
+  /** Whether this message originated as text or as transcribed audio */
+  inputModality: InputModality;
 }
 
 /**
@@ -176,6 +178,7 @@ export class AgentMessageBridgeService {
           patientId: threadCtx.patientId!,
           messageText: payload.messageText.trim(),
           correlationId,
+          inputModality: payload.inputModality,
         });
 
         this.logger.debug(
@@ -194,6 +197,7 @@ export class AgentMessageBridgeService {
         patientPhone: payload.senderPhoneNumber,
         patientName: payload.senderDisplayName ?? undefined,
         correlationId,
+        inputModality: payload.inputModality,
       });
 
       this.logger.debug(
