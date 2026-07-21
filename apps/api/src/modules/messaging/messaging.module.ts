@@ -60,6 +60,7 @@ import { TranscriptionProviderFactory } from "./transcription/transcription-prov
   exports: [
     HandoffRequestsService,
     MessageThreadsService,
+    EvolutionWhatsAppAdapter,
   ],
 })
 export class MessagingModule {}

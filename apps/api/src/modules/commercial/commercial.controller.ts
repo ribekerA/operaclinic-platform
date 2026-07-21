@@ -8,6 +8,7 @@ import type { Request } from "express";
 import { CommercialAbuseProtectionService } from "./commercial-abuse-protection.service";
 import { CommercialService } from "./commercial.service";
 import { CompleteCommercialOnboardingDto } from "./dto/complete-commercial-onboarding.dto";
+import { CreateCommercialCheckoutDto } from "./dto/create-commercial-checkout.dto";
 import { StartCommercialOnboardingDto } from "./dto/start-commercial-onboarding.dto";
 
 @Controller("commercial")
@@ -54,9 +55,13 @@ export class CommercialController {
   async createCheckout(
     @Req() request: Request,
     @Param("publicToken") publicToken: string,
+    @Body() dto: CreateCommercialCheckoutDto,
   ): Promise<{ checkoutUrl: string; sessionId: string }> {
     this.abuseProtectionService.assertWithinLimit(request, "create_checkout");
-    return this.commercialService.createCheckout(publicToken);
+    return this.commercialService.createCheckout(
+      publicToken,
+      dto.paymentPreference,
+    );
   }
 
   @Post("onboarding/:publicToken/confirm-checkout")

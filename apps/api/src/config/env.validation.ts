@@ -12,6 +12,7 @@ interface ValidatedEnv {
   JWT_REFRESH_TTL: string;
   COMMERCIAL_ONBOARDING_TTL_HOURS: number;
   COMMERCIAL_ONBOARDING_ENABLE_MOCK_CHECKOUT: boolean;
+  COMMERCIAL_TRIAL_PERIOD_DAYS: number;
   PAYMENT_PROVIDER: string;
   STRIPE_SECRET_KEY: string;
   STRIPE_WEBHOOK_SECRET: string;
@@ -32,6 +33,8 @@ interface ValidatedEnv {
   ANTHROPIC_API_KEY: string;
   ANTHROPIC_AGENT_ENABLED: boolean;
   DEMO_RESET_SECRET: string;
+  DEMO_FOUNDER_WHATSAPP_NUMBER: string;
+  EVOLUTION_DEMO_INSTANCE_NAME: string;
   TRANSCRIPTION_PROVIDER: string;
 }
 
@@ -122,6 +125,10 @@ export function validateEnv(config: RawEnv): ValidatedEnv {
       config.COMMERCIAL_ONBOARDING_ENABLE_MOCK_CHECKOUT,
       false,
     ),
+    COMMERCIAL_TRIAL_PERIOD_DAYS: toNumber(
+      config.COMMERCIAL_TRIAL_PERIOD_DAYS,
+      7,
+    ),
     PAYMENT_PROVIDER: String(config.PAYMENT_PROVIDER ?? ""),
     STRIPE_SECRET_KEY: String(config.STRIPE_SECRET_KEY ?? ""),
     STRIPE_WEBHOOK_SECRET: String(config.STRIPE_WEBHOOK_SECRET ?? ""),
@@ -157,6 +164,12 @@ export function validateEnv(config: RawEnv): ValidatedEnv {
     ANTHROPIC_API_KEY: String(config.ANTHROPIC_API_KEY ?? ""),
     ANTHROPIC_AGENT_ENABLED: toBoolean(config.ANTHROPIC_AGENT_ENABLED, false),
     DEMO_RESET_SECRET: String(config.DEMO_RESET_SECRET ?? ""),
+    DEMO_FOUNDER_WHATSAPP_NUMBER: String(
+      config.DEMO_FOUNDER_WHATSAPP_NUMBER ?? "",
+    ),
+    EVOLUTION_DEMO_INSTANCE_NAME: String(
+      config.EVOLUTION_DEMO_INSTANCE_NAME ?? "",
+    ),
     TRANSCRIPTION_PROVIDER: String(config.TRANSCRIPTION_PROVIDER ?? ""),
   };
 
@@ -184,6 +197,16 @@ export function validateEnv(config: RawEnv): ValidatedEnv {
   ) {
     throw new Error(
       "COMMERCIAL_ONBOARDING_TTL_HOURS must be an integer between 1 and 168.",
+    );
+  }
+
+  if (
+    !Number.isInteger(validated.COMMERCIAL_TRIAL_PERIOD_DAYS) ||
+    validated.COMMERCIAL_TRIAL_PERIOD_DAYS < 1 ||
+    validated.COMMERCIAL_TRIAL_PERIOD_DAYS > 90
+  ) {
+    throw new Error(
+      "COMMERCIAL_TRIAL_PERIOD_DAYS must be an integer between 1 and 90.",
     );
   }
 

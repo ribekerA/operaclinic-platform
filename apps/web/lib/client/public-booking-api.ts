@@ -5,6 +5,7 @@ export interface PublicClinicInfo {
   clinicName: string;
   displayName: string;
   timezone: string;
+  isDemo: boolean;
   professionals: Array<{
     id: string;
     displayName: string;

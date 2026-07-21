@@ -41,6 +41,7 @@ export class StripePaymentAdapter implements PaymentAdapter {
     },
     onboardingId: string,
     onboardingPublicToken: string,
+    paymentPreference: "trial_card" | "pay_now",
   ): Promise<CheckoutSession> {
     if (!this.stripe) {
       throw new BadRequestException("Stripe payment adapter is not configured.");
@@ -51,8 +52,14 @@ export class StripePaymentAdapter implements PaymentAdapter {
         "stripe.webUrl",
         "http://localhost:3000",
       );
+      const isTrial = paymentPreference === "trial_card";
+      const trialPeriodDays = this.configService.get<number>(
+        "commercial.trialPeriodDays",
+        7,
+      );
+
       const session = await this.stripe.checkout.sessions.create({
-        payment_method_types: ["card", "boleto"],
+        payment_method_types: isTrial ? ["card"] : ["card", "boleto"],
         line_items: [
           {
             price_data: {
@@ -93,6 +100,7 @@ export class StripePaymentAdapter implements PaymentAdapter {
             planId: plan.id,
             planCode: plan.code,
           },
+          ...(isTrial ? { trial_period_days: trialPeriodDays } : {}),
         },
         expires_at: Math.floor((Date.now() + 24 * 60 * 60 * 1000) / 1000), // 24 hours
       });

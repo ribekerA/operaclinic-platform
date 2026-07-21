@@ -198,6 +198,9 @@ export function CommercialCheckoutWorkspace({
   const [error, setError] = useState<string | null>(null);
   const [accessMessage, setAccessMessage] = useState<string | null>(null);
   const [accessPreviewUrl, setAccessPreviewUrl] = useState<string | null>(null);
+  const [paymentPreference, setPaymentPreference] = useState<
+    "trial_card" | "pay_now"
+  >("trial_card");
   const hasHandledStripeReturnRef = useRef(false);
 
   async function loadOnboarding(): Promise<void> {
@@ -262,7 +265,10 @@ export function CommercialCheckoutWorkspace({
     setError(null);
 
     try {
-      const { checkoutUrl } = await createStripeCheckout(onboardingToken);
+      const { checkoutUrl } = await createStripeCheckout(
+        onboardingToken,
+        paymentPreference,
+      );
       window.location.href = checkoutUrl;
     } catch (actionError) {
       setError(
@@ -716,6 +722,44 @@ export function CommercialCheckoutWorkspace({
                         Você será redirecionado para o ambiente seguro de pagamento.
                         Após confirmar, voltará automaticamente para continuar.
                       </p>
+                      <div className="grid gap-2" role="radiogroup" aria-label="Forma de pagamento">
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={paymentPreference === "trial_card"}
+                          onClick={() => setPaymentPreference("trial_card")}
+                          className={`rounded-xl border px-4 py-3 text-left text-sm transition ${
+                            paymentPreference === "trial_card"
+                              ? "border-teal-300 bg-teal-500/10 text-white"
+                              : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                          }`}
+                        >
+                          <span className="block font-semibold">
+                            Cartão com 7 dias grátis
+                          </span>
+                          <span className="mt-0.5 block text-xs text-slate-400">
+                            Cobrança automática após o período de teste. Cancele quando quiser.
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          role="radio"
+                          aria-checked={paymentPreference === "pay_now"}
+                          onClick={() => setPaymentPreference("pay_now")}
+                          className={`rounded-xl border px-4 py-3 text-left text-sm transition ${
+                            paymentPreference === "pay_now"
+                              ? "border-teal-300 bg-teal-500/10 text-white"
+                              : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                          }`}
+                        >
+                          <span className="block font-semibold">
+                            Pagar agora (cartão ou boleto)
+                          </span>
+                          <span className="mt-0.5 block text-xs text-slate-400">
+                            Sem período de teste. Acesso liberado assim que o pagamento for confirmado.
+                          </span>
+                        </button>
+                      </div>
                       <button
                         type="button"
                         onClick={() => void handleStripeRedirect()}
@@ -727,7 +771,11 @@ export function CommercialCheckoutWorkspace({
                         ) : (
                           <CreditCard className="h-4 w-4" />
                         )}
-                        {isRedirecting ? "Redirecionando..." : "Pagar com cartão"}
+                        {isRedirecting
+                          ? "Redirecionando..."
+                          : paymentPreference === "trial_card"
+                            ? "Começar com 7 dias grátis"
+                            : "Pagar agora"}
                       </button>
                     </>
                   )}

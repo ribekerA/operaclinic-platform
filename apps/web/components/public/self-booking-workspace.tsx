@@ -19,6 +19,7 @@ import {
   getPublicAvailability,
   toErrorMessage,
 } from "@/lib/client/public-booking-api";
+import { notifyFounderOfDemoBooking } from "@/lib/client/demo-api";
 
 interface SelfBookingWorkspaceProps {
   slug: string;
@@ -107,6 +108,7 @@ export function SelfBookingWorkspace({ slug, clinic }: SelfBookingWorkspaceProps
     startsAt: string;
     confirmationCode: string;
   } | null>(null);
+  const [founderNotified, setFounderNotified] = useState(false);
 
   const selectedConsultationType = clinic.consultationTypes.find(
     (ct) => ct.id === booking.consultationTypeId,
@@ -158,6 +160,14 @@ export function SelfBookingWorkspace({ slug, clinic }: SelfBookingWorkspaceProps
       const result = await bookPublicAppointment(slug, input);
       setConfirmation(result);
       setStep("success");
+
+      if (clinic.isDemo) {
+        notifyFounderOfDemoBooking(slug, result.appointmentId)
+          .then(() => setFounderNotified(true))
+          .catch(() => {
+            // Silent — a failed demo notification must never affect the lead's booking confirmation.
+          });
+      }
     } catch (err) {
       setError(toErrorMessage(err, "Não foi possível confirmar o agendamento."));
     } finally {
@@ -210,6 +220,11 @@ export function SelfBookingWorkspace({ slug, clinic }: SelfBookingWorkspaceProps
             </p>
             <p className="mt-1 text-xs text-muted">Guarde este código para consultar seu agendamento.</p>
           </div>
+          {clinic.isDemo && founderNotified && (
+            <p className="border-t border-slate-100 pt-4 text-xs text-teal-700">
+              Notificação enviada para nosso time.
+            </p>
+          )}
         </div>
       </div>
     );

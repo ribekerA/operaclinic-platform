@@ -24,6 +24,7 @@ export class MockPaymentAdapter implements PaymentAdapter {
     },
     onboardingId: string,
     onboardingPublicToken: string,
+    paymentPreference: "trial_card" | "pay_now",
   ): Promise<CheckoutSession> {
     const reference = `mock_${Date.now()}_${onboardingId}`;
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h

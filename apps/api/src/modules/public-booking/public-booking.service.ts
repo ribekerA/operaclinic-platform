@@ -22,6 +22,7 @@ export interface PublicClinicInfo {
   clinicName: string;
   displayName: string;
   timezone: string;
+  isDemo: boolean;
   professionals: Array<{
     id: string;
     displayName: string;
@@ -91,7 +92,7 @@ export class PublicBookingService {
       throw new NotFoundException("Clínica não encontrada.");
     }
 
-    const [professionals, consultationTypes] = await Promise.all([
+    const [professionals, consultationTypes, demoLeadTenant] = await Promise.all([
       this.prisma.professional.findMany({
         where: { tenantId: tenant.id, isActive: true, visibleForSelfBooking: true },
         select: {
@@ -106,6 +107,10 @@ export class PublicBookingService {
         select: { id: true, name: true, durationMinutes: true, aestheticArea: true },
         orderBy: { name: "asc" },
       }),
+      this.prisma.demoLeadTenant.findUnique({
+        where: { tenantId: tenant.id },
+        select: { id: true },
+      }),
     ]);
 
     return {
@@ -113,6 +118,7 @@ export class PublicBookingService {
       clinicName: tenant.name,
       displayName: tenant.clinic?.displayName ?? tenant.name,
       timezone: tenant.timezone,
+      isDemo: demoLeadTenant !== null,
       professionals: professionals.map((p) => ({
         id: p.id,
         displayName: p.displayName,

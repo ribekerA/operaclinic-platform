@@ -19,6 +19,7 @@ import type {
 import { findCommercialPublicPlanCatalogEntry } from "@operaclinic/shared";
 import {
   CommercialOnboardingStatus,
+  PaymentMethodPreference,
   Prisma,
   RoleCode,
   SubscriptionStatus,
@@ -243,6 +244,7 @@ export class CommercialService {
 
   async createCheckout(
     publicToken: string,
+    paymentPreference: "trial_card" | "pay_now",
   ): Promise<{ checkoutUrl: string; sessionId: string }> {
     await this.expireStaleOnboardings();
 
@@ -265,10 +267,21 @@ export class CommercialService {
     }
 
     try {
+      await this.prisma.commercialOnboarding.update({
+        where: { id: onboarding.id },
+        data: {
+          paymentMethodPreference:
+            paymentPreference === "trial_card"
+              ? PaymentMethodPreference.TRIAL_CARD
+              : PaymentMethodPreference.PAY_NOW,
+        },
+      });
+
       const session = await this.paymentAdapter.createCheckout(
         onboarding.plan,
         onboarding.id,
         publicToken,
+        paymentPreference,
       );
 
       this.logger.debug(
@@ -483,12 +496,25 @@ export class CommercialService {
           },
         });
 
+        const wantsTrial =
+          onboarding.paymentMethodPreference ===
+          PaymentMethodPreference.TRIAL_CARD;
+        const trialPeriodDays = this.configService.get<number>(
+          "commercial.trialPeriodDays",
+          7,
+        );
+
         const subscription = await tx.subscription.create({
           data: {
             tenantId: tenant.id,
             planId: onboarding.planId,
-            status: SubscriptionStatus.ACTIVE,
+            status: wantsTrial
+              ? SubscriptionStatus.TRIAL
+              : SubscriptionStatus.ACTIVE,
             startsAt: now,
+            endsAt: wantsTrial
+              ? new Date(now.getTime() + trialPeriodDays * 86400000)
+              : null,
           },
         });
 
@@ -868,8 +894,9 @@ export class CommercialService {
 
     switch (stripeStatus) {
       case "active":
-      case "trialing":
         return SubscriptionStatus.ACTIVE;
+      case "trialing":
+        return SubscriptionStatus.TRIAL;
       case "past_due":
       case "unpaid":
       case "incomplete":

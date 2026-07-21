@@ -7,21 +7,19 @@ import {
 export const dynamic = "force-dynamic";
 
 interface RouteContext {
-  params: Promise<{
-    onboardingToken: string;
-  }>;
+  params: Promise<{ slug: string }>;
 }
 
 export async function POST(
   request: NextRequest,
   context: RouteContext,
 ): Promise<NextResponse> {
-  const { onboardingToken } = await context.params;
-  const body = await request.json();
+  const { slug } = await context.params;
+  const body = await request.json().catch(() => null);
 
   const result = await requestBackendPublic({
     method: "POST",
-    path: `/commercial/onboarding/${onboardingToken}/create-checkout`,
+    path: `/demo/multi/${slug}/notify-founder`,
     body,
   });
 

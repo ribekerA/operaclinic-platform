@@ -28,6 +28,7 @@ export interface PaymentAdapter {
     },
     onboardingId: string,
     onboardingPublicToken: string,
+    paymentPreference: "trial_card" | "pay_now",
   ): Promise<CheckoutSession>;
 
   /**

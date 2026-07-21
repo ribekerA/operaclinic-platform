@@ -6,4 +6,5 @@ export default registerAs("commercial", () => ({
   ),
   enableMockCheckout:
     process.env.COMMERCIAL_ONBOARDING_ENABLE_MOCK_CHECKOUT === "true",
+  trialPeriodDays: Number(process.env.COMMERCIAL_TRIAL_PERIOD_DAYS ?? 7),
 }));

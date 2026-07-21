@@ -31,6 +31,11 @@ enum CommercialOnboardingStatus {
   ESCALATED_TO_STAFF
 }
 
+enum PaymentMethodPreference {
+  TRIAL_CARD
+  PAY_NOW
+}
+
 enum MessagingChannel {
   WHATSAPP
 }
@@ -258,6 +263,7 @@ model Tenant {
   procedureProtocols     ProcedureProtocol[]
   patientProtocolInstances PatientProtocolInstance[]
   protocolSessionAppointments ProtocolSessionAppointment[]
+  demoLeadTenant         DemoLeadTenant?
 
   @@map("tenants")
 }
@@ -356,6 +362,7 @@ model CommercialOnboarding {
   adminFullName       String?                    @map("admin_full_name") @db.VarChar(160)
   adminEmail          String?                    @map("admin_email") @db.VarChar(180)
   adminPasswordHash   String?                    @map("admin_password_hash") @db.VarChar(255)
+  paymentMethodPreference PaymentMethodPreference? @map("payment_method_preference")
   paymentReference    String?                    @map("payment_reference") @db.VarChar(120)
   checkoutConfirmedAt DateTime?                  @map("checkout_confirmed_at") @db.Timestamptz(6)
   onboardingStartedAt DateTime?                  @map("onboarding_started_at") @db.Timestamptz(6)
@@ -395,6 +402,22 @@ model Subscription {
   @@index([tenantId], map: "idx_subscriptions_tenant_id")
   @@index([planId], map: "idx_subscriptions_plan_id")
   @@map("subscriptions")
+}
+
+model DemoLeadTenant {
+  id                   String    @id @default(uuid()) @db.Uuid
+  tenantId             String    @unique @map("tenant_id") @db.Uuid
+  slug                 String    @unique @db.VarChar(100)
+  leadClinicName       String    @map("lead_clinic_name") @db.VarChar(160)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt            DateTime  @map("expires_at") @db.Timestamptz(6)
+  lastBookedAt         DateTime? @map("last_booked_at") @db.Timestamptz(6)
+  founderNotifiedCount Int       @default(0) @map("founder_notified_count")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt], map: "idx_demo_lead_tenants_expires_at")
+  @@map("demo_lead_tenants")
 }
 
 model TenantFeature {

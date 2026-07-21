@@ -50,10 +50,14 @@ export function completeCommercialOnboarding(
 
 export function createStripeCheckout(
   onboardingToken: string,
+  paymentPreference: "trial_card" | "pay_now",
 ): Promise<{ checkoutUrl: string; sessionId: string }> {
   return requestJson<{ checkoutUrl: string; sessionId: string }>(
     `/api/commercial/onboarding/${onboardingToken}/create-checkout`,
-    { method: "POST" },
+    {
+      method: "POST",
+      body: JSON.stringify({ paymentPreference }),
+    },
   );
 }
 
